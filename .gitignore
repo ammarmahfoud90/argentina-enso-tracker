@@ -1,0 +1,51 @@
+# Environment
+.env
+*.env
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+.eggs/
+
+# Data (raw CHIRPS files can be huge)
+data/raw/
+*.nc
+*.nc4
+*.h5
+*.hdf5
+
+# Keep processed parquet
+!data/processed/
+!data/processed/*.parquet
+
+# Streamlit
+.streamlit/secrets.toml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
