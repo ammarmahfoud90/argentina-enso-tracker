@@ -67,7 +67,7 @@ PHASE_ICONS = {
 
 def _phase_badge(phase: str) -> str:
     icon = PHASE_ICONS.get(phase, "⚪")
-    return f"{icon} **{phase}**"
+    return f"{icon} <strong>{phase}</strong>"
 
 
 def _sig_marker(p_value: float) -> str:
