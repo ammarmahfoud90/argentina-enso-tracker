@@ -182,10 +182,6 @@ def load_correlations() -> tuple[pd.DataFrame | None, str | None]:
 
 def render_sidebar() -> None:
     with st.sidebar:
-        st.title("Argentina ENSO\nImpact Tracker")
-        st.caption("FRIS — FloodRisk Intelligence System · MVP")
-        st.divider()
-
         st.markdown("### Fuentes de datos")
         st.markdown(
             f"- [ONI (NOAA CPC)]({NOAA_ONI_URL})\n"
