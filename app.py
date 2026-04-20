@@ -32,7 +32,6 @@ from src.config import (
     SIGNIFICANCE_THRESHOLD,
 )
 from src.fetch_enso import ENSOSnapshot, fetch_enso_snapshot
-from src.fetch_forecast import ENSOForecast, fetch_enso_forecast
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -155,12 +154,6 @@ def load_enso_snapshot() -> tuple[ENSOSnapshot | None, str | None]:
     except Exception as exc:
         logger.error("Error obteniendo ENSO snapshot: %s", exc)
         return None, str(exc)
-
-
-@st.cache_data(ttl=86400, show_spinner=False)
-def load_forecast() -> ENSOForecast:
-    """Load ENSO forecast (always returns, never raises)."""
-    return fetch_enso_forecast()
 
 
 @st.cache_data(show_spinner=False)
@@ -308,61 +301,56 @@ def _render_oni_chart(oni_df: pd.DataFrame) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Section 2: Pronóstico ENSO
+# Section 2: Pronóstico ENSO oficial (curated links)
 # ---------------------------------------------------------------------------
 
+_FORECAST_RESOURCES = [
+    {
+        "title": "NOAA ENSO Advisory (mensual)",
+        "description": (
+            "Diagnóstico y pronóstico oficial de NOAA Climate Prediction Center. "
+            "Actualización mensual con probabilidades por fase para los próximos trimestres."
+        ),
+        "button_label": "Ver advisory →",
+        "url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/",
+    },
+    {
+        "title": "IRI ENSO Forecast",
+        "description": (
+            "Pronóstico probabilístico del International Research Institute for Climate "
+            "and Society (Columbia University). Incluye gráfico plume de probabilidades "
+            "por trimestre."
+        ),
+        "button_label": "Ver pronóstico IRI →",
+        "url": "https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/",
+    },
+    {
+        "title": "NOAA ONI — series y pronóstico",
+        "description": (
+            "Serie histórica del Oceanic Niño Index y valores proyectados "
+            "publicados por NOAA CPC."
+        ),
+        "button_label": "Ver ONI →",
+        "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+    },
+]
+
+
 def render_forecast() -> None:
-    st.header("2. Pronóstico ENSO a 6 meses")
+    st.header("2. Pronóstico ENSO oficial")
 
-    with st.spinner("Consultando pronóstico IRI/NOAA…"):
-        forecast = load_forecast()
-
-    if not forecast.is_structured or not forecast.quarters:
-        st.info(
-            "**Pronóstico estructurado no disponible.**\n\n"
-            "La página de IRI no expone un JSON parseeable con las probabilidades "
-            "en este momento. Esto es esperado: IRI publica el pronóstico como un "
-            "gráfico visual, no como datos estructurados.\n\n"
-            f"Consulte el pronóstico oficial en: [{NOAA_CPC_ADVISORY_URL}]({NOAA_CPC_ADVISORY_URL})\n\n"
-            "*No se muestran probabilidades estimadas o interpoladas.*"
-        )
-        st.link_button("Ver Pronóstico NOAA CPC", NOAA_CPC_ADVISORY_URL)
-        return
-
-    # If we have structured data
-    st.caption(f"Fuente: IRI ENSO Forecast · Obtenido: {forecast.retrieved_at[:10]}")
-
-    rows = []
-    for q in forecast.quarters:
-        rows.append({
-            "Período": q.label,
-            "El Niño (%)": q.el_nino_pct,
-            "Neutral (%)": q.neutral_pct,
-            "La Niña (%)": q.la_nina_pct,
-            "Fuente": q.source,
-        })
-
-    df = pd.DataFrame(rows)
-    st.dataframe(df.set_index("Período"), use_container_width=True)
-
-    # Bar chart
-    fig = go.Figure()
-    quarters = [q.label for q in forecast.quarters]
-    fig.add_bar(x=quarters, y=[q.el_nino_pct for q in forecast.quarters],
-                name="El Niño", marker_color="#d62728")
-    fig.add_bar(x=quarters, y=[q.neutral_pct for q in forecast.quarters],
-                name="Neutral", marker_color="#2ca02c")
-    fig.add_bar(x=quarters, y=[q.la_nina_pct for q in forecast.quarters],
-                name="La Niña", marker_color="#1f77b4")
-    fig.update_layout(
-        barmode="stack",
-        height=280,
-        yaxis_title="Probabilidad (%)",
-        margin=dict(t=20, b=30, l=40, r=20),
-        plot_bgcolor="white",
-        paper_bgcolor="white",
+    st.markdown(
+        "El pronóstico ENSO operacional lo emiten centros especializados (NOAA, IRI). "
+        "Este tracker no reproduce esos pronósticos: los enlaza directamente."
     )
-    st.plotly_chart(fig, use_container_width=True)
+
+    cols = st.columns(3)
+    for col, resource in zip(cols, _FORECAST_RESOURCES):
+        with col:
+            with st.container(border=True):
+                st.markdown(f"**{resource['title']}**")
+                st.caption(resource["description"])
+                st.link_button(resource["button_label"], resource["url"], use_container_width=True)
 
 
 # ---------------------------------------------------------------------------
@@ -580,7 +568,7 @@ def render_footer() -> None:
 def main() -> None:
     render_sidebar()
 
-    st.title("🌊 Argentina ENSO Impact Tracker")
+    st.title("Argentina ENSO Impact Tracker")
     st.caption(
         "Estado del ENSO y su correlación histórica con precipitación en 5 regiones argentinas. "
         "Todos los datos provienen de fuentes públicas verificables (NOAA CPC, CHIRPS v2.0)."
