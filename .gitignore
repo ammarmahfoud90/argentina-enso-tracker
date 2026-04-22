@@ -23,6 +23,7 @@ data/raw/
 *.nc4
 *.h5
 *.hdf5
+*.pkl
 
 # Keep processed parquet
 !data/processed/

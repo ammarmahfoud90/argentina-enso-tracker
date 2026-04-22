@@ -1,0 +1,11 @@
+# Dev / standalone deliverables — not required by the Streamlit dashboard
+# Install: pip install -r requirements-dev.txt
+
+# Base dependencies (dashboard)
+-r requirements.txt
+
+# ENSO comparison GIF (scripts/generate_enso_gif.py)
+matplotlib>=3.8.0
+cartopy>=0.22.0
+Pillow>=10.0.0
+geopandas>=0.14.0
