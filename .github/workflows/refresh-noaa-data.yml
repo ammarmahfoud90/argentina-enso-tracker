@@ -1,0 +1,105 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Refresh NOAA ENSO Data
+#
+# Fetches fresh copies of the three lightweight NOAA CPC ASCII index files:
+#   • ONI   → data/raw/oni.ascii.txt
+#   • Niño 3.4 → data/raw/nino34.ascii.txt
+#   • SOI   → data/raw/soi.txt
+#
+# The CHIRPS correlation cache (data/processed/correlations.parquet) is
+# intentionally NOT touched by this workflow — that 1981-2025 dataset is
+# computed separately and lives independently of these monthly index files.
+#
+# Schedule: Every Monday at 06:00 UTC.
+#   NOAA CPC publishes updated ONI values around the 2nd week of each month.
+#   A weekly Monday run ensures new data is committed within days of release,
+#   without hammering the endpoint daily.
+#
+# Commit strategy: only commits when at least one source was actually updated
+#   (period_delta_months > 0). If all local files are already current the job
+#   exits cleanly with no empty commit.
+#
+# Permissions: uses the built-in GITHUB_TOKEN with `contents: write` — no
+#   personal access tokens or external secrets required.
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: Refresh NOAA ENSO Data
+
+on:
+  # ── Scheduled run — every Monday at 06:00 UTC ────────────────────────────
+  schedule:
+    - cron: "0 6 * * 1"
+
+  # ── Manual trigger from the GitHub Actions UI ────────────────────────────
+  # Useful for testing and for triggering immediately after NOAA publishes.
+  workflow_dispatch:
+
+# Minimum permissions: read the repo, write files back to it.
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Fetch & commit fresh NOAA index files
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Check out the full repo ───────────────────────────────────────
+      # fetch-depth: 0 is not needed here — we only need HEAD to commit back.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Set up Python ─────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          # Cache pip downloads so repeated runs are faster.
+          cache: "pip"
+
+      # ── 3. Install minimal runtime dependencies ──────────────────────────
+      # Only `requests` is needed — it is the sole external import used by
+      # src/utils.fetch_text(), which drives all three NOAA fetches.
+      # We do NOT install the full requirements (pandas, xarray, etc.) because
+      # this workflow does not touch correlation computation or CHIRPS data.
+      - name: Install dependencies
+        run: pip install requests
+
+      # ── 4. Run the refresh script ────────────────────────────────────────
+      # scripts/refresh_noaa_data.py:
+      #   • Fetches live text from each NOAA CPC endpoint.
+      #   • Calls check_noaa_data_freshness() from src/utils.py, printing the
+      #     full FreshnessReport to the log for every source (audit trail).
+      #   • Overwrites data/raw/<file> only when period_delta_months > 0.
+      #   • Writes a `changed_sources` output variable (e.g. "ONI,SOI") so
+      #     the commit step knows what actually changed.
+      - name: Refresh NOAA index files
+        id: refresh
+        run: python -m scripts.refresh_noaa_data
+
+      # ── 5. Commit updated files (only when something changed) ────────────
+      # The `if` guard reads the output variable set in step 4.
+      # An empty `changed_sources` means all files were already current —
+      # we skip this step entirely to avoid pointless empty commits.
+      - name: Commit updated NOAA files
+        if: steps.refresh.outputs.changed_sources != ''
+        run: |
+          # Configure the built-in Actions bot as the commit author.
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Stage only the three managed index files.
+          # The CHIRPS cache and any other data/ artefacts are intentionally
+          # excluded — git will only commit what we explicitly stage here.
+          git add \
+            data/raw/oni.ascii.txt \
+            data/raw/nino34.ascii.txt \
+            data/raw/soi.txt
+
+          # Commit message includes which sources were refreshed.
+          # Example: "chore: refresh NOAA ENSO data (auto) [ONI,Nino34]"
+          git commit -m "chore: refresh NOAA ENSO data (auto) [${{ steps.refresh.outputs.changed_sources }}]"
+
+          # Push back to the branch that triggered the workflow.
+          # For scheduled runs this is always the default branch (main).
+          git push
