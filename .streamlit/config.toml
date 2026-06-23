@@ -1,0 +1,10 @@
+[theme]
+# Pin light-mode palette so var(--background-color) etc. match the
+# custom CSS design system. Users can still switch to Dark via the
+# Streamlit menu; [data-theme="dark"] CSS overrides handle that case.
+base                    = "light"
+backgroundColor         = "#F8FAFC"
+secondaryBackgroundColor = "#FFFFFF"
+textColor               = "#1E293B"
+primaryColor            = "#1E40AF"
+font                    = "sans serif"

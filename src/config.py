@@ -144,6 +144,14 @@ CORRELATIONS_CACHE_VERSION: str = "1.0.0"
 PAIRS_CACHE_PATH: str = "data/processed/oni_precip_pairs.parquet"
 
 # ---------------------------------------------------------------------------
+# Data freshness
+# ---------------------------------------------------------------------------
+
+DATA_STALENESS_THRESHOLD_DAYS: int = 60
+"""Warn when any individual data source's latest date lags the most-recent
+source by more than this many days (indicates a source has stopped updating)."""
+
+# ---------------------------------------------------------------------------
 # Network settings
 # ---------------------------------------------------------------------------
 

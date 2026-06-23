@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 from src.config import (
     CORRELATIONS_CACHE_PATH,
     CORRELATIONS_CACHE_VERSION,
+    DATA_STALENESS_THRESHOLD_DAYS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
     NOAA_CPC_ADVISORY_URL,
@@ -72,12 +73,12 @@ st.markdown(
         letter-spacing: -0.02em;
     }
 
-    /* ── App background ── */
+    /* ── App background — use Streamlit CSS variable so dark mode works ── */
     .stApp {
-        background-color: #F8FAFC;
+        background-color: var(--background-color, #F8FAFC);
     }
 
-    /* ── Sidebar ── */
+    /* ── Sidebar — always dark navy regardless of theme ── */
     [data-testid="stSidebar"] {
         background-color: #1E3A8A;
     }
@@ -98,8 +99,8 @@ st.markdown(
 
     /* ── Metric cards ── */
     [data-testid="metric-container"] {
-        background: #FFFFFF;
-        border: 1px solid #E2E8F0;
+        background: var(--secondary-background-color, #FFFFFF);
+        border: 1px solid rgba(30, 64, 175, 0.18);
         border-top: 3px solid #1E40AF;
         border-radius: 8px;
         padding: 16px 20px !important;
@@ -115,33 +116,33 @@ st.markdown(
         font-weight: 600 !important;
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        color: #64748B !important;
+        /* color intentionally unset — inherits from Streamlit theme */
     }
     [data-testid="metric-container"] [data-testid="stMetricValue"] {
         font-family: 'Fira Code', monospace !important;
         font-size: 1.75rem !important;
         font-weight: 700 !important;
-        color: #1E3A8A !important;
+        /* color intentionally unset — inherits from Streamlit theme */
     }
 
     /* ── Section headers ── */
     h2 {
-        border-bottom: 2px solid #DBEAFE;
+        border-bottom: 2px solid rgba(219, 234, 254, 0.7);
         padding-bottom: 8px;
         margin-top: 8px !important;
     }
 
-    /* ── Containers with border ── */
+    /* ── Containers with border — use CSS variable for background ── */
     [data-testid="stVerticalBlockBorderWrapper"] > div {
         border-radius: 10px !important;
-        border: 1px solid #DBEAFE !important;
-        background: #FFFFFF !important;
+        border: 1px solid rgba(219, 234, 254, 0.6) !important;
+        background: var(--secondary-background-color, #FFFFFF) !important;
         box-shadow: 0 1px 4px rgba(30,64,175,0.06);
         transition: box-shadow 200ms ease, border-color 200ms ease;
     }
     [data-testid="stVerticalBlockBorderWrapper"] > div:hover {
         box-shadow: 0 4px 16px rgba(30,64,175,0.10);
-        border-color: #93C5FD !important;
+        border-color: rgba(147, 197, 253, 0.8) !important;
     }
 
     /* ── Link buttons ── */
@@ -162,39 +163,39 @@ st.markdown(
 
     /* ── Expander ── */
     [data-testid="stExpander"] {
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid rgba(226, 232, 240, 0.6) !important;
         border-radius: 8px !important;
-        background: #FFFFFF !important;
+        background: var(--secondary-background-color, #FFFFFF) !important;
         margin-bottom: 8px;
         transition: border-color 150ms ease;
     }
     [data-testid="stExpander"]:hover {
-        border-color: #93C5FD !important;
+        border-color: rgba(147, 197, 253, 0.8) !important;
     }
     [data-testid="stExpander"] summary {
         font-family: 'Fira Sans', sans-serif !important;
         font-weight: 600 !important;
-        color: #1E3A8A !important;
+        /* color inherits from Streamlit theme */
         cursor: pointer;
     }
 
     /* ── Dataframe ── */
     [data-testid="stDataFrame"] {
         border-radius: 8px !important;
-        border: 1px solid #E2E8F0 !important;
+        border: 1px solid rgba(226, 232, 240, 0.5) !important;
         overflow: hidden;
     }
 
     /* ── Divider ── */
     hr {
-        border-color: #E2E8F0 !important;
+        border-color: rgba(226, 232, 240, 0.6) !important;
         margin: 24px 0 !important;
     }
 
     /* ── Caption ── */
     [data-testid="stCaptionContainer"] {
-        color: #64748B !important;
         font-size: 0.78rem !important;
+        /* color inherits from Streamlit theme */
     }
 
     /* ── Warning / Error ── */
@@ -207,22 +208,51 @@ st.markdown(
     [data-testid="stAppViewContainer"] h1 {
         font-size: 2rem !important;
         font-weight: 700 !important;
-        color: #1E3A8A !important;
+    }
+
+    /* ── Dark mode overrides ──────────────────────────────────────────────── */
+    /* Streamlit sets data-theme="dark" on the wrapping div when dark mode is active */
+
+    [data-theme="dark"] h1,
+    [data-theme="dark"] h2,
+    [data-theme="dark"] h3,
+    [data-theme="dark"] h4 {
+        color: #60A5FA !important;   /* lighter blue readable on dark backgrounds */
+    }
+
+    [data-theme="dark"] h2 {
+        border-bottom-color: rgba(96, 165, 250, 0.25) !important;
+    }
+
+    [data-theme="dark"] [data-testid="metric-container"] {
+        border-color: rgba(96, 165, 250, 0.25) !important;
+        border-top-color: #3B82F6 !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.30);
+    }
+
+    [data-theme="dark"] [data-testid="stVerticalBlockBorderWrapper"] > div {
+        border-color: rgba(96, 165, 250, 0.18) !important;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.20);
+    }
+
+    [data-theme="dark"] [data-testid="stExpander"] {
+        border-color: rgba(96, 165, 250, 0.18) !important;
+    }
+
+    [data-theme="dark"] hr {
+        border-color: rgba(96, 165, 250, 0.15) !important;
     }
 
     /* ── Mobile responsiveness ── */
     @media (max-width: 640px) {
-        /* Stack all columns vertically on narrow screens */
         [data-testid="column"] {
             flex: 0 0 100% !important;
             max-width: 100% !important;
             min-width: 100% !important;
         }
-        /* Reduce title font on mobile */
         [data-testid="stAppViewContainer"] > div > div > div > div > div > div > div:first-child {
             font-size: 1.4rem !important;
         }
-        /* Metric value smaller on mobile */
         [data-testid="stMetricValue"] {
             font-size: 1.3rem !important;
         }
@@ -485,17 +515,19 @@ def _render_oni_scatter(region: str, pairs_df: pd.DataFrame, corr_df: pd.DataFra
         sub = df[mask]
         if sub.empty:
             continue
+        # Pre-format hover text to avoid Plotly d3-format edge cases with '+' sign flag
+        hover_texts = [
+            f"ONI: {ox:+.2f} °C<br>Anomalía precip: {oy:+.0f} mm"
+            for ox, oy in zip(sub["oni_aligned"], sub["precip_anom"])
+        ]
         fig.add_trace(go.Scatter(
             x=sub["oni_aligned"],
             y=sub["precip_anom"],
             mode="markers",
             name=phase,
             marker=dict(color=color, size=5, opacity=0.65),
-            hovertemplate=(
-                f"<b>{phase}</b><br>"
-                "ONI: %{x:+.2f} °C<br>"
-                "Anomalía precip: %{y:+.0f} mm<extra></extra>"
-            ),
+            text=hover_texts,
+            hovertemplate=f"<b>{phase}</b><br>%{{text}}<extra></extra>",
         ))
 
     # Regression line
@@ -792,7 +824,7 @@ def render_anomaly_banner() -> None:
 def render_risk_map(risk_results: dict) -> None:
     """Province-centroid bubble map of Argentina coloured by forecast risk.
 
-    Uses go.Scattermapbox with carto-positron — no Mapbox token required.
+    Uses go.Scattermap with carto-positron — no Mapbox token required.
     One bubble per province, coloured by its region's risk level.
     """
     _RISK_META = {
@@ -828,7 +860,8 @@ def render_risk_map(risk_results: dict) -> None:
         if not entries:
             continue
         provs, lats, lons, regs, risk_labels = zip(*entries)
-        fig.add_trace(go.Scattermapbox(
+        # go.Scattermap replaces the deprecated go.Scattermapbox (Plotly ≥5.15)
+        fig.add_trace(go.Scattermap(
             lat=lats,
             lon=lons,
             mode="markers",
@@ -843,18 +876,18 @@ def render_risk_map(risk_results: dict) -> None:
         ))
 
     fig.update_layout(
-        mapbox_style="carto-positron",
-        mapbox_zoom=2.5,
-        mapbox_center={"lat": -38.0, "lon": -64.5},
+        map_style="carto-positron",
+        map_zoom=2.5,
+        map_center={"lat": -38.0, "lon": -64.5},
         margin=dict(t=0, b=0, l=0, r=0),
         height=500,
-        paper_bgcolor="#FFFFFF",
+        paper_bgcolor="rgba(0,0,0,0)",
         legend=dict(
             orientation="h",
             y=-0.06,
             x=0,
             font=dict(size=11, family="Fira Sans, sans-serif"),
-            bgcolor="rgba(255,255,255,0.85)",
+            bgcolor="rgba(255,255,255,0.80)",
         ),
     )
     st.plotly_chart(fig, use_container_width=True)
@@ -884,13 +917,21 @@ def render_sidebar() -> None:
             f"- [Niño 3.4 (NOAA)]({NOAA_NINO34_URL})\n"
             f"- [SOI (NOAA CPC)]({NOAA_SOI_URL})\n"
             f"- [CHIRPS v2.0 (CHG/UCSB)](https://www.chc.ucsb.edu/data/chirps)\n"
-            f"- [IRI ENSO Forecast]({NOAA_CPC_ADVISORY_URL})"
+            f"- [IRI ENSO Forecast](https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/)"
         )
         st.divider()
 
         github_url = os.getenv("GITHUB_REPO_URL", "#")
         st.markdown(f"[Repositorio GitHub]({github_url})")
 
+        st.divider()
+        st.markdown(
+            "<div style='font-size:0.72rem;color:#94A3B8;line-height:1.6'>"
+            "Desarrollado por<br>"
+            "<strong style='color:#BFDBFE'>Ing. Ammar Mahfoud</strong>"
+            "</div>",
+            unsafe_allow_html=True,
+        )
         st.divider()
         contact = os.getenv("CONTACT_EMAIL", "contacto@example.com")
         st.caption(
@@ -936,9 +977,13 @@ def render_enso_status() -> None:
         st.caption(f"Actualizado: {snapshot.nino34_date} · [Fuente]({NOAA_NINO34_URL})")
 
     with col3:
+        # Normalize negative-zero: -0.04 rounds to "-0.0" — replace with "+0.0"
+        _soi_str = f"{snapshot.soi_value:+.1f}"
+        if _soi_str == "-0.0":
+            _soi_str = "+0.0"
         st.metric(
             label="SOI",
-            value=f"{snapshot.soi_value:+.1f}",
+            value=_soi_str,
             help="Índice de Oscilación del Sur: diferencia estandarizada de presión Tahití − Darwin",
         )
         st.caption(f"Actualizado: {snapshot.soi_date} · [Fuente]({NOAA_SOI_URL})")
@@ -971,18 +1016,19 @@ def _render_oni_chart(oni_df: pd.DataFrame) -> None:
         mode="lines",
         name="ONI",
         line=dict(color="#1E40AF", width=1.6),
-        hovertemplate="<b>%{x|%Y %b}</b><br>ONI: %{y:+.2f} °C<extra></extra>",
+        hovertemplate="<b>%{x|%Y %b}</b><br>ONI: %{y:.2f} °C<extra></extra>",
     ))
 
-    # Threshold lines
+    # Threshold lines — annotations on the LEFT to avoid colliding with the
+    # "you are here" marker/label that appears at the right edge.
     fig.add_hline(
         y=0.5, line_dash="dot", line_color="#EF4444", line_width=1.2,
-        annotation_text="El Niño +0.5", annotation_position="right",
+        annotation_text="El Niño +0.5", annotation_position="top left",
         annotation=dict(font_size=10, font_color="#EF4444"),
     )
     fig.add_hline(
         y=-0.5, line_dash="dot", line_color="#3B82F6", line_width=1.2,
-        annotation_text="La Niña −0.5", annotation_position="right",
+        annotation_text="La Niña −0.5", annotation_position="bottom left",
         annotation=dict(font_size=10, font_color="#3B82F6"),
     )
     fig.add_hline(y=0, line_color="#CBD5E1", line_width=0.8)
@@ -994,13 +1040,20 @@ def _render_oni_chart(oni_df: pd.DataFrame) -> None:
         else "#3B82F6" if last_row["oni"] <= -0.5
         else "#22C55E"
     )
+    # If the ONI is within 0.15 of a threshold, push the label downward so it
+    # doesn't stack on top of the threshold dashed-line label area.
+    _oni_val = float(last_row["oni"])
+    if abs(_oni_val - 0.5) < 0.15 or abs(_oni_val + 0.5) < 0.15:
+        _text_pos = "bottom right"
+    else:
+        _text_pos = "middle right"
     fig.add_trace(go.Scatter(
         x=[last_row["date"]],
         y=[last_row["oni"]],
         mode="markers+text",
         marker=dict(size=10, color=last_color, line=dict(color="#FFFFFF", width=2)),
         text=[f"  {last_row['oni']:+.2f}"],
-        textposition="middle right",
+        textposition=_text_pos,
         textfont=dict(size=10, color=last_color, family="Fira Code, monospace"),
         hovertemplate=(
             f"<b>Último dato: {last_row['season']} {last_row['year']}</b>"
@@ -1012,7 +1065,7 @@ def _render_oni_chart(oni_df: pd.DataFrame) -> None:
     layout = dict(**_PLOTLY_BASE)
     layout.update(
         height=310,
-        margin=dict(t=20, b=30, l=50, r=80),
+        margin=dict(t=20, b=30, l=100, r=60),  # l enlarged for left-side threshold labels
         yaxis_title="ONI (°C)",
         xaxis_title=None,
         showlegend=False,
@@ -1216,8 +1269,11 @@ def _render_correlation_heatmap(table_df: pd.DataFrame) -> None:
                 # Mute non-significant cells: push z toward 0 so they appear near-white.
                 # Actual r shown as text with "(n.s.)" so users still see the value.
                 row_z.append(r if is_sig else r * 0.15)
+                # Explicitly label which test: "(Pears. n.s.)" reminds the
+                # reader that this refers to Pearson p-value only; Spearman
+                # may differ (check the detail table in the expander below).
                 row_text.append(
-                    f"{r:+.3f}{sig_marker}" if is_sig else f"{r:+.3f}\n(n.s.)"
+                    f"{r:+.3f}{sig_marker}" if is_sig else f"{r:+.3f}\n(Pears. n.s.)"
                 )
         z.append(row_z)
         text.append(row_text)
@@ -1259,7 +1315,10 @@ def _render_correlation_heatmap(table_df: pd.DataFrame) -> None:
     )
     fig.update_layout(**layout)
     st.plotly_chart(fig, use_container_width=True)
-    st.caption("Celdas brillantes = significativo (p < 0.05). Celdas opacas con (n.s.) = no significativo.")
+    st.caption(
+        "Celdas brillantes = Pearson p < 0.05. Celdas opacas con '(Pears. n.s.)' = Pearson no significativo "
+        "— el Spearman puede diferir; ver tabla detallada en el desplegable superior."
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1395,6 +1454,29 @@ def render_risk_implications() -> None:
 # Section 5: Metadata / Footer
 # ---------------------------------------------------------------------------
 
+def _check_data_staleness(snapshot) -> list[str]:
+    """Return list of source names whose date lags the most recent source
+    by more than DATA_STALENESS_THRESHOLD_DAYS.
+
+    Args:
+        snapshot: ENSOSnapshot with oni_date, nino34_date, soi_date as date objects.
+
+    Returns:
+        List of stale source labels (empty when all sources are fresh).
+    """
+    source_dates = {
+        "ONI": snapshot.oni_date,
+        "Niño 3.4": snapshot.nino34_date,
+        "SOI": snapshot.soi_date,
+    }
+    latest = max(source_dates.values())
+    return [
+        name
+        for name, d in source_dates.items()
+        if (latest - d).days > DATA_STALENESS_THRESHOLD_DAYS
+    ]
+
+
 def render_footer() -> None:
     st.divider()
 
@@ -1417,17 +1499,45 @@ def render_footer() -> None:
             unsafe_allow_html=True,
         )
         if snapshot:
+            # Staleness check — warn when any source lags the freshest by >threshold
+            stale_sources = _check_data_staleness(snapshot)
+
+            def _date_html(name: str, d, url: str) -> str:
+                stale_badge = (
+                    " <span style='background:#FEF9C3;color:#92400E;font-size:0.68rem;"
+                    "font-weight:700;padding:1px 5px;border-radius:3px;margin-left:4px'>"
+                    "DESACTUALIZADO</span>"
+                    if name in stale_sources else ""
+                )
+                return (
+                    f"{name}: {d} · "
+                    f"<a href='{url}' style='color:#93C5FD'>fuente</a>"
+                    f"{stale_badge}"
+                )
+
+            src_html = "<br>".join([
+                _date_html("ONI", snapshot.oni_date, NOAA_ONI_URL),
+                _date_html("Niño 3.4", snapshot.nino34_date, NOAA_NINO34_URL),
+                _date_html("SOI", snapshot.soi_date, NOAA_SOI_URL),
+            ])
+
             st.markdown(
-                f"<div style='color:#CBD5E1;font-size:0.78rem;line-height:1.8'>"
-                f"ONI: {snapshot.oni_date} · "
-                f"<a href='{NOAA_ONI_URL}' style='color:#93C5FD'>NOAA CPC</a><br>"
-                f"Niño 3.4: {snapshot.nino34_date} · "
-                f"<a href='{NOAA_NINO34_URL}' style='color:#93C5FD'>NOAA</a><br>"
-                f"SOI: {snapshot.soi_date} · "
-                f"<a href='{NOAA_SOI_URL}' style='color:#93C5FD'>NOAA CPC</a>"
+                f"<div style='color:#CBD5E1;font-size:0.78rem;line-height:1.9'>"
+                f"{src_html}"
                 f"</div>",
                 unsafe_allow_html=True,
             )
+
+            if stale_sources:
+                st.markdown(
+                    f"<div style='background:#FEF9C3;border:1px solid #FDE047;border-radius:5px;"
+                    f"padding:6px 10px;margin-top:6px;font-size:0.75rem;color:#78350F'>"
+                    f"⚠️ <strong>{', '.join(stale_sources)}</strong> no se ha actualizado en más de "
+                    f"{DATA_STALENESS_THRESHOLD_DAYS} días respecto a la fuente más reciente. "
+                    f"Los datos pueden estar desactualizados."
+                    f"</div>",
+                    unsafe_allow_html=True,
+                )
         else:
             st.markdown(
                 "<div style='color:#94A3B8;font-size:0.78rem'>Índices ENSO: no disponibles</div>",
@@ -1468,6 +1578,9 @@ def render_footer() -> None:
         f"display:flex;gap:20px;align-items:center;flex-wrap:wrap'>"
         f"<a href='{github_url}' style='color:#93C5FD;font-size:0.8rem;font-weight:600;"
         f"text-decoration:none'>GitHub</a>"
+        f"<span style='color:#94A3B8;font-size:0.78rem'>"
+        f"Desarrollado por <strong style='color:#BFDBFE'>Ing. Ammar Mahfoud</strong>"
+        f"</span>"
         f"<span style='color:#64748B;font-size:0.78rem'>"
         f"Demostración técnica · No constituye asesoría profesional · "
         f"<a href='mailto:{contact}' style='color:#93C5FD'>{contact}</a>"
@@ -1493,6 +1606,9 @@ def main() -> None:
         "<div style='font-size:0.9rem;color:#64748B;margin-top:8px;max-width:640px'>"
         "Estado del ENSO y correlación histórica con precipitación en 5 regiones argentinas. "
         "Todos los datos provienen de fuentes públicas verificables (NOAA CPC, CHIRPS v2.0)."
+        "</div>"
+        "<div style='font-size:0.75rem;color:#94A3B8;margin-top:6px'>"
+        "por <strong style='color:#64748B'>Ing. Ammar Mahfoud</strong>"
         "</div>"
         "</div>",
         unsafe_allow_html=True,
