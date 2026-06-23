@@ -17,26 +17,18 @@ build/
 *.egg
 .eggs/
 
-# Data — heavy files excluded by default, lightweight NOAA index files tracked
-#
-# Use data/raw/* (not data/raw/) so git descends into the directory and
-# negation patterns below take effect.  A trailing-slash rule on a directory
-# prevents git from evaluating any ! overrides inside it.
-data/raw/*
-data/processed/*
+# Data — ignore the heavy CHIRPS directory and large binary formats.
+# data/raw/ is NOT ignored as a directory so the auto-refresh workflow
+# can commit the three small NOAA ASCII index files directly.
+data/raw/chirps/
+data/processed/
 *.nc
 *.nc4
 *.h5
 *.hdf5
 *.pkl
 
-# Un-ignore the three small NOAA CPC ASCII index files.
-# These are committed so the auto-refresh workflow can update them in-place.
-!data/raw/oni.ascii.txt
-!data/raw/nino34.ascii.txt
-!data/raw/soi.txt
-
-# Un-ignore processed correlation cache
+# Processed correlation cache is the one parquet file we keep.
 !data/processed/correlations.parquet
 
 # Streamlit
