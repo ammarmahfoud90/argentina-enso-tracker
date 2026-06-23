@@ -89,9 +89,11 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           # Stage only the three managed index files.
-          # The CHIRPS cache and any other data/ artefacts are intentionally
-          # excluded — git will only commit what we explicitly stage here.
-          git add \
+          # -f bypasses any residual gitignore evaluation for files that are
+          # new to the index — the .gitignore negation patterns already
+          # un-ignore these paths, but -f makes the add bulletproof when
+          # the files are being committed for the first time.
+          git add -f \
             data/raw/oni.ascii.txt \
             data/raw/nino34.ascii.txt \
             data/raw/soi.txt
