@@ -24,14 +24,18 @@ from dotenv import load_dotenv
 from src.config import (
     CORRELATIONS_CACHE_PATH,
     CORRELATIONS_CACHE_VERSION,
+    ENSO_EL_NINO_THRESHOLD,
+    ENSO_LA_NINA_THRESHOLD,
     NOAA_CPC_ADVISORY_URL,
     NOAA_NINO34_URL,
     NOAA_ONI_URL,
     NOAA_SOI_URL,
+    ONI_ALERT_WINDOW,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
 from src.fetch_enso import ENSOSnapshot, fetch_enso_snapshot
+from src.fetch_forecast import ENSOForecast, ForecastQuarter, fetch_enso_forecast
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
@@ -350,9 +354,325 @@ def load_correlations() -> tuple[pd.DataFrame | None, str | None]:
         return None, f"Error leyendo Parquet: {exc}"
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def load_forecast() -> ENSOForecast:
+    """Fetch IRI/NOAA ENSO forecast (structured when available, fallback link otherwise)."""
+    return fetch_enso_forecast()
+
+
+# ---------------------------------------------------------------------------
+# Feature 2 helpers — ONI anomaly alert banner
+# ---------------------------------------------------------------------------
+
+def _oni_phase(val: float) -> str:
+    if val >= ENSO_EL_NINO_THRESHOLD:
+        return "El Niño"
+    if val <= ENSO_LA_NINA_THRESHOLD:
+        return "La Niña"
+    return "Neutral"
+
+
+def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
+    """Inspect recent ONI values and return alert metadata dict, or None."""
+    recent = snapshot.oni_series.tail(ONI_ALERT_WINDOW + 1)
+    if len(recent) < 2:
+        return None
+
+    latest = recent.iloc[-1]
+    prev = recent.iloc[-2]
+    latest_oni = float(latest["oni"])
+    prev_oni = float(prev["oni"])
+    latest_season = str(latest["season"])
+
+    current_phase = _oni_phase(latest_oni)
+    prev_phase = _oni_phase(prev_oni)
+    transition = current_phase != prev_phase
+
+    if current_phase == "El Niño":
+        icon = "\u26a0\ufe0f"
+        if transition:
+            msg = (
+                f"El Ni\u00f1o emergente \u2014 ONI cruz\u00f3 +{ENSO_EL_NINO_THRESHOLD} "
+                f"en {latest_season} (ONI = {latest_oni:+.2f}\u00b0C, anterior: {prev_oni:+.2f}\u00b0C)."
+            )
+        else:
+            msg = (
+                f"Condiciones El Ni\u00f1o activas \u2014 ONI = {latest_oni:+.2f}\u00b0C "
+                f"({latest_season}), por encima del umbral +{ENSO_EL_NINO_THRESHOLD}."
+            )
+        bg, border, text = "#FEF2F2", "#EF4444", "#B91C1C"
+
+    elif current_phase == "La Ni\u00f1a":
+        icon = "\u26a0\ufe0f"
+        if transition:
+            msg = (
+                f"La Ni\u00f1a emergente \u2014 ONI cruz\u00f3 \u2212{abs(ENSO_LA_NINA_THRESHOLD)} "
+                f"en {latest_season} (ONI = {latest_oni:+.2f}\u00b0C, anterior: {prev_oni:+.2f}\u00b0C)."
+            )
+        else:
+            msg = (
+                f"Condiciones La Ni\u00f1a activas \u2014 ONI = {latest_oni:+.2f}\u00b0C "
+                f"({latest_season}), por debajo del umbral \u2212{abs(ENSO_LA_NINA_THRESHOLD)}."
+            )
+        bg, border, text = "#EFF6FF", "#3B82F6", "#1D4ED8"
+
+    else:
+        icon = "\u2705"
+        if transition:
+            msg = (
+                f"Transici\u00f3n a Neutral \u2014 ONI = {latest_oni:+.2f}\u00b0C "
+                f"({latest_season}), fase anterior: {prev_phase}."
+            )
+        else:
+            msg = (
+                f"ENSO Neutral \u2014 ONI = {latest_oni:+.2f}\u00b0C ({latest_season}), "
+                f"dentro del rango neutral (\u00b1{ENSO_EL_NINO_THRESHOLD})."
+            )
+        bg, border, text = "#F0FDF4", "#22C55E", "#15803D"
+
+    return {
+        "phase": current_phase,
+        "icon": icon,
+        "msg": msg,
+        "bg": bg,
+        "border": border,
+        "text": text,
+        "transition": transition,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Feature 1 helpers — forecast-driven regional risk
+# ---------------------------------------------------------------------------
+
+def _get_dominant_phase(quarter: ForecastQuarter) -> tuple[str, float]:
+    """Return (dominant_phase_name, probability_pct) for a ForecastQuarter."""
+    phases = {
+        "El Ni\u00f1o": quarter.el_nino_pct,
+        "Neutral": quarter.neutral_pct,
+        "La Ni\u00f1a": quarter.la_nina_pct,
+    }
+    dominant = max(phases, key=lambda k: phases[k])
+    return dominant, phases[dominant]
+
+
+def _forecast_risk_for_region(
+    region: str,
+    corr_df: pd.DataFrame,
+    dominant_phase: str,
+    prob_pct: float,
+    season_label: str,
+) -> dict:
+    """Compute forecast risk for one region.
+
+    Returns dict: significant (bool), risk (str), score (float), statement (str).
+    Only produces a directional signal when pearson_p < SIGNIFICANCE_THRESHOLD.
+    """
+    region_data = corr_df[corr_df["region"] == region]
+    sig = region_data[region_data["pearson_p"] < SIGNIFICANCE_THRESHOLD]
+
+    if sig.empty:
+        return {
+            "significant": False,
+            "risk": "no_signal",
+            "score": 0.0,
+            "statement": "sin se\u00f1al estad\u00edsticamente significativa",
+        }
+
+    best = sig.loc[sig["pearson_r"].abs().idxmax()]
+    r = float(best["pearson_r"])
+    lag = int(best["lag"])
+    p = float(best["pearson_p"])
+    n = int(best["n_obs"])
+
+    if dominant_phase == "Neutral":
+        return {
+            "significant": True,
+            "risk": "neutral",
+            "score": 0.0,
+            "statement": (
+                f"Pron\u00f3stico ENSO neutral ({prob_pct:.0f}% probabilidad, {season_label}) \u2014 "
+                f"sin se\u00f1al direccional clara a pesar de correlaci\u00f3n hist\u00f3rica significativa "
+                f"(r = {r:+.3f}, p = {p:.4f}, n = {n})."
+            ),
+        }
+
+    # El Niño → ONI positive. r > 0 means more precip with higher ONI → excess.
+    # La Niña → ONI negative. r > 0 means less precip → deficit.
+    nino_sign = 1 if dominant_phase == "El Ni\u00f1o" else -1
+    precip_sign = nino_sign * (1 if r > 0 else -1)
+
+    lag_str = "" if lag == 0 else f" (con {lag} mes{'es' if lag > 1 else ''} de retardo)"
+
+    if precip_sign > 0:
+        risk, score = "excess", 1.0
+        effect = "precipitaci\u00f3n hist\u00f3ricamente sobre lo normal"
+        implication = "\u2192 riesgo de exceso h\u00eddrico"
+    else:
+        risk, score = "deficit", -1.0
+        effect = "precipitaci\u00f3n hist\u00f3ricamente bajo lo normal"
+        implication = "\u2192 riesgo de d\u00e9ficit h\u00eddrico"
+
+    statement = (
+        f"IRI/NOAA pronostica {prob_pct:.0f}% {dominant_phase} ({season_label}){lag_str} "
+        f"\u2192 {effect} {implication}. "
+        f"(Correlaci\u00f3n: r = {r:+.3f}, p = {p:.4f}, n = {n})"
+    )
+
+    return {"significant": True, "risk": risk, "score": score, "statement": statement}
+
+
+# ---------------------------------------------------------------------------
+# Feature 3 helper — build GeoJSON from REGIONS bounding boxes
+# ---------------------------------------------------------------------------
+
+def _build_regions_geojson() -> dict:
+    """Build a GeoJSON FeatureCollection from REGIONS bounding boxes (config.py)."""
+    features = []
+    for name, r in REGIONS.items():
+        coords = [[
+            [r["lon_min"], r["lat_min"]],
+            [r["lon_max"], r["lat_min"]],
+            [r["lon_max"], r["lat_max"]],
+            [r["lon_min"], r["lat_max"]],
+            [r["lon_min"], r["lat_min"]],
+        ]]
+        features.append({
+            "type": "Feature",
+            "id": name,
+            "properties": {"name": name},
+            "geometry": {"type": "Polygon", "coordinates": coords},
+        })
+    return {"type": "FeatureCollection", "features": features}
+
+
 # ---------------------------------------------------------------------------
 # Sidebar
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Feature 2 — Anomaly detection / alert banner
+# ---------------------------------------------------------------------------
+
+def render_anomaly_banner() -> None:
+    """Show prominent ONI alert banner at the top of the app."""
+    snapshot, error = load_enso_snapshot()
+    if error or snapshot is None:
+        return
+
+    alert = _get_oni_alert(snapshot)
+    if alert is None:
+        return
+
+    transition_badge = ""
+    if alert["transition"]:
+        transition_badge = (
+            "<span style='background:#FEF9C3;color:#92400E;font-size:0.7rem;"
+            "font-weight:700;text-transform:uppercase;letter-spacing:0.06em;"
+            "padding:2px 8px;border-radius:4px;margin-left:10px'>CAMBIO DE FASE</span>"
+        )
+
+    st.markdown(
+        f"<div style='background:{alert['bg']};border:1px solid {alert['border']};"
+        f"border-left:4px solid {alert['border']};border-radius:8px;"
+        f"padding:12px 18px;margin-bottom:16px'>"
+        f"<div style='font-size:1.0rem;font-weight:700;color:{alert['text']};"
+        f"font-family:Fira Sans,sans-serif'>"
+        f"{alert['icon']} Estado ENSO: {alert['msg']}"
+        f"</div>"
+        f"{transition_badge}"
+        f"<div style='font-size:0.74rem;color:#64748B;margin-top:4px'>"
+        f"Umbral NOAA CPC: ONI \u2265 +{ENSO_EL_NINO_THRESHOLD} = El Ni\u00f1o \u00b7 "
+        f"ONI \u2264 \u2212{abs(ENSO_LA_NINA_THRESHOLD)} = La Ni\u00f1a \u00b7 "
+        f"Valor autom\u00e1tico \u2014 no constituye declaraci\u00f3n oficial NOAA."
+        f"</div>"
+        f"</div>",
+        unsafe_allow_html=True,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Feature 3 — Argentina regional risk map
+# ---------------------------------------------------------------------------
+
+def render_risk_map(risk_results: dict) -> None:
+    """Render Plotly choropleth map of Argentina coloured by forecast risk level.
+
+    Significant regions are coloured blue (excess) or orange (deficit).
+    Non-significant regions are rendered in neutral gray.
+    Uses carto-positron tile style — no Mapbox token required.
+    """
+    geojson = _build_regions_geojson()
+    region_names = list(REGIONS.keys())
+
+    scores = []
+    hover_labels = []
+    for r in region_names:
+        res = risk_results.get(r, {})
+        scores.append(res.get("score", 0.0))
+        if not res.get("significant", False):
+            hover_labels.append("Sin se\u00f1al estad\u00edsticamente significativa")
+        elif res["risk"] == "excess":
+            hover_labels.append("Exceso h\u00eddrico (pron\u00f3stico)")
+        elif res["risk"] == "deficit":
+            hover_labels.append("D\u00e9ficit h\u00eddrico (pron\u00f3stico)")
+        else:
+            hover_labels.append("Neutral")
+
+    customdata = [[region_names[i], hover_labels[i]] for i in range(len(region_names))]
+
+    fig = go.Figure(go.Choroplethmapbox(
+        geojson=geojson,
+        locations=region_names,
+        featureidkey="id",
+        z=scores,
+        customdata=customdata,
+        hovertemplate="<b>%{customdata[0]}</b><br>%{customdata[1]}<extra></extra>",
+        colorscale=[
+            [0.0, "#F97316"],   # score -1 → orange = drought/deficit
+            [0.5, "#94A3B8"],   # score  0 → gray  = no signal / neutral
+            [1.0, "#1D4ED8"],   # score +1 → blue  = excess/flood
+        ],
+        zmin=-1,
+        zmax=1,
+        marker_opacity=0.72,
+        marker_line_width=1.5,
+        marker_line_color="#FFFFFF",
+        showscale=False,
+    ))
+
+    fig.update_layout(
+        mapbox_style="carto-positron",
+        mapbox_zoom=2.6,
+        mapbox_center={"lat": -38.5, "lon": -63.5},
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=480,
+        paper_bgcolor="#FFFFFF",
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Color legend
+    legend_items = [
+        ("#1D4ED8", "Exceso h\u00eddrico (pron\u00f3stico)"),
+        ("#F97316", "D\u00e9ficit h\u00eddrico (pron\u00f3stico)"),
+        ("#94A3B8", "Sin se\u00f1al estad\u00edsticamente significativa (p \u2265 0.05)"),
+    ]
+    parts = []
+    for color, label in legend_items:
+        parts.append(
+            f"<div style='display:flex;align-items:center;gap:6px;"
+            f"font-size:0.78rem;color:#475569'>"
+            f"<span style='display:inline-block;width:14px;height:14px;"
+            f"border-radius:3px;background:{color}'></span>{label}</div>"
+        )
+    st.markdown(
+        "<div style='display:flex;gap:20px;flex-wrap:wrap;margin-top:4px'>"
+        + "".join(parts)
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+
 
 def render_sidebar() -> None:
     with st.sidebar:
@@ -739,11 +1059,97 @@ def render_risk_implications() -> None:
     st.header("4. Implicaciones de riesgo por región")
 
     corr_df, error = load_correlations()
-
     if error or corr_df is None:
         st.warning("Cache de correlaciones no disponible. Ejecutar `python -m src.compute_correlations`.")
         return
 
+    # ── Feature 1: Forecast-driven risk ──────────────────────────────────────
+    st.subheader("4a. Señal forward-looking (pronóstico × correlación histórica)")
+
+    with st.spinner("Obteniendo pronóstico ENSO…"):
+        forecast = load_forecast()
+
+    risk_results: dict = {}
+
+    if forecast.is_structured and forecast.quarters:
+        nearest = forecast.quarters[0]
+        dominant_phase, prob_pct = _get_dominant_phase(nearest)
+
+        st.markdown(
+            f"<div style='background:#EFF6FF;border:1px solid #BFDBFE;border-radius:6px;"
+            f"padding:8px 14px;font-size:0.82rem;color:#1D4ED8;margin-bottom:14px'>"
+            f"Fuente: IRI/NOAA \u00b7 Temporada: <strong>{nearest.label}</strong> \u00b7 "
+            f"Fase dominante: <strong>{dominant_phase}</strong> ({prob_pct:.0f}%) \u00b7 "
+            f"El Ni\u00f1o {nearest.el_nino_pct:.0f}% / Neutral {nearest.neutral_pct:.0f}% "
+            f"/ La Ni\u00f1a {nearest.la_nina_pct:.0f}%"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
+
+        for region_name in REGIONS:
+            result = _forecast_risk_for_region(
+                region_name, corr_df, dominant_phase, prob_pct, nearest.label
+            )
+            risk_results[region_name] = result
+
+        for region_name in REGIONS:
+            result = risk_results[region_name]
+            if result["significant"] and result["risk"] == "excess":
+                icon, bg, border, tc = "\U0001f535", "#EFF6FF", "#93C5FD", "#1D4ED8"
+            elif result["significant"] and result["risk"] == "deficit":
+                icon, bg, border, tc = "\U0001f7e0", "#FFF7ED", "#FED7AA", "#C2410C"
+            elif result["significant"] and result["risk"] == "neutral":
+                icon, bg, border, tc = "\u26aa", "#F8FAFC", "#CBD5E1", "#475569"
+            else:
+                icon, bg, border, tc = "\u2014", "#F8FAFC", "#E2E8F0", "#64748B"
+
+            st.markdown(
+                f"<div style='background:{bg};border:1px solid {border};"
+                f"border-left:3px solid {border};border-radius:6px;"
+                f"padding:10px 14px;margin-bottom:8px'>"
+                f"<div style='font-family:Fira Code,monospace;font-weight:700;"
+                f"color:{tc};font-size:0.88rem;margin-bottom:4px'>"
+                f"{icon}&nbsp; {region_name}</div>"
+                f"<div style='font-size:0.82rem;color:#334155'>{result['statement']}</div>"
+                f"</div>",
+                unsafe_allow_html=True,
+            )
+
+        st.caption(
+            f"\u26a0\ufe0f Señal probabilística — no certeza. "
+            f"Solo regiones con p < {SIGNIFICANCE_THRESHOLD} muestran señal direccional. "
+            "Validar con pronóstico oficial NOAA/IRI antes de tomar decisiones."
+        )
+
+    else:
+        st.info(
+            f"Pronóstico estructurado IRI no disponible en este momento. "
+            f"[Ver pronóstico oficial NOAA/IRI]({forecast.fallback_url})"
+        )
+        for region_name in REGIONS:
+            region_data = corr_df[corr_df["region"] == region_name]
+            sig = region_data[region_data["pearson_p"] < SIGNIFICANCE_THRESHOLD]
+            risk_results[region_name] = {
+                "significant": not sig.empty,
+                "risk": "no_signal",
+                "score": 0.0,
+                "statement": "sin señal estadísticamente significativa",
+            }
+
+    st.divider()
+
+    # ── Feature 3: Choropleth map ─────────────────────────────────────────────
+    st.subheader("4b. Mapa de riesgo regional — Argentina")
+    st.caption(
+        "Regiones aproximadas por bounding box (IGN Argentina). "
+        "Gris = sin señal estadísticamente significativa (p ≥ 0.05)."
+    )
+    render_risk_map(risk_results)
+
+    st.divider()
+
+    # ── Historical correlation detail (existing section) ──────────────────────
+    st.subheader("4c. Correlación histórica por región (detalle)")
     for region_name in REGIONS:
         with st.expander(f"**{region_name}** — {REGIONS[region_name]['description']}"):
             text = _generate_risk_text(region_name, corr_df)
@@ -866,6 +1272,7 @@ def main() -> None:
 
     st.markdown("<div style='margin:16px 0 8px'>", unsafe_allow_html=True)
 
+    render_anomaly_banner()
     render_enso_status()
     st.divider()
     render_forecast()

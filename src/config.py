@@ -124,6 +124,9 @@ ENSO_EL_NINO_THRESHOLD: float = 0.5   # ONI >= +0.5 for 5+ consecutive months
 ENSO_LA_NINA_THRESHOLD: float = -0.5  # ONI <= -0.5 for 5+ consecutive months
 ENSO_CONSECUTIVE_MONTHS: int = 5       # minimum consecutive months for phase declaration
 
+# Alert banner settings (Feature 2)
+ONI_ALERT_WINDOW: int = 3  # recent seasons inspected for trend / transition detection
+
 # ---------------------------------------------------------------------------
 # Correlation analysis settings
 # ---------------------------------------------------------------------------
