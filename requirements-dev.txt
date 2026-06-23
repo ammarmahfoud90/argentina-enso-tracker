@@ -9,3 +9,9 @@ matplotlib>=3.8.0
 cartopy>=0.22.0
 Pillow>=10.0.0
 geopandas>=0.14.0
+
+# Lint / test
+ruff>=0.3.0
+black>=24.0.0
+pytest>=7.4.0
+pytest-mock>=3.12.0

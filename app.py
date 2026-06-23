@@ -17,7 +17,6 @@ import os
 from pathlib import Path
 
 import pandas as pd
-import plotly.graph_objects as go
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -495,6 +494,7 @@ def _render_oni_scatter(region: str, pairs_df: pd.DataFrame, corr_df: pd.DataFra
         corr_df: Correlations DataFrame from load_correlations().
     """
     import numpy as np
+    import plotly.graph_objects as go
 
     if region not in pairs_df.columns:
         return
@@ -594,6 +594,7 @@ def _render_oni_scatter(region: str, pairs_df: pd.DataFrame, corr_df: pd.DataFra
 
 def _render_forecast_probability_bars(quarters: list[ForecastQuarter]) -> None:
     """Horizontal stacked bar chart of El Niño / Neutral / La Niña probabilities per season."""
+    import plotly.graph_objects as go
     labels = [q.label for q in quarters]
     el_nino_vals = [q.el_nino_pct for q in quarters]
     neutral_vals = [q.neutral_pct for q in quarters]
@@ -874,6 +875,7 @@ def render_risk_map(risk_results: dict) -> None:
     Uses go.Scattermap with carto-positron — no Mapbox token required.
     One bubble per province, coloured by its region's risk level.
     """
+    import plotly.graph_objects as go
     _RISK_META = {
         "excess":    ("#1D4ED8", "Exceso h\u00eddrico (pron\u00f3stico)"),
         "deficit":   ("#F97316", "D\u00e9ficit h\u00eddrico (pron\u00f3stico)"),
@@ -1041,6 +1043,7 @@ def render_enso_status() -> None:
 
 
 def _render_oni_chart(oni_df: pd.DataFrame) -> None:
+    import plotly.graph_objects as go
     fig = go.Figure()
 
     oni_max = oni_df["oni"].max()
@@ -1295,6 +1298,7 @@ def render_correlations() -> None:
 
 def _render_correlation_heatmap(table_df: pd.DataFrame) -> None:
     """Render a heatmap of Pearson correlations (region × lag)."""
+    import plotly.graph_objects as go
     regions = list(REGIONS.keys())
     lags = sorted(table_df["lag"].unique())
 

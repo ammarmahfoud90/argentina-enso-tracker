@@ -1,0 +1,8 @@
+# Data pipeline — only needed when running `python -m src.compute_correlations`
+# Install with: pip install -r requirements.txt -r requirements-data.txt
+-r requirements.txt
+scipy>=1.11.0
+xarray>=2023.12.0
+netCDF4>=1.6.5
+pooch>=1.7.0
+pydap>=3.5.0
