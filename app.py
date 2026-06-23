@@ -257,6 +257,31 @@ st.markdown(
             font-size: 1.3rem !important;
         }
     }
+
+    /* ── Reduced motion — respect user OS preference ── */
+    @media (prefers-reduced-motion: reduce) {
+        *, *::before, *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* ── Focus rings — keyboard navigation visibility ── */
+    a:focus-visible,
+    button:focus-visible,
+    [role="button"]:focus-visible,
+    [data-testid="stLinkButton"] a:focus-visible,
+    [data-testid="stButton"] button:focus-visible {
+        outline: 2px solid #1E40AF !important;
+        outline-offset: 2px !important;
+        border-radius: 4px !important;
+    }
+    [data-theme="dark"] a:focus-visible,
+    [data-theme="dark"] button:focus-visible,
+    [data-theme="dark"] [role="button"]:focus-visible {
+        outline-color: #60A5FA !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -635,8 +660,30 @@ def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
     prev_phase = _oni_phase(prev_oni)
     transition = current_phase != prev_phase
 
+    # SVG icons — warning triangle for active phases, check circle for neutral
+    _SVG_WARN = (
+        "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' "
+        "stroke='currentColor' stroke-width='2' stroke-linecap='round' "
+        "stroke-linejoin='round' style='display:inline;vertical-align:middle;"
+        "margin-right:6px'>"
+        "<path d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3"
+        "L13.71 3.86a2 2 0 0 0-3.42 0z'/>"
+        "<line x1='12' y1='9' x2='12' y2='13'/>"
+        "<line x1='12' y1='17' x2='12.01' y2='17'/>"
+        "</svg>"
+    )
+    _SVG_CHECK = (
+        "<svg width='16' height='16' viewBox='0 0 24 24' fill='none' "
+        "stroke='currentColor' stroke-width='2' stroke-linecap='round' "
+        "stroke-linejoin='round' style='display:inline;vertical-align:middle;"
+        "margin-right:6px'>"
+        "<path d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/>"
+        "<polyline points='22 4 12 14.01 9 11.01'/>"
+        "</svg>"
+    )
+
     if current_phase == "El Niño":
-        icon = "\u26a0\ufe0f"
+        icon = _SVG_WARN
         if transition:
             msg = (
                 f"El Ni\u00f1o emergente \u2014 ONI cruz\u00f3 +{ENSO_EL_NINO_THRESHOLD} "
@@ -650,7 +697,7 @@ def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
         bg, border, text = "#FEF2F2", "#EF4444", "#B91C1C"
 
     elif current_phase == "La Ni\u00f1a":
-        icon = "\u26a0\ufe0f"
+        icon = _SVG_WARN
         if transition:
             msg = (
                 f"La Ni\u00f1a emergente \u2014 ONI cruz\u00f3 \u2212{abs(ENSO_LA_NINA_THRESHOLD)} "
@@ -664,7 +711,7 @@ def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
         bg, border, text = "#EFF6FF", "#3B82F6", "#1D4ED8"
 
     else:
-        icon = "\u2705"
+        icon = _SVG_CHECK
         if transition:
             msg = (
                 f"Transici\u00f3n a Neutral \u2014 ONI = {latest_oni:+.2f}\u00b0C "
@@ -1362,16 +1409,36 @@ def render_risk_implications() -> None:
             )
             risk_results[region_name] = result
 
+        # SVG dot helpers — colored filled circles replacing emoji indicators
+        def _svg_dot(color: str, size: int = 10) -> str:
+            return (
+                f"<svg width='{size}' height='{size}' viewBox='0 0 {size} {size}' "
+                f"style='display:inline;vertical-align:middle;margin-right:6px'>"
+                f"<circle cx='{size//2}' cy='{size//2}' r='{size//2}' fill='{color}'/>"
+                f"</svg>"
+            )
+
+        _SVG_DASH = (
+            "<svg width='10' height='10' viewBox='0 0 10 10' "
+            "style='display:inline;vertical-align:middle;margin-right:6px'>"
+            "<line x1='1' y1='5' x2='9' y2='5' stroke='#94A3B8' stroke-width='2' "
+            "stroke-linecap='round'/></svg>"
+        )
+
         for region_name in REGIONS:
             result = risk_results[region_name]
             if result["significant"] and result["risk"] == "excess":
-                icon, bg, border, tc = "\U0001f535", "#EFF6FF", "#93C5FD", "#1D4ED8"
+                icon = _svg_dot("#1D4ED8")
+                bg, border, tc = "#EFF6FF", "#93C5FD", "#1D4ED8"
             elif result["significant"] and result["risk"] == "deficit":
-                icon, bg, border, tc = "\U0001f7e0", "#FFF7ED", "#FED7AA", "#C2410C"
+                icon = _svg_dot("#F97316")
+                bg, border, tc = "#FFF7ED", "#FED7AA", "#C2410C"
             elif result["significant"] and result["risk"] == "neutral":
-                icon, bg, border, tc = "\u26aa", "#F8FAFC", "#CBD5E1", "#475569"
+                icon = _svg_dot("#94A3B8")
+                bg, border, tc = "#F8FAFC", "#CBD5E1", "#475569"
             else:
-                icon, bg, border, tc = "\u2014", "#F8FAFC", "#E2E8F0", "#64748B"
+                icon = _SVG_DASH
+                bg, border, tc = "#F8FAFC", "#E2E8F0", "#64748B"
 
             st.markdown(
                 f"<div style='background:{bg};border:1px solid {border};"
@@ -1379,7 +1446,7 @@ def render_risk_implications() -> None:
                 f"padding:10px 14px;margin-bottom:8px'>"
                 f"<div style='font-family:Fira Code,monospace;font-weight:700;"
                 f"color:{tc};font-size:0.88rem;margin-bottom:4px'>"
-                f"{icon}&nbsp; {region_name}</div>"
+                f"{icon}{region_name}</div>"
                 f"<div style='font-size:0.82rem;color:#334155'>{result['statement']}</div>"
                 f"</div>",
                 unsafe_allow_html=True,
