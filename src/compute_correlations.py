@@ -43,6 +43,7 @@ from src.config import (
     CORRELATION_LAGS,
     CORRELATIONS_CACHE_PATH,
     CORRELATIONS_CACHE_VERSION,
+    PAIRS_CACHE_PATH,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
@@ -184,11 +185,25 @@ def run(start_year: int = CHIRPS_START_YEAR, end_year: int | None = None) -> Non
     corr_df["version"] = CORRELATIONS_CACHE_VERSION
     corr_df["computed_at"] = computed_at
 
-    # 5. Save to Parquet
+    # 5. Save correlations to Parquet
     out_path = Path(CORRELATIONS_CACHE_PATH)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     corr_df.to_parquet(out_path, index=False)
     logger.info("Parquet guardado en %s (%d filas)", out_path, len(corr_df))
+
+    # 6. Save raw monthly ONI–precipitation pairs (used by UI scatter charts)
+    chirps_ym = chirps_df.copy()
+    chirps_ym["ym"] = chirps_ym["date"].dt.to_period("M")
+    oni_ym = oni_monthly.copy()
+    oni_ym["ym"] = oni_monthly["date"].dt.to_period("M")
+    pairs = (
+        chirps_ym
+        .merge(oni_ym[["ym", "oni"]], on="ym", how="inner")
+        .drop(columns=["ym"])
+    )
+    pairs_path = Path(PAIRS_CACHE_PATH)
+    pairs.to_parquet(pairs_path, index=False)
+    logger.info("Pairs Parquet guardado en %s (%d filas)", pairs_path, len(pairs))
 
     # Summary
     sig_mask = corr_df["pearson_p"] < SIGNIFICANCE_THRESHOLD

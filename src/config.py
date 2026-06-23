@@ -141,6 +141,7 @@ SIGNIFICANCE_THRESHOLD: float = 0.05  # p-value cutoff for "significant"
 
 CORRELATIONS_CACHE_PATH: str = "data/processed/correlations.parquet"
 CORRELATIONS_CACHE_VERSION: str = "1.0.0"
+PAIRS_CACHE_PATH: str = "data/processed/oni_precip_pairs.parquet"
 
 # ---------------------------------------------------------------------------
 # Network settings

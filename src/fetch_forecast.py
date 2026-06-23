@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
+import pandas as pd
+
 from src.config import IRI_ENSO_FORECAST_URL, NOAA_CPC_ADVISORY_URL
 from src.utils import fetch_text, get_logger
 
@@ -87,7 +89,97 @@ class ENSOForecast:
 
 
 # ---------------------------------------------------------------------------
-# IRI JSON extraction
+# IRI HTML table extraction (primary method — more robust than regex JSON)
+# ---------------------------------------------------------------------------
+
+def _try_extract_iri_table(html: str) -> Optional[list[ForecastQuarter]]:
+    """Attempt to extract ENSO probability table via pd.read_html().
+
+    IRI and NOAA embed forecast tables in HTML. This method is more
+    robust than JSON regex when the page structure changes.
+
+    Args:
+        html: Full HTML content of the forecast page.
+
+    Returns:
+        List of ForecastQuarter if a valid table is found, else None.
+    """
+    try:
+        tables = pd.read_html(html)
+    except Exception:
+        return None
+
+    for table in tables:
+        str_cols = [str(c).lower().strip() for c in table.columns]
+
+        has_nino = any("niño" in c or "nino" in c or "el n" in c or "above" in c for c in str_cols)
+        has_nina = any("niña" in c or "nina" in c or "la n" in c or "below" in c for c in str_cols)
+        if not (has_nino and has_nina):
+            continue
+        if len(table) == 0:
+            continue
+
+        # Map columns to probability roles
+        col_map: dict[str, object] = {}
+        for orig_col in table.columns:
+            lc = str(orig_col).lower().strip()
+            if "niño" in lc or "nino" in lc or "el n" in lc or "above" in lc:
+                col_map.setdefault("el_nino", orig_col)
+            elif "niña" in lc or "nina" in lc or "la n" in lc or "below" in lc:
+                col_map.setdefault("la_nina", orig_col)
+            elif "neutral" in lc or "near" in lc or "normal" in lc:
+                col_map.setdefault("neutral", orig_col)
+            elif any(k in lc for k in ("season", "period", "month", "target", "trimest")):
+                col_map.setdefault("label", orig_col)
+
+        if "el_nino" not in col_map or "la_nina" not in col_map:
+            continue
+
+        # Fall back to first column as label if none detected
+        if "label" not in col_map:
+            col_map["label"] = table.columns[0]
+
+        quarters: list[ForecastQuarter] = []
+        for _, row in table.iterrows():
+            try:
+                label = str(row[col_map["label"]]).strip()
+                if label.lower() in ("nan", ""):
+                    continue
+
+                def _to_pct(val: object) -> float:
+                    return float(str(val).replace("%", "").strip())
+
+                el_nino = _to_pct(row[col_map["el_nino"]])
+                la_nina = _to_pct(row[col_map["la_nina"]])
+                if "neutral" in col_map:
+                    neutral = _to_pct(row[col_map["neutral"]])
+                else:
+                    neutral = max(0.0, 100.0 - el_nino - la_nina)
+
+                # Values might be 0–1 fractions instead of percentages
+                if el_nino + neutral + la_nina <= 1.5:
+                    el_nino, neutral, la_nina = el_nino * 100, neutral * 100, la_nina * 100
+
+                q = ForecastQuarter(
+                    label=label,
+                    el_nino_pct=round(el_nino, 1),
+                    neutral_pct=round(neutral, 1),
+                    la_nina_pct=round(la_nina, 1),
+                )
+                q.validate()
+                quarters.append(q)
+            except Exception:
+                continue
+
+        if quarters:
+            logger.info("IRI tabla HTML: %d trimestres extraídos", len(quarters))
+            return quarters[:6]
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# IRI JSON extraction (secondary / fallback)
 # ---------------------------------------------------------------------------
 
 # The IRI ENSO forecast page embeds forecast probabilities in a JavaScript
@@ -215,11 +307,19 @@ def fetch_enso_forecast() -> ENSOForecast:
         )
         return forecast
 
+    # Primary: HTML table extraction (most robust against page structure changes)
+    table_quarters = _try_extract_iri_table(html)
+    if table_quarters:
+        forecast.quarters = table_quarters
+        forecast.is_structured = True
+        logger.info("Pronóstico ENSO (tabla HTML): %d trimestres", len(forecast.quarters))
+        return forecast
+
+    # Secondary: JSON embedded in page scripts
     data = _try_extract_iri_json(html)
     if data is None:
         logger.info(
-            "No se encontró JSON de pronóstico en la página IRI. "
-            "Esto es esperado si IRI no expone datos estructurados. "
+            "No se encontró tabla ni JSON de pronóstico en la página IRI. "
             "El dashboard mostrará el link oficial."
         )
         return forecast
@@ -227,7 +327,7 @@ def fetch_enso_forecast() -> ENSOForecast:
     try:
         forecast.quarters = _parse_iri_forecast(data)
         forecast.is_structured = True
-        logger.info("Pronóstico ENSO: %d trimestres parseados", len(forecast.quarters))
+        logger.info("Pronóstico ENSO (JSON): %d trimestres parseados", len(forecast.quarters))
     except ForecastUnavailableError as exc:
         logger.warning("ForecastUnavailableError: %s", exc)
 
