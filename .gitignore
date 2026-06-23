@@ -28,8 +28,9 @@ data/processed/
 *.hdf5
 *.pkl
 
-# Processed correlation cache is the one parquet file we keep.
+# Processed caches committed to repo (small, needed by Streamlit app).
 !data/processed/correlations.parquet
+!data/processed/oni_precip_pairs.parquet
 
 # Streamlit
 .streamlit/secrets.toml
