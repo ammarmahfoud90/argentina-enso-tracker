@@ -45,7 +45,7 @@ ajustados +0.1° para cobertura completa de píxeles CHIRPS.
 2. **ONI mensual**: serie de anomalías Niño 3.4 con media móvil 3 meses
    (NOAA CPC, base 1991–2020).
 3. **Correlación**: Pearson y Spearman entre ONI y precipitación, con lags
-   0, 1, 2, 3 meses (ONI lidera). Período: 1981–2024.
+   0, 1, 2, 3 meses (ONI lidera). Período: 1981–2025.
 4. **Significancia**: p-value de dos colas (umbral p < 0.05).
 5. **Validación cruzada**: ERA5 (Copernicus CDS) disponible para
    verificación de la serie CHIRPS.  El MVP corre sólo con CHIRPS;

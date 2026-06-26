@@ -24,6 +24,7 @@ from src.config import (
     CORRELATIONS_CACHE_PATH,
     CORRELATIONS_CACHE_VERSION,
     DATA_STALENESS_THRESHOLD_DAYS,
+    ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
     NOAA_CPC_ADVISORY_URL,
@@ -32,6 +33,7 @@ from src.config import (
     NOAA_SOI_URL,
     ONI_ALERT_WINDOW,
     PAIRS_CACHE_PATH,
+    REGION_ORDER,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
@@ -657,9 +659,15 @@ def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
     prev_oni = float(prev["oni"])
     latest_season = str(latest["season"])
 
-    current_phase = _oni_phase(latest_oni)
+    # Use the official multi-month classification (classify_enso_phase, 5-month
+    # persistence) as the single source of truth so the banner never contradicts
+    # the header metric cards or other phase displays.
+    current_phase = snapshot.phase
     prev_phase = _oni_phase(prev_oni)
     transition = current_phase != prev_phase
+    # Detect "emerging" state: latest single reading already crosses threshold but
+    # official phase has not yet accumulated 5 consecutive months.
+    emerging = _oni_phase(latest_oni) != current_phase and current_phase == "Neutral"
 
     # SVG icons — warning triangle for active phases, check circle for neutral
     _SVG_WARN = (
@@ -717,6 +725,14 @@ def _get_oni_alert(snapshot: ENSOSnapshot) -> dict | None:
             msg = (
                 f"Transici\u00f3n a Neutral \u2014 ONI = {latest_oni:+.2f}\u00b0C "
                 f"({latest_season}), fase anterior: {prev_phase}."
+            )
+        elif emerging:
+            # Latest reading crossed a threshold but 5-month persistence not yet met.
+            emerging_toward = _oni_phase(latest_oni)
+            msg = (
+                f"ENSO Neutral (oficial) \u2014 \u00daltima lectura ONI = {latest_oni:+.2f}\u00b0C "
+                f"({latest_season}), por encima del umbral hacia {emerging_toward}, "
+                f"pero sin confirmar {ENSO_CONSECUTIVE_MONTHS} meses consecutivos."
             )
         else:
             msg = (
@@ -1024,6 +1040,10 @@ def render_enso_status() -> None:
             help="Anomalía mensual de temperatura superficial del mar en la región Niño 3.4 (ERSSTv5)",
         )
         st.caption(f"Actualizado: {snapshot.nino34_date} · [Fuente]({NOAA_NINO34_URL})")
+        st.caption(
+            "ℹ️ La fase ENSO oficial se basa en el ONI (media 3 meses, ≥5 meses consecutivos). "
+            "El Niño 3.4 mensual puede divergir del ONI."
+        )
 
     with col3:
         # Normalize negative-zero: -0.04 rounds to "-0.0" — replace with "+0.0"
@@ -1257,7 +1277,7 @@ def render_correlations() -> None:
         "&nbsp;&nbsp;\\* p<0.05 &nbsp; \\*\\* p<0.01 &nbsp; \\*\\*\\* p<0.001"
     )
 
-    # Pivot for readability
+    # Pivot for readability — reindex to canonical REGION_ORDER (not alphabetical)
     pivot = table_df.pivot_table(
         index="region",
         columns="lag",
@@ -1266,12 +1286,16 @@ def render_correlations() -> None:
     )
     pivot.columns = [f"Lag {c}m" for c in pivot.columns]
     pivot.index.name = "Región"
+    pivot = pivot.reindex([r for r in REGION_ORDER if r in pivot.index])
 
     st.dataframe(pivot, use_container_width=True)
 
     # Full detail table
     with st.expander("Ver tabla completa — Pearson + Spearman + p-values"):
-        detail = table_df.drop(columns=["sig", "pearson_r_display"]).rename(columns={
+        detail = table_df.drop(columns=["sig", "pearson_r_display"]).copy()
+        # Apply canonical REGION_ORDER before renaming so the sort key is still "region"
+        detail["region"] = pd.Categorical(detail["region"], categories=REGION_ORDER, ordered=True)
+        detail = detail.sort_values(["region", "lag"]).rename(columns={
             "region": "Región",
             "lag": "Lag (meses)",
             "pearson_r": "r (Pearson)",
@@ -1299,7 +1323,7 @@ def render_correlations() -> None:
 def _render_correlation_heatmap(table_df: pd.DataFrame) -> None:
     """Render a heatmap of Pearson correlations (region × lag)."""
     import plotly.graph_objects as go
-    regions = list(REGIONS.keys())
+    regions = [r for r in REGION_ORDER if r in table_df["region"].values]
     lags = sorted(table_df["lag"].unique())
 
     z = []

@@ -117,6 +117,12 @@ REGIONS: dict[str, dict] = {
 }
 
 # ---------------------------------------------------------------------------
+# Canonical region display order (used in Section 3 tables and charts)
+# ---------------------------------------------------------------------------
+
+REGION_ORDER: list[str] = ["Pampa Húmeda", "NEA", "NOA", "Cuyo", "Patagonia"]
+
+# ---------------------------------------------------------------------------
 # ENSO phase classification thresholds (NOAA CPC criteria)
 # ---------------------------------------------------------------------------
 

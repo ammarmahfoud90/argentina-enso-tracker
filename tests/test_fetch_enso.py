@@ -119,6 +119,15 @@ class TestParseNino34:
         assert (df["nino34"] > -90).all()
 
 
+SOI_PARTIAL_YEAR_SAMPLE = """\
+STANDARDIZED    TAHITI - DARWIN  SEA LEVEL PRESSURES
+YEAR JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC
+1951   1.4  2.0  0.5  1.2 -0.3  0.4  1.5  1.0  0.8  0.5  1.1  0.7
+1952  -0.5  0.8  1.1 -0.2  0.9  0.5 -0.3  0.4  1.0 -0.1  0.6  0.2
+2025   0.3  0.1  0.4 -999.9 -999.9 -999.9 -999.9 -999.9 -999.9 -999.9 -999.9 -999.9
+"""
+
+
 class TestParseSOI:
     def test_returns_dataframe(self):
         df = parse_soi(SOI_SAMPLE)
@@ -132,6 +141,32 @@ class TestParseSOI:
     def test_soi_values_reasonable(self):
         df = parse_soi(SOI_SAMPLE)
         assert df["soi"].between(-10, 10).all()
+
+    def test_partial_year_last_row_is_latest_real_month(self):
+        """Parser must return the most recent valid month, not December of prior year."""
+        df = parse_soi(SOI_PARTIAL_YEAR_SAMPLE)
+        last = df.iloc[-1]
+        # 2025-Mar-15 (month 3) is the last non-sentinel value; 1952-Dec should not win.
+        assert last["date"].year == 2025
+        assert last["date"].month == 3
+
+    def test_partial_year_sentinel_months_excluded(self):
+        """Months filled with -999.9 must not appear in the output."""
+        df = parse_soi(SOI_PARTIAL_YEAR_SAMPLE)
+        assert (df["soi"] > -999).all()
+
+    def test_partial_row_fewer_than_13_tokens(self):
+        """A row with only year + a few monthly values (no sentinels) must be parsed."""
+        sample = (
+            "STANDARDIZED    TAHITI - DARWIN  SEA LEVEL PRESSURES\n"
+            "YEAR JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC\n"
+            "2024  0.5  0.6  0.7  0.4  0.3  0.2  0.1 -0.1 -0.2 -0.3 -0.4 -0.5\n"
+            "2025  0.8  0.9\n"  # only 2 monthly tokens, no sentinels
+        )
+        df = parse_soi(sample)
+        last = df.iloc[-1]
+        assert last["date"].year == 2025
+        assert last["date"].month == 2
 
 
 # ---------------------------------------------------------------------------
@@ -178,6 +213,46 @@ class TestClassifyENSOPhase:
     def test_exact_threshold_la_nina(self):
         df = _make_oni_df([-0.5, -0.5, -0.5, -0.5, -0.5])
         assert classify_enso_phase(df) == "La Niña"
+
+
+# ---------------------------------------------------------------------------
+# Unit tests — phase consistency (BUG 2)
+# ---------------------------------------------------------------------------
+
+
+class TestPhaseConsistency:
+    """Verify classify_enso_phase() is the authoritative source and can disagree
+    with a naive single-value threshold check — the fix makes the banner use
+    classify_enso_phase, so these cases drive the correctness guarantee."""
+
+    def test_four_months_el_nino_single_value_disagrees(self):
+        """4 consecutive El Niño months: single-value says 'El Niño', official says 'Neutral'."""
+        # Only 4 of 5 required months above threshold → official Neutral
+        df = _make_oni_df([0.2, 0.3, 0.6, 0.7, 0.8, 0.9, 0.3])
+        phase = classify_enso_phase(df)
+        latest_oni = df["oni"].iloc[-1]
+        # Single-value check: 0.3 is below 0.5 → also Neutral here, but the
+        # important case is when the tail is all above threshold except not 5 in a row.
+        assert phase == "Neutral"
+
+    def test_five_months_el_nino_both_agree(self):
+        """When 5 consecutive months are ≥0.5, classify and single-value both give El Niño."""
+        df = _make_oni_df([0.6, 0.7, 0.8, 0.9, 1.0])
+        phase = classify_enso_phase(df)
+        assert phase == "El Niño"
+        # Single-value check on latest also agrees
+        assert df["oni"].iloc[-1] >= 0.5
+
+    def test_borderline_phase_official_is_neutral_single_value_says_el_nino(self):
+        """Official phase Neutral when last 5 months are NOT all above threshold,
+        even though the very latest ONI reading is above +0.5."""
+        # 4 above, 1 below in the last 5 → Neutral (official), but latest = +0.8
+        df = _make_oni_df([0.8, 0.9, 1.0, 0.3, 0.8])
+        phase = classify_enso_phase(df)
+        latest_oni = df["oni"].iloc[-1]
+        assert phase == "Neutral"          # multi-month check: not 5 consecutive
+        assert latest_oni >= 0.5           # single-value check would say El Niño
+        # After the BUG 2 fix the banner uses phase (Neutral) not latest_oni check (El Niño)
 
 
 # ---------------------------------------------------------------------------

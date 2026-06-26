@@ -240,10 +240,10 @@ def parse_soi(raw_text: str) -> pd.DataFrame:
             in_data = True
         if not in_data:
             continue
-        if len(parts) < 13:
-            continue
         try:
             year = int(parts[0])
+            # parts[1:13] naturally yields fewer elements for partial-year rows —
+            # no minimum-token guard needed; sentinel months (-999.9) are skipped below.
             for month_idx, val_str in enumerate(parts[1:13], start=1):
                 val = float(val_str)
                 if val <= -999:
