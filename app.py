@@ -940,6 +940,17 @@ def render_risk_map(risk_results: dict) -> None:
             ),
         ))
 
+    # Override the English "Falkland Islands" tile label with the correct Argentine name.
+    fig.add_trace(go.Scattermap(
+        lat=[-51.7],
+        lon=[-59.2],
+        mode="text",
+        text=["Islas Malvinas (Arg.)"],
+        textfont=dict(size=11, color="#1E3A8A", family="Fira Sans, sans-serif"),
+        hoverinfo="skip",
+        showlegend=False,
+    ))
+
     fig.update_layout(
         map_style="carto-positron",
         map_zoom=2.5,
