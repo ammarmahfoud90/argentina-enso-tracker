@@ -1,0 +1,47 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<script src="https://unpkg.com/d3@7.9.0/dist/d3.min.js" integrity="sha384-CjloA8y00+1SDAUkjs099PVfnY2KmDC2BZnws9kh8D/lX1s46w6EPhpXdqMfjK6i" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/topojson-client@3.1.0/dist/topojson-client.min.js" integrity="sha384-Ukv1p/xTma6P4/2bY5KzWBw+ydSpXmhCMtyciIQVDJ1RmOxtCYNMF1uXT9T63H67" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
+<style>html,body{margin:0;background:#FFFFFF;overflow:hidden}</style>
+</head><body>
+<div id="map"></div>
+<script>
+(async () => {
+  const topo = await (await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')).json();
+  const countries = topojson.feature(topo, topo.objects.countries);
+  const arg = countries.features.find(f => f.id === '032');
+  const vecinos = countries.features.filter(f => ['068','076','152','600','858','604'].includes(f.id));
+  const W = 720, H = 560;
+  const proj = d3.geoMercator().fitExtent([[20, 18], [430, H - 18]], arg);
+  const path = d3.geoPath(proj);
+  const svg = d3.select('#map').append('svg').attr('viewBox', `0 0 ${W} ${H}`).style('width', '100%').style('height', 'auto').style('display', 'block');
+  svg.selectAll('.v').data(vecinos).join('path').attr('d', path).attr('fill', '#F0F2F5').attr('stroke', '#DEE2E8').attr('stroke-width', 0.8);
+  svg.append('path').datum(arg).attr('d', path).attr('fill', '#FAFBFC').attr('stroke', '#14161A').attr('stroke-width', 1.1);
+  const regiones = [
+    { n: 'NEA', ll: [-58.5, -27.3], r: 0.223, s: '***' },
+    { n: 'Pampa Húmeda', ll: [-61.0, -35.3], r: 0.182, s: '***' },
+    { n: 'NOA', ll: [-65.4, -25.6], r: 0.017, s: '' },
+    { n: 'Cuyo', ll: [-68.4, -32.6], r: 0.031, s: '' },
+    { n: 'Patagonia', ll: [-68.6, -43.6], r: 0.071, s: '*' },
+  ];
+  const rad = r => 9 + Math.abs(r) * 90;
+  const col = r => { const a = Math.min(1, Math.abs(r) / 0.25); return `oklch(0.56 ${(0.14 * a).toFixed(3)} 30 / ${(0.25 + 0.6 * a).toFixed(2)})`; };
+  const g = svg.selectAll('.reg').data(regiones).join('g').attr('transform', d => { const p = proj(d.ll); return `translate(${p[0]},${p[1]})`; });
+  g.append('circle').attr('r', 0).attr('fill', d => col(d.r)).attr('stroke', '#14161A').attr('stroke-width', d => d.s ? 1.2 : 0.6).attr('stroke-dasharray', d => d.s ? null : '2 3')
+    .transition().duration(650).delay((d, i) => 350 + i * 130).ease(d3.easeCubicOut).attr('r', d => rad(d.r));
+  g.append('text').attr('x', d => rad(d.r) + 8).attr('y', -2).attr('font-family', 'Libre Franklin').attr('font-size', 13).attr('font-weight', 700).attr('fill', '#14161A').text(d => d.n);
+  g.append('text').attr('x', d => rad(d.r) + 8).attr('y', 14).attr('font-family', 'IBM Plex Mono').attr('font-size', 11.5).attr('fill', '#555C68').text(d => (d.r >= 0 ? '+' : '−') + Math.abs(d.r).toFixed(3) + d.s + (d.s ? '' : ' n.s.'));
+  // Leyenda
+  const lg = svg.append('g').attr('transform', `translate(${W - 210}, ${H - 168})`);
+  lg.append('text').attr('font-family', 'IBM Plex Mono').attr('font-size', 10.5).attr('letter-spacing', '0.1em').attr('fill', '#79818E').text('SEÑAL ENSO → LLUVIA');
+  const items = [[0.22, 'Fuerte (p<0.001)'], [0.07, 'Débil (p<0.05)'], [0.02, 'No significativa']];
+  items.forEach((it, i) => {
+    const y = 24 + i * 40;
+    lg.append('circle').attr('cx', 12).attr('cy', y).attr('r', rad(it[0]) * 0.55).attr('fill', col(it[0])).attr('stroke', '#14161A').attr('stroke-width', it[0] > 0.05 ? 1 : 0.6).attr('stroke-dasharray', it[0] > 0.05 ? null : '2 3');
+    lg.append('text').attr('x', 34).attr('y', y + 4).attr('font-family', 'IBM Plex Mono').attr('font-size', 11.5).attr('fill', '#555C68').text(it[1]);
+  });
+  lg.append('text').attr('y', 158).attr('font-family', 'IBM Plex Mono').attr('font-size', 10).attr('fill', '#A7AEBB').text('Geometría: Natural Earth');
+})();
+</script>
+</body></html>

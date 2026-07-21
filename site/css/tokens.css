@@ -10,11 +10,16 @@
 :root {
   /* ── Colour palette ───────────────────────────────────────────────────── */
   --color-bg:        #FFFFFF;
-  --color-bg-alt:    #F5F5F3;       /* alternate section background          */
+  --color-bg-alt:    #F4F6F9;       /* panel / section background            */
+  --color-bg-inset:  #FAFBFC;       /* inset panel background                */
   --color-ink:       #14161A;       /* primary text                          */
-  --color-ink-2:     #4A4E58;       /* secondary / captions                  */
+  --color-ink-2:     #555C68;       /* secondary / captions                  */
   --color-ink-3:     #79818E;       /* tertiary / metadata                   */
-  --color-rule:      #E0E0DC;       /* horizontal rules, borders             */
+  --color-ink-4:     #A7AEBB;       /* disabled / faint                      */
+  --color-border:    #E4E7EC;       /* hairline borders                      */
+  --color-border-2:  #C7CCD6;       /* axis / dividers                       */
+  --color-border-3:  #EEF0F4;       /* faint grid lines                      */
+  --color-rule:      #E4E7EC;       /* horizontal rules, borders             */
 
   /* Phase colours */
   --color-nino:      #C2382A;       /* El Niño red                           */
@@ -69,8 +74,8 @@
   --space-20: 80px;
 
   /* ── Layout ───────────────────────────────────────────────────────────── */
-  --max-width: 860px;
-  --max-width-wide: 1100px;
+  --max-width: 1180px;
+  --max-width-wide: 1180px;
 
   /* ── Borders & radius ─────────────────────────────────────────────────── */
   --radius-sm:  3px;

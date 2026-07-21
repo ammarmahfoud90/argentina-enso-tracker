@@ -34,6 +34,7 @@ from src.config import (
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
+    PAIRS_CACHE_PATH,
     REGION_ORDER,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
@@ -232,7 +233,37 @@ def build_payload() -> dict:
         cache_meta["end_year"]    = int(corr_df["end_year"].iloc[0])
         cache_meta["computed_at"] = str(corr_df["computed_at"].iloc[0])
 
-    # 8. Assemble final payload
+    # 8. 12-month precipitation anomaly per region (from pairs Parquet)
+    precip_anomaly_12m: dict = {}
+    pairs_path = Path(PAIRS_CACHE_PATH)
+    if pairs_path.exists():
+        pairs_df = pd.read_parquet(pairs_path)
+        pairs_df["date"] = pd.to_datetime(pairs_df["date"])
+        pairs_df["month"] = pairs_df["date"].dt.month
+        region_cols = [c for c in REGION_ORDER if c in pairs_df.columns]
+        # Climatological mean per calendar month
+        clim = pairs_df.groupby("month")[region_cols].mean()
+        # Last 12 available months
+        recent = pairs_df.sort_values("date").tail(12).reset_index(drop=True)
+        for region in REGION_ORDER:
+            if region not in pairs_df.columns:
+                continue
+            bars = []
+            for _, row in recent.iterrows():
+                m = int(row["month"])
+                obs = float(row[region])
+                mean_val = float(clim.loc[m, region])
+                bars.append({
+                    "date": row["date"].date().isoformat(),
+                    "month": m,
+                    "anomaly_mm": round(obs - mean_val, 1),
+                })
+            precip_anomaly_12m[region] = bars
+        logger.info("Precip anomaly: %d regions, 12 months each", len(precip_anomaly_12m))
+    else:
+        logger.warning("Pairs Parquet not found at %s — precip_anomaly_12m will be empty", pairs_path)
+
+    # 9. Assemble final payload
     payload = {
         "current": {
             "oni_value":   round(snapshot.oni_value, 2),
@@ -252,6 +283,7 @@ def build_payload() -> dict:
         "region_order":  REGION_ORDER,
         "episodes":      episodes,
         "correlation_cache": cache_meta,
+        "precip_anomaly_12m": precip_anomaly_12m,
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
             "Índice automático — no constituye declaración oficial de NOAA. "
