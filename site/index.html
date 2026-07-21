@@ -15,6 +15,12 @@
     a{color:#1E3FAE;text-decoration:none;}
     a:hover{color:#C2382A;text-decoration:underline;}
     a:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
+    button:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
+    details summary:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
+
+    /* Skip link */
+    .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;}
+    .skip-link:focus{position:fixed;top:8px;left:8px;width:auto;height:auto;padding:8px 16px;background:#14161A;color:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-size:13px;border-radius:4px;z-index:999;text-decoration:none;}
     details>summary{list-style:none;cursor:pointer;}
     details>summary::-webkit-details-marker{display:none;}
 
@@ -44,7 +50,7 @@
     .hero-threshold{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:14px;}
     .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;margin-top:22px;}
     .region-pills{display:flex;flex-wrap:wrap;gap:8px;}
-    .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .25s,color .25s,border-color .25s;}
+    .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .25s,color .25s,border-color .25s;}
     .region-pill.active{background:#14161A;color:#FFFFFF;border-color:#14161A;}
     .advice-panel{margin-top:12px;font-size:14px;line-height:1.55;color:#14161A;background:#F4F6F9;border-radius:4px;padding:12px 16px;max-width:54ch;}
 
@@ -74,7 +80,7 @@
 
     /* Range switcher */
     .range-switcher{display:flex;gap:6px;margin-bottom:16px;}
-    .range-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
+    .range-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;min-height:36px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
     .range-btn.active{background:#14161A;color:#FFFFFF;border-color:#14161A;}
 
     /* ONI chart layout */
@@ -106,7 +112,9 @@
     /* Accordions */
     .accordions-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;margin-top:36px;}
     details.region-accordion{border-top:1px solid #E4E7EC;}
-    details.region-accordion summary{display:flex;align-items:baseline;gap:12px;padding:13px 4px;}
+    details.region-accordion summary{display:flex;align-items:baseline;gap:12px;padding:13px 4px;min-height:44px;}
+    details.region-accordion summary::after{content:'▸';margin-left:8px;font-size:11px;color:#A7AEBB;flex-shrink:0;transition:transform .2s;}
+    details.region-accordion[open] summary::after{transform:rotate(90deg);}
     .acc-name{font-weight:700;font-size:14px;}
     .acc-prov{font-size:13px;color:#79818E;}
     .acc-r{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#555C68;}
@@ -133,9 +141,10 @@
 </head>
 <body>
 
-<div id="loading">Cargando datos…</div>
+<a href="#main" class="skip-link">Saltar al contenido principal</a>
+<div id="loading" role="status" aria-live="polite">Cargando datos…</div>
 
-<div class="page" id="main" style="display:none">
+<main class="page" id="main" style="display:none">
 
   <!-- 1. Masthead -->
   <header class="masthead">
@@ -223,11 +232,11 @@
     </div>
     <div class="chart-layout">
       <div class="chart-main">
-        <svg id="oni-svg" viewBox="0 0 1120 250" style="width:100%;height:auto;display:block;"></svg>
+        <svg id="oni-svg" viewBox="0 0 1120 250" style="width:100%;height:auto;display:block;" role="img" aria-label="Serie histórica del Índice ONI (Oceanic Niño Index) desde el año seleccionado hasta la fecha más reciente disponible"></svg>
       </div>
       <div class="chart-inset-wrap">
         <div class="inset-label">Últimos 24 meses</div>
-        <svg id="inset-svg" viewBox="0 0 300 230"></svg>
+        <svg id="inset-svg" viewBox="0 0 300 230" role="img" aria-label="Detalle de los últimos 24 meses del Índice ONI"></svg>
       </div>
     </div>
   </section>
@@ -288,12 +297,12 @@
   </section>
 
   <!-- 8. Footer -->
-  <footer class="footer">
+  <footer class="footer" role="contentinfo">
     <span>Fuentes: NOAA CPC · IRI Columbia · CHIRPS v2.0 (UCSB)</span>
     <span>Índices automáticos — no constituyen declaración oficial</span>
   </footer>
 
-</div>
+</main>
 
 <script src="js/advice.js"></script>
 <script>
