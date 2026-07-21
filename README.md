@@ -1,25 +1,47 @@
 # Argentina ENSO Impact Tracker
 
 Primer entregable de **FRIS (FloodRisk Intelligence System)**.
-Dashboard público que muestra el estado actual del ENSO (El Niño / La Niña)
+Sitio editorial estático que muestra el estado actual del ENSO (El Niño / La Niña)
 y su correlación histórica con precipitación en 5 regiones de Argentina.
 
-**Demo:** *(URL Render disponible tras deploy)*
+**Demo:** *(URL Render disponible tras deploy — ver instrucciones abajo)*
 
 ---
 
-## Descripción
+## Arquitectura
 
-El tracker combina tres fuentes de datos en tiempo real y un análisis
-histórico pre-computado:
+El proyecto es un **sitio estático** generado por un pipeline Python.
+No hay servidor de aplicación en producción.
 
-| Componente | Fuente | Actualización |
+```
+build.py  →  site/data/enso.json  →  site/index.html  (vanilla JS)
+                                  →  site/map.html     (D3 v7 + topojson)
+```
+
+| Componente | Descripción |
+|---|---|
+| `build.py` | Fetches live NOAA indices, lee el Parquet de correlaciones, detecta episodios ENSO, escribe `site/data/enso.json` |
+| `site/data/enso.json` | Único origen de datos del frontend. Actualizado diariamente por GitHub Action |
+| `site/index.html` | Página editorial: ONI hero + escala gradiente, cards, gráfico histórico SVG, heatmap de correlaciones, sección de riesgo por región, mapa |
+| `site/map.html` | Mapa Argentina con D3 v7 + topojson; círculos proporcionales a \|r Pearson\| |
+| `site/js/advice.js` | Textos de riesgo parametrizados — condicionales sobre fase ONI real + r real |
+| `site/css/tokens.css` | Tokens de diseño v2 (paleta blanca editorial) |
+| `.github/workflows/daily-build.yml` | Cron 07:00 UTC — corre `build.py`, valida JSON, commitea si hay cambios |
+
+**Regla de datos:** todo número renderizado en el sitio proviene de `enso.json`
+(generado desde NOAA CPC + Parquet CHIRPS). No hay datos inventados ni generadores sintéticos.
+
+---
+
+## Fuentes de datos
+
+| Índice | Fuente | Actualización |
 |---|---|---|
 | ONI (Oceanic Niño Index) | NOAA CPC | Mensual |
 | Niño 3.4 SST anomalía | NOAA ERSSTv5 | Mensual |
 | SOI (Índice Oscilación Sur) | NOAA CPC | Mensual |
-| Pronóstico ENSO 6m | IRI Columbia / NOAA CPC | Mensual |
 | Precipitación histórica | CHIRPS v2.0 (CHG/UCSB) | Anual |
+| Pronóstico ENSO | IRI Columbia / NOAA CPC — solo links | Mensual |
 
 ---
 
@@ -45,107 +67,75 @@ ajustados +0.1° para cobertura completa de píxeles CHIRPS.
 2. **ONI mensual**: serie de anomalías Niño 3.4 con media móvil 3 meses
    (NOAA CPC, base 1991–2020).
 3. **Correlación**: Pearson y Spearman entre ONI y precipitación, con lags
-   0, 1, 2, 3 meses (ONI lidera). Período: 1981–2025.
+   0, 1, 2, 3 meses (ONI lidera). Período: 1981–2024.
 4. **Significancia**: p-value de dos colas (umbral p < 0.05).
-5. **Validación cruzada**: ERA5 (Copernicus CDS) disponible para
-   verificación de la serie CHIRPS.  El MVP corre sólo con CHIRPS;
-   la validación ERA5 es un paso de QA externo.
+5. **Detección de episodios**: ONI ≥ +0.5 / ≤ −0.5 por ≥5 temporadas
+   consecutivas solapadas (criterio NOAA CPC).
 
----
+### Resultados (CHIRPS 1981–2024)
 
-## Fuentes de datos y citas
-
-- **ONI**: NOAA Climate Prediction Center.
-  `https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt`
-
-- **Niño 3.4 SST**: NOAA ERSSTv5.
-  `https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii`
-
-- **SOI**: NOAA Climate Prediction Center.
-  `https://www.cpc.ncep.noaa.gov/data/indices/soi`
-
-- **CHIRPS v2.0**: Funk, C. et al. (2015). *The climate hazards infrared
-  precipitation with stations — a new environmental record for monitoring
-  extremes.* Scientific Data, 2, 150066.
-  DOI: [10.1038/sdata.2015.66](https://doi.org/10.1038/sdata.2015.66)
-  Descarga: `https://data.chc.ucsb.edu/products/CHIRPS-2.0/`
-
-- **ERA5** (validación): Hersbach, H. et al. (2020). *The ERA5 global
-  reanalysis.* Quarterly Journal of the Royal Meteorological Society,
-  146(730), 1999–2049.
-  DOI: [10.1002/qj.3803](https://doi.org/10.1002/qj.3803)
-
-- **Pronóstico ENSO**: IRI / NOAA CPC.
-  `https://iri.columbia.edu/our-expertise/climate/enso/`
-
----
-
-## Limitaciones conocidas
-
-1. **Pronóstico**: IRI no expone probabilidades como API estructurada.
-   El dashboard muestra el link al plume oficial si el JSON no es
-   parseeable.
-2. **CHIRPS fuente única**: La validación cruzada con ERA5 no está
-   incluida en el pipeline de producción (requiere registro en
-   Copernicus CDS). Los datos CHIRPS están marcados como "fuente única"
-   en el UI.
-3. **Causalidad**: Las correlaciones reportadas son estadísticas, no
-   implican causalidad directa.
-4. **Latencia ONI**: El índice tiene un rezago de ~2 meses en
-   publicación.
-5. **Resolución espacial**: Los bounding boxes promedian sobre
-   unidades administrativas heterogéneas; regiones con gradientes
-   fuertes (NOA, Patagonia) pueden tener alta varianza interna.
+| Región | Mejor r Pearson | Lag | p-value |
+|---|---|---|---|
+| NEA | +0.223 | 0m | \*\*\* |
+| Pampa Húmeda | +0.186 | 0m | \*\*\* |
+| NOA | — | — | n.s. |
+| Cuyo | — | — | n.s. |
+| Patagonia | — | — | n.s. |
 
 ---
 
 ## Setup local
 
 ### Requisitos
-- Python 3.11+
-- `pip install -r requirements.txt`
-
-### Configuración
-```bash
-cp .env.example .env
-# Editar .env con valores reales
+```
+Python 3.11+
+pip install -r requirements-data.txt   # para build.py
+pip install -r requirements.txt        # para todo (incl. legacy Streamlit)
 ```
 
-### Generar cache de correlaciones (una sola vez)
+### Generar cache de correlaciones (una sola vez, tarda ~20 min)
 ```bash
 python -m src.compute_correlations
 ```
-Esto descarga ~45 años × ~130 MB/año de CHIRPS (primera vez).
-Los archivos NetCDF van a `data/raw/chirps/` (gitignored).
-El resultado se guarda en `data/processed/correlations.parquet` (~50 KB).
+Accede a CHIRPS via IRI OPeNDAP — descarga sólo el subset Argentina (~486 MB, 1981–2024).
+El resultado se guarda en `data/processed/correlations.parquet` (versionado en el repo).
 
-### Ejecutar dashboard
+### Generar el JSON del sitio
 ```bash
-streamlit run app.py
+python build.py
+# → site/data/enso.json
+```
+Requiere internet para fetchar NOAA CPC. Lee el Parquet en caché, no re-corre CHIRPS.
+
+### Ver el sitio localmente
+```bash
+# Cualquier servidor HTTP estático sirve:
+python -m http.server 8080 --directory site
+# → http://localhost:8080
 ```
 
 ### Tests
 ```bash
-# Unit tests (sin red)
-pytest -m "not integration"
-
-# Con tests de red
-pytest
+pytest -m "not integration"   # unit tests (sin red)
+pytest                        # incluye tests de integración NOAA live
 ```
 
 ---
 
-## Deploy en Render
+## Deploy en Render (sitio estático)
 
-1. Fork / push este repo a GitHub.
-2. En Render: *New → Web Service → conectar repo*.
-3. Variables de entorno en Render:
-   - `CONTACT_EMAIL`
-   - `GITHUB_REPO_URL`
-4. El `correlations.parquet` **debe estar commiteado** en
-   `data/processed/` para que el deploy funcione sin regenerar.
-5. Render free tier duerme tras 15 min de inactividad; el primer
-   request puede tardar ~30s.
+1. Push este repo a GitHub.
+2. En Render: **New → Static Site → conectar repo**.
+3. Configurar:
+   - **Publish directory:** `site`
+   - **Build command:** *(vacío — el JSON se commitea por el GitHub Action)*
+4. El GitHub Action (`.github/workflows/daily-build.yml`) corre `build.py` diariamente
+   a las 07:00 UTC y commitea `site/data/enso.json` si hubo cambios.
+   Render detecta el nuevo commit y redeploya automáticamente.
+
+> **Nota:** Si el repo venía configurado como Web Service en Render, cambiar
+> el tipo a Static Site requiere crear un nuevo servicio o editar manualmente
+> en Settings → Environment.
 
 ---
 
@@ -153,26 +143,64 @@ pytest
 
 ```
 argentina-enso-tracker/
-├── app.py                    # Streamlit entry point
-├── render.yaml               # Render deploy config
-├── requirements.txt
-├── pyproject.toml            # ruff + black + pytest config
+├── build.py                      # Pipeline → site/data/enso.json
+├── render.yaml                   # Render static site config
+├── requirements.txt              # Todas las dependencias
+├── requirements-data.txt         # Solo las necesarias para build.py
+├── pyproject.toml                # ruff + black + pytest config
 ├── .env.example
+├── .github/
+│   └── workflows/
+│       └── daily-build.yml       # Cron diario: fetch → JSON → commit
+├── site/                         # Sitio estático (servido en producción)
+│   ├── index.html                # Página principal (vanilla JS)
+│   ├── map.html                  # Mapa D3 + topojson
+│   ├── css/
+│   │   └── tokens.css            # Design tokens v2
+│   ├── js/
+│   │   └── advice.js             # Textos de riesgo (auditables)
+│   └── data/
+│       └── enso.json             # Generado por build.py (versionado)
+├── src/                          # Pipeline de datos (usado por build.py)
+│   ├── config.py                 # Regiones, URLs, umbrales ENSO
+│   ├── fetch_enso.py             # ONI, Niño 3.4, SOI desde NOAA
+│   ├── fetch_chirps.py           # Descarga y procesamiento CHIRPS
+│   ├── compute_correlations.py   # Script one-shot (Pearson + Spearman)
+│   └── utils.py                  # HTTP retry, logging
 ├── data/
-│   ├── raw/                  # gitignored (CHIRPS NetCDF)
+│   ├── raw/                      # gitignored (CHIRPS NetCDF)
 │   └── processed/
-│       └── correlations.parquet  # versionado
-├── src/
-│   ├── config.py             # regiones, URLs, umbrales
-│   ├── fetch_enso.py         # ONI, Niño 3.4, SOI
-│   ├── fetch_forecast.py     # pronóstico IRI/NOAA
-│   ├── fetch_chirps.py       # descarga y procesamiento CHIRPS
-│   ├── compute_correlations.py  # script one-shot
-│   └── utils.py              # HTTP retry, logging
+│       └── correlations.parquet  # Versionado — no re-corre CHIRPS en prod
+├── legacy/
+│   └── app.py                    # Dashboard Streamlit original (archivado)
 └── tests/
-    ├── test_fetch_enso.py
     └── test_correlations.py
 ```
+
+---
+
+## Limitaciones conocidas
+
+1. **Pronóstico**: IRI/NOAA no exponen probabilidades como API estructurada.
+   El sitio muestra links oficiales (NOAA Advisory, IRI Forecast) sin gráfico de plume.
+   El parseo IRI está en [BACKLOG.md](BACKLOG.md).
+2. **CHIRPS fuente única**: validación cruzada con ERA5 no está en el pipeline de producción.
+   Los datos CHIRPS están marcados como "fuente única" en el UI.
+3. **Causalidad**: las correlaciones son estadísticas, no implican causalidad directa.
+4. **Resolución espacial**: los bounding boxes promedian sobre unidades administrativas
+   heterogéneas; NOA y Patagonia pueden tener alta varianza interna.
+5. **Latencia ONI**: el índice tiene un rezago de ~2 meses en publicación.
+
+---
+
+## Fuentes y citas
+
+- **ONI / SOI**: NOAA Climate Prediction Center — `https://www.cpc.ncep.noaa.gov/`
+- **Niño 3.4 SST**: NOAA ERSSTv5 — `https://www.cpc.ncep.noaa.gov/data/indices/`
+- **CHIRPS v2.0**: Funk, C. et al. (2015). *The climate hazards infrared precipitation
+  with stations.* Scientific Data, 2, 150066.
+  DOI: [10.1038/sdata.2015.66](https://doi.org/10.1038/sdata.2015.66)
+- **Pronóstico ENSO**: IRI Columbia University — `https://iri.columbia.edu/`
 
 ---
 
@@ -183,6 +211,5 @@ portfolio de FRIS (FloodRisk Intelligence System). **No constituye
 asesoría profesional de ningún tipo.** Para análisis de riesgo
 operacional contactar al equipo de FRIS.
 
-Los datos mostrados provienen de fuentes públicas y se reproducen con
-fines informativos. FRIS no garantiza la exactitud, completitud o
-actualidad de los datos de terceros.
+Los índices se calculan automáticamente a partir de fuentes públicas —
+no constituyen declaración oficial de NOAA.
