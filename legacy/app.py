@@ -587,7 +587,7 @@ def _render_oni_scatter(region: str, pairs_df: pd.DataFrame, corr_df: pd.DataFra
         margin=dict(t=50, b=70, l=60, r=30),
     )
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption(
         f"Cada punto = un mes (1981–pres.). ONI desplazado {lag} mes(es) para alinear con precipitación. "
         "Anomalía calculada respecto a la media del período."
@@ -632,7 +632,7 @@ def _render_forecast_probability_bars(quarters: list[ForecastQuarter]) -> None:
         showlegend=True,
     )
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ---------------------------------------------------------------------------
@@ -966,7 +966,7 @@ def render_risk_map(risk_results: dict) -> None:
             bgcolor="rgba(255,255,255,0.80)",
         ),
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 def render_sidebar() -> None:
@@ -1152,7 +1152,7 @@ def _render_oni_chart(oni_df: pd.DataFrame) -> None:
         showlegend=False,
     )
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
 
 
 # ---------------------------------------------------------------------------
@@ -1237,7 +1237,7 @@ def render_forecast() -> None:
                     unsafe_allow_html=True,
                 )
                 st.caption(resource["description"])
-                st.link_button(resource["button_label"] + " \u2192", resource["url"], use_container_width=True)
+                st.link_button(resource["button_label"] + " \u2192", resource["url"], width='stretch')
     st.markdown("</div>", unsafe_allow_html=True)
 
 
@@ -1299,7 +1299,7 @@ def render_correlations() -> None:
     pivot.index.name = "Región"
     pivot = pivot.reindex([r for r in REGION_ORDER if r in pivot.index])
 
-    st.dataframe(pivot, use_container_width=True)
+    st.dataframe(pivot, width='stretch')
 
     # Full detail table
     with st.expander("Ver tabla completa — Pearson + Spearman + p-values"):
@@ -1324,7 +1324,7 @@ def render_correlations() -> None:
 
         st.dataframe(
             detail.style.apply(highlight_sig, axis=1),
-            use_container_width=True,
+            width='stretch',
         )
 
     # Heatmap
@@ -1400,7 +1400,7 @@ def _render_correlation_heatmap(table_df: pd.DataFrame) -> None:
         margin=dict(t=50, b=40, l=150, r=40),
     )
     fig.update_layout(**layout)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.caption(
         "Celdas brillantes = Pearson p < 0.05. Celdas opacas con '(Pears. n.s.)' = Pearson no significativo "
         "— el Spearman puede diferir; ver tabla detallada en el desplegable superior."
@@ -1549,7 +1549,7 @@ def render_risk_implications() -> None:
             ].copy()
             region_data["sig"] = region_data["pearson_p"].apply(_sig_marker)
             region_data.columns = ["Lag (m)", "r Pearson", "p Pearson", "r Spearman", "p Spearman", "N", "Sig."]
-            st.dataframe(region_data.set_index("Lag (m)"), use_container_width=True)
+            st.dataframe(region_data.set_index("Lag (m)"), width='stretch')
 
             # ONI vs precipitation scatter chart (requires pairs cache)
             if pairs_df is not None:

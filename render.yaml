@@ -1,44 +1,43 @@
 services:
-  # ── Static site (primary) ─────────────────────────────────────────────
-  # Serves site/ as a static site. No build command needed — enso.json
-  # is committed to the repo and updated daily by the GitHub Action.
+  # ── OPTION A — Static Site (recommended, requires new Render service) ──────
   #
-  # Manual Render dashboard steps (if render.yaml auto-deploy doesn't apply):
-  #   1. Go to your Render service → Settings → Build & Deploy
-  #   2. Set "Publish directory" to: site
-  #   3. Remove the old start command (no server process needed)
-  #   4. Set "Environment" to: Static Site
+  # Render cannot convert an existing Python Web Service to a Static Site
+  # via render.yaml alone. To deploy the static site:
+  #   1. In Render dashboard: New → Static Site → connect this repo
+  #   2. Publish directory: site
+  #   3. Build command: (leave empty — enso.json is committed by GitHub Action)
+  #   4. Delete or suspend the old Python web service
+  #
+  # Uncomment the block below once the new Static Site service is created:
+  #
+  # - type: web
+  #   name: argentina-enso-tracker-static
+  #   env: static
+  #   staticPublishPath: site
+  #   headers:
+  #     - path: /*
+  #       name: Cache-Control
+  #       value: public, max-age=3600, stale-while-revalidate=86400
+  #     - path: /data/enso.json
+  #       name: Cache-Control
+  #       value: public, max-age=1800, stale-while-revalidate=3600
+
+  # ── OPTION B — Legacy Python Web Service (current active service) ─────────
+  #
+  # Keeps the existing Streamlit app running while the static site is set up.
+  # app.py was moved to legacy/app.py in the static-site refactor.
   #
   - type: web
     name: argentina-enso-tracker
-    runtime: static
-    staticPublishPath: site
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: public, max-age=3600, stale-while-revalidate=86400
-      - path: /data/enso.json
-        name: Cache-Control
-        value: public, max-age=1800, stale-while-revalidate=3600
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-
-  # ── Legacy Streamlit app (kept for reference; NOT deployed) ───────────
-  # To re-enable the Streamlit app, rename this block and remove the
-  # static service above.
-  #
-  # - type: web
-  #   name: argentina-enso-tracker-legacy
-  #   runtime: python
-  #   plan: free
-  #   buildCommand: "pip install -r requirements.txt"
-  #   startCommand: "streamlit run legacy/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
-  #   envVars:
-  #     - key: PYTHON_VERSION
-  #       value: "3.11.0"
-  #     - key: CONTACT_EMAIL
-  #       sync: false
-  #     - key: GITHUB_REPO_URL
-  #       sync: false
+    runtime: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "streamlit run legacy/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: CONTACT_EMAIL
+        sync: false
+      - key: GITHUB_REPO_URL
+        sync: false
+    autoDeploy: true
