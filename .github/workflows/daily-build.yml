@@ -1,0 +1,79 @@
+name: Daily ENSO build
+
+# Runs every day at 07:00 UTC (04:00 ART / 08:00 ART+1)
+# NOAA CPC typically updates monthly data within the first days of each month.
+on:
+  schedule:
+    - cron: '0 7 * * *'
+  workflow_dispatch:           # allow manual trigger from GitHub Actions UI
+
+permissions:
+  contents: write              # needed to commit enso.json back to the repo
+
+jobs:
+  build:
+    name: Fetch ENSO data and update site/data/enso.json
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # ── Checkout ─────────────────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── Python ───────────────────────────────────────────────────────────
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      # ── Dependencies (data layer only — no Streamlit/Plotly) ─────────────
+      - name: Install data dependencies
+        run: pip install -r requirements-data.txt
+
+      # ── Run pipeline ──────────────────────────────────────────────────────
+      # The correlations Parquet (data/processed/correlations.parquet) is
+      # committed to the repo and read by build.py directly.
+      # CHIRPS re-computation only runs via compute_correlations.py when needed.
+      - name: Run build.py
+        run: python build.py
+
+      # ── Validate JSON output ──────────────────────────────────────────────
+      - name: Validate enso.json structure
+        run: |
+          python - <<'EOF'
+          import json, sys
+          with open('site/data/enso.json') as f:
+              d = json.load(f)
+          required = ['current', 'oni_series', 'correlations', 'episodes', 'last_updated']
+          missing = [k for k in required if k not in d]
+          if missing:
+              print(f'FAIL: missing keys: {missing}', file=sys.stderr)
+              sys.exit(1)
+          c = d['current']
+          assert isinstance(c['oni_value'], float), 'oni_value must be float'
+          assert c['phase'] in ('El Niño', 'La Niña', 'Neutral'), 'invalid phase'
+          assert len(d['oni_series']) > 100, 'oni_series too short'
+          assert len(d['correlations']) > 0, 'no correlation rows'
+          print(f"OK: phase={c['phase']}, ONI={c['oni_value']}, "
+                f"{len(d['oni_series'])} ONI points, "
+                f"{len(d['correlations'])} correlation rows, "
+                f"{len(d['episodes'])} episodes")
+          EOF
+
+      # ── Commit and push if changed ────────────────────────────────────────
+      - name: Commit updated enso.json
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add site/data/enso.json
+          # Only commit if the file actually changed
+          if git diff --cached --quiet; then
+            echo "No changes in enso.json — nothing to commit."
+          else
+            git commit -m "data: daily ENSO update $(date -u +%Y-%m-%d)"
+            git push
+          fi

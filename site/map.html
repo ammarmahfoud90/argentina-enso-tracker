@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa ENSO Argentina</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Mono', 'Courier New', monospace;
+      background: #FFFFFF;
+      color: #14161A;
+      overflow: hidden;          /* no scroll inside iframe */
+    }
+
+    #map-container {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+    }
+
+    svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Country/province fill */
+    .arg-province {
+      fill: #F5F5F3;
+      stroke: #C8CAD0;
+      stroke-width: 0.5;
+    }
+
+    /* Correlation circles */
+    .corr-circle {
+      stroke: #FFFFFF;
+      stroke-width: 2;
+      opacity: 0.82;
+      cursor: default;
+      transition: opacity 0.15s ease;
+    }
+    .corr-circle:hover { opacity: 1; }
+
+    /* Region labels */
+    .region-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      fill: #14161A;
+      text-anchor: middle;
+      pointer-events: none;
+    }
+    .region-r {
+      font-size: 9px;
+      fill: #4A4E58;
+    }
+
+    /* Legend */
+    #legend {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(255,255,255,0.92);
+      border: 1px solid #E0E0DC;
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 10px;
+      line-height: 1.8;
+      color: #4A4E58;
+    }
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+    .legend-circle {
+      border-radius: 50%;
+      flex-shrink: 0;
+      opacity: 0.82;
+    }
+    .legend-size-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    /* Tooltip */
+    #tooltip {
+      position: absolute;
+      display: none;
+      background: rgba(20,22,26,0.92);
+      color: #F0F0EE;
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 8px 12px;
+      border-radius: 5px;
+      pointer-events: none;
+      max-width: 220px;
+    }
+
+    /* Phase badge */
+    #phase-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      background: #F5F5F3;
+      border: 1px solid #E0E0DC;
+      color: #14161A;
+    }
+
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #79818E;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="map-container">
+  <svg id="map-svg" aria-label="Mapa de correlaciones ENSO en Argentina"></svg>
+  <div id="phase-badge">Cargando…</div>
+  <div id="legend">
+    <div style="font-weight:600;margin-bottom:6px;color:#14161A">Correlación ONI–Precip.</div>
+    <div class="legend-row">
+      <div class="legend-circle" style="width:12px;height:12px;background:#C2382A"></div>
+      <span>r &gt; 0 (más lluvia en El Niño)</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-circle" style="width:12px;height:12px;background:#2A55D0"></div>
+      <span>r &lt; 0 (menos lluvia en El Niño)</span>
+    </div>
+    <div class="legend-row">
+      <div class="legend-circle" style="width:12px;height:12px;background:#C0C4CC"></div>
+      <span>No significativo (p ≥ 0.05)</span>
+    </div>
+    <div style="margin-top:6px;color:#79818E;font-size:9px">
+      Tamaño ∝ |r Pearson| (mejor lag).<br>
+      Fuente: NOAA CPC · CHIRPS v2.0.
+    </div>
+  </div>
+  <div id="tooltip"></div>
+  <div id="loading">Cargando datos…</div>
+</div>
+
+<!-- D3 v7 + topojson-client from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+<script>
+/* ======================================================================
+   Argentina ENSO correlation map.
+   All correlation values loaded from data/enso.json — no hardcoded data.
+
+   Region centroids computed from config.py bounding-box midpoints:
+     Pampa Húmeda: lat (-40+-29)/2=-34.5, lon (-65+-57)/2=-61.0
+     NEA:          lat (-29+-22)/2=-25.5, lon (-62+-53)/2=-57.5
+     NOA:          lat (-29+-22)/2=-25.5, lon (-69+-62)/2=-65.5
+     Cuyo:         lat (-36+-28)/2=-32.0, lon (-70+-65)/2=-67.5
+     Patagonia:    lat (-55+-37)/2=-46.0, lon (-73+-62)/2=-67.5
+   These are geographic coordinates, not data values.
+   ====================================================================== */
+
+const SIG_THRESHOLD = 0.05;
+
+/* Geographic centres derived from config.py bounding boxes */
+const REGION_CENTERS = {
+  'Pampa Húmeda': { lat: -34.5, lon: -61.0 },
+  'NEA':          { lat: -25.5, lon: -57.5 },
+  'NOA':          { lat: -25.5, lon: -65.5 },
+  'Cuyo':         { lat: -32.0, lon: -67.5 },
+  'Patagonia':    { lat: -46.0, lon: -67.5 },
+};
+
+/* Circle size scale: |r| → radius in SVG units */
+const R_MIN = 12;   /* minimum visible radius (px at reference size) */
+const R_MAX = 38;   /* radius for |r| = 0.6                          */
+
+function rToRadius(absR) {
+  return R_MIN + Math.min(absR / 0.6, 1.0) * (R_MAX - R_MIN);
+}
+
+function rToColor(r, isSig) {
+  if (!isSig) return '#C0C4CC';
+  return r > 0 ? '#C2382A' : '#2A55D0';
+}
+
+function sigStars(p) {
+  if (p < 0.001) return '***';
+  if (p < 0.01)  return '**';
+  if (p < 0.05)  return '*';
+  return '';
+}
+
+/* ── Main ─────────────────────────────────────────────────────────────── */
+async function main() {
+  const tooltip = document.getElementById('tooltip');
+  const badge   = document.getElementById('phase-badge');
+  const loading = document.getElementById('loading');
+
+  /* 1. Load ENSO data */
+  let data;
+  try {
+    const resp = await fetch('data/enso.json');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    data = await resp.json();
+  } catch (err) {
+    loading.textContent = 'Error: ' + err.message;
+    return;
+  }
+  loading.style.display = 'none';
+
+  /* Phase badge */
+  const phase = data.current.phase;
+  badge.textContent = phase + ' · ONI ' + (data.current.oni_value >= 0 ? '+' : '') + data.current.oni_value.toFixed(2) + ' °C';
+  badge.style.color = phase === 'El Niño' ? '#C2382A' : (phase === 'La Niña' ? '#2A55D0' : '#4A4E58');
+  badge.style.borderColor = phase === 'El Niño' ? '#C2382A' : (phase === 'La Niña' ? '#2A55D0' : '#E0E0DC');
+
+  /* 2. Build best-corr index per region */
+  const corrs = data.correlations;
+  const bestByRegion = {};
+  (data.region_order || Object.keys(REGION_CENTERS)).forEach(region => {
+    const rows = corrs.filter(c => c.region === region);
+    const sig  = rows.filter(c => c.pearson_p < SIG_THRESHOLD);
+    const pool = sig.length > 0 ? sig : rows;
+    if (pool.length === 0) { bestByRegion[region] = null; return; }
+    bestByRegion[region] = pool.reduce((a, b) =>
+      Math.abs(a.pearson_r) >= Math.abs(b.pearson_r) ? a : b
+    );
+  });
+
+  /* 3. Set up SVG and projection */
+  const svgEl = document.getElementById('map-svg');
+  const width  = svgEl.clientWidth  || window.innerWidth;
+  const height = svgEl.clientHeight || window.innerHeight;
+
+  const svg = d3.select('#map-svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('preserveAspectRatio', 'xMidYMid meet');
+
+  /* Mercator projection centred on Argentina */
+  const projection = d3.geoMercator()
+    .center([-65, -38])
+    .scale(width * 1.5)
+    .translate([width / 2, height / 2]);
+
+  const path = d3.geoPath().projection(projection);
+
+  /* 4. Load Argentina boundary from world-atlas CDN (countries-110m) */
+  let worldTopo;
+  try {
+    worldTopo = await d3.json(
+      'https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json'
+    );
+  } catch (err) {
+    console.warn('Could not load world-atlas; drawing without base map.', err);
+  }
+
+  const mapG = svg.append('g').attr('class', 'map-layer');
+
+  if (worldTopo) {
+    /* Draw all countries as a light base, Argentina slightly darker */
+    const countries = topojson.feature(worldTopo, worldTopo.objects.countries);
+    mapG.selectAll('path.country')
+      .data(countries.features)
+      .enter()
+      .append('path')
+      .attr('class', 'country')
+      .attr('d', path)
+      .attr('fill', d => d.id === '032' ? '#EAEAE6' : '#F0F0EE')
+      .attr('stroke', '#D0D0CC')
+      .attr('stroke-width', d => d.id === '032' ? 0.8 : 0.4);
+
+    /* Country borders */
+    const borders = topojson.mesh(worldTopo, worldTopo.objects.countries,
+      (a, b) => a !== b
+    );
+    mapG.append('path')
+      .datum(borders)
+      .attr('d', path)
+      .attr('fill', 'none')
+      .attr('stroke', '#B8B8B4')
+      .attr('stroke-width', 0.5);
+  } else {
+    /* Fallback: plain rectangle background */
+    mapG.append('rect')
+      .attr('width', width)
+      .attr('height', height)
+      .attr('fill', '#F5F5F3');
+  }
+
+  /* 5. Draw region correlation circles */
+  const circleG = svg.append('g').attr('class', 'circle-layer');
+
+  (data.region_order || Object.keys(REGION_CENTERS)).forEach(region => {
+    const center = REGION_CENTERS[region];
+    if (!center) return;
+
+    const best   = bestByRegion[region];
+    const isSig  = best && best.pearson_p < SIG_THRESHOLD;
+    const absR   = best ? Math.abs(best.pearson_r) : 0.05;
+    const r      = best ? best.pearson_r : 0;
+    const radius = rToRadius(absR);
+    const color  = rToColor(r, isSig);
+
+    const [cx, cy] = projection([center.lon, center.lat]);
+    if (cx == null || cy == null) return;
+
+    const g = circleG.append('g').attr('class', 'region-g');
+
+    /* Shadow */
+    g.append('circle')
+      .attr('cx', cx)
+      .attr('cy', cy + 2)
+      .attr('r', radius)
+      .attr('fill', 'rgba(20,22,26,0.08)')
+      .attr('pointer-events', 'none');
+
+    /* Main circle */
+    g.append('circle')
+      .attr('class', 'corr-circle')
+      .attr('cx', cx)
+      .attr('cy', cy)
+      .attr('r', radius)
+      .attr('fill', color)
+      .on('mousemove', function(event) {
+        const rStr = best
+          ? (best.pearson_r >= 0 ? '+' : '') + best.pearson_r.toFixed(4) + sigStars(best.pearson_p)
+          : 'sin datos';
+        const lagStr = best ? `Lag ${best.lag}m` : '';
+        const pStr   = best ? `p=${best.pearson_p.toFixed(4)}` : '';
+        const nStr   = best ? `n=${best.n_obs}` : '';
+        const sigStr = isSig ? 'Significativo' : 'No significativo (p≥0.05)';
+        tooltip.innerHTML =
+          `<strong>${region}</strong><br>` +
+          `r = ${rStr}<br>` +
+          (lagStr ? `${lagStr} · ${pStr} · ${nStr}<br>` : '') +
+          `${sigStr}`;
+        const rect = document.getElementById('map-container').getBoundingClientRect();
+        const x = event.clientX - rect.left + 12;
+        const y = event.clientY - rect.top  - 10;
+        tooltip.style.left  = Math.min(x, rect.width - 230) + 'px';
+        tooltip.style.top   = Math.max(y, 4) + 'px';
+        tooltip.style.display = 'block';
+      })
+      .on('mouseleave', () => { tooltip.style.display = 'none'; });
+
+    /* Region label */
+    const labelY = cy - radius - 8;
+    g.append('text')
+      .attr('class', 'region-label')
+      .attr('x', cx)
+      .attr('y', labelY)
+      .text(region);
+
+    /* r value below label */
+    if (best) {
+      const rDisp = (best.pearson_r >= 0 ? '+' : '') + best.pearson_r.toFixed(3) + sigStars(best.pearson_p);
+      g.append('text')
+        .attr('class', 'region-label region-r')
+        .attr('x', cx)
+        .attr('y', labelY + 12)
+        .text(rDisp);
+    }
+  });
+
+  /* 6. Islas Malvinas label (override English tile label) */
+  const [mlx, mly] = projection([-59.0, -51.8]);
+  if (mlx && mly) {
+    svg.append('text')
+      .attr('x', mlx)
+      .attr('y', mly)
+      .attr('text-anchor', 'middle')
+      .attr('font-family', 'IBM Plex Mono, monospace')
+      .attr('font-size', '8px')
+      .attr('fill', '#79818E')
+      .text('Islas Malvinas (Arg.)');
+  }
+
+  /* 7. Disclaimer */
+  svg.append('text')
+    .attr('x', width / 2)
+    .attr('y', height - 6)
+    .attr('text-anchor', 'middle')
+    .attr('font-family', 'IBM Plex Mono, monospace')
+    .attr('font-size', '7px')
+    .attr('fill', '#C0C4CC')
+    .text('Índice automático — no constituye declaración oficial de NOAA · CHIRPS v2.0 · correlación Pearson');
+}
+
+main().catch(console.error);
+</script>
+</body>
+</html>

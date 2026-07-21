@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Argentina ENSO Impact Tracker</title>
+  <meta name="description" content="Estado del ENSO y correlación histórica con precipitación en 5 regiones argentinas. Datos NOAA CPC y CHIRPS v2.0.">
+
+  <!-- Design tokens -->
+  <link rel="stylesheet" href="css/tokens.css">
+
+  <!-- Google Fonts: Libre Franklin + IBM Plex Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── Reset & base ──────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-base);
+      color: var(--color-ink);
+      background: var(--color-bg);
+      line-height: var(--leading-normal);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--color-accent);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+    a:hover { opacity: 0.75; }
+    a:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+      border-radius: var(--radius-sm);
+    }
+
+    /* ── Layout containers ─────────────────────────────────────────────── */
+    .container {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+    .container--wide {
+      max-width: var(--max-width-wide);
+      margin: 0 auto;
+      padding: 0 var(--space-6);
+    }
+
+    /* ── Sections ──────────────────────────────────────────────────────── */
+    .section {
+      padding: var(--space-12) 0;
+      border-top: 1px solid var(--color-rule);
+    }
+    .section:first-of-type { border-top: none; }
+    .section--alt { background: var(--color-bg-alt); }
+
+    .section-kicker {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-medium);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      margin-bottom: var(--space-2);
+    }
+    .section-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-xl);
+      font-weight: var(--weight-bold);
+      color: var(--color-accent);
+      margin-bottom: var(--space-3);
+      letter-spacing: -0.02em;
+    }
+    .section-desc {
+      color: var(--color-ink-2);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-6);
+      max-width: 640px;
+    }
+
+    /* ── Masthead ──────────────────────────────────────────────────────── */
+    .masthead {
+      border-bottom: 3px solid var(--color-ink);
+      padding: var(--space-10) 0 var(--space-8);
+    }
+    .masthead-kicker {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-ink-3);
+      margin-bottom: var(--space-3);
+    }
+    .masthead-title {
+      font-size: var(--text-hero);
+      font-weight: var(--weight-black);
+      line-height: var(--leading-tight);
+      letter-spacing: -0.03em;
+      color: var(--color-ink);
+      margin-bottom: var(--space-4);
+    }
+    @media (max-width: 600px) {
+      .masthead-title { font-size: var(--text-3xl); }
+    }
+    .masthead-sub {
+      color: var(--color-ink-2);
+      max-width: 600px;
+      line-height: var(--leading-snug);
+      margin-bottom: var(--space-4);
+    }
+    .masthead-meta {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+    }
+    .masthead-rule {
+      border: none;
+      border-top: 1px solid var(--color-rule);
+      margin: var(--space-4) 0 0;
+    }
+
+    /* ── Phase badge (hero) ────────────────────────────────────────────── */
+    .hero-phase {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      font-family: var(--font-mono);
+      font-size: var(--text-2xl);
+      font-weight: var(--weight-bold);
+      letter-spacing: -0.02em;
+      margin-bottom: var(--space-6);
+    }
+    .hero-phase-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .phase-nino  { color: var(--color-nino); }
+    .phase-nina  { color: var(--color-nina); }
+    .phase-neutral { color: var(--color-neutral); }
+    .dot-nino    { background: var(--color-nino); }
+    .dot-nina    { background: var(--color-nina); }
+    .dot-neutral { background: var(--color-neutral); }
+
+    /* ── Gradient ENSO scale ───────────────────────────────────────────── */
+    .scale-wrap {
+      margin-bottom: var(--space-8);
+    }
+    .scale-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      margin-bottom: var(--space-1);
+    }
+    .scale-bar-wrap {
+      position: relative;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--gradient-enso);
+      overflow: visible;
+    }
+    .scale-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--color-ink);
+      border: 3px solid var(--color-bg);
+      box-shadow: 0 0 0 2px var(--color-ink);
+      transition: left var(--transition);
+      pointer-events: none;
+    }
+    .scale-value-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      margin-top: var(--space-1);
+    }
+
+    /* ── Indicator cards ───────────────────────────────────────────────── */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-2);
+    }
+    @media (max-width: 640px) {
+      .cards { grid-template-columns: 1fr; }
+    }
+    .card {
+      border: 1px solid var(--color-rule);
+      border-top: 3px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-4) var(--space-5);
+      background: var(--color-bg);
+      box-shadow: var(--shadow-card);
+    }
+    .card-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-ink-3);
+      margin-bottom: var(--space-2);
+    }
+    .card-value {
+      font-family: var(--font-mono);
+      font-size: var(--text-3xl);
+      font-weight: var(--weight-bold);
+      letter-spacing: -0.02em;
+      line-height: 1;
+      margin-bottom: var(--space-2);
+    }
+    .card-value--nino   { color: var(--color-nino); }
+    .card-value--nina   { color: var(--color-nina); }
+    .card-value--neutral { color: var(--color-ink); }
+    .card-date {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      margin-bottom: var(--space-2);
+    }
+    .card-caption {
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      line-height: var(--leading-snug);
+    }
+
+    /* ── ONI SVG chart ─────────────────────────────────────────────────── */
+    .chart-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+    #oni-chart {
+      display: block;
+      width: 100%;
+      min-width: 480px;
+      height: auto;
+    }
+
+    /* ── Correlation heatmap ───────────────────────────────────────────── */
+    .heatmap-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+    }
+    .heatmap-table th {
+      text-align: center;
+      padding: var(--space-2) var(--space-3);
+      font-size: var(--text-xs);
+      font-weight: var(--weight-semi);
+      letter-spacing: 0.06em;
+      color: var(--color-ink-2);
+      background: var(--color-bg-alt);
+      border-bottom: 1px solid var(--color-rule);
+    }
+    .heatmap-table th.th-region {
+      text-align: left;
+      min-width: 140px;
+    }
+    .heatmap-table td {
+      padding: var(--space-3) var(--space-4);
+      text-align: center;
+      border-bottom: 1px solid var(--color-rule);
+      transition: opacity var(--transition);
+    }
+    .heatmap-table td.td-region {
+      text-align: left;
+      font-family: var(--font-body);
+      font-weight: var(--weight-semi);
+      color: var(--color-ink);
+      font-size: var(--text-sm);
+    }
+    .heatmap-table tr:last-child td { border-bottom: none; }
+    .heatmap-table tbody tr:hover td { opacity: 0.85; }
+
+    .cell-r {
+      display: block;
+      font-weight: var(--weight-medium);
+    }
+    .cell-stars {
+      font-size: 0.65rem;
+      vertical-align: super;
+      color: var(--color-ink);
+    }
+    .cell-ns {
+      display: block;
+      font-size: 0.65rem;
+      color: var(--color-ink-3);
+    }
+
+    /* ── Forecast note ─────────────────────────────────────────────────── */
+    .forecast-note {
+      border: 1px solid var(--color-rule);
+      border-left: 4px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      padding: var(--space-5) var(--space-6);
+      background: var(--color-bg-alt);
+    }
+    .forecast-note p {
+      color: var(--color-ink-2);
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-4);
+    }
+    .source-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+    .source-link {
+      display: inline-block;
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid var(--color-accent);
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-accent);
+      text-decoration: none;
+      font-weight: var(--weight-medium);
+      transition: background var(--transition);
+    }
+    .source-link:hover {
+      background: var(--color-accent);
+      color: var(--color-bg);
+      opacity: 1;
+    }
+
+    /* ── Region selector ───────────────────────────────────────────────── */
+    .region-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-2);
+      margin-bottom: var(--space-5);
+    }
+    .region-btn {
+      padding: var(--space-2) var(--space-4);
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-md);
+      background: var(--color-bg);
+      font-family: var(--font-body);
+      font-size: var(--text-sm);
+      font-weight: var(--weight-medium);
+      color: var(--color-ink-2);
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .region-btn:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+    }
+    .region-btn.active {
+      background: var(--color-accent);
+      border-color: var(--color-accent);
+      color: var(--color-bg);
+    }
+    .region-btn:focus-visible {
+      outline: 2px solid var(--color-accent);
+      outline-offset: 2px;
+    }
+
+    /* ── Advice box ────────────────────────────────────────────────────── */
+    .advice-box {
+      border-radius: var(--radius-md);
+      padding: var(--space-5) var(--space-6);
+      font-size: var(--text-sm);
+      line-height: var(--leading-loose);
+      border: 1px solid var(--color-rule);
+      min-height: 80px;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .advice-box--excess {
+      background: var(--color-nina-bg);
+      border-color: var(--color-nina);
+      border-left: 4px solid var(--color-nina);
+    }
+    .advice-box--deficit {
+      background: var(--color-nino-bg);
+      border-color: var(--color-nino);
+      border-left: 4px solid var(--color-nino);
+    }
+    .advice-box--neutral {
+      background: var(--color-neutral-bg);
+      border-color: var(--color-neutral);
+      border-left: 4px solid var(--color-neutral);
+    }
+    .advice-box--none {
+      background: var(--color-bg-alt);
+      border-left: 4px solid var(--color-rule);
+    }
+    .advice-meta {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      margin-top: var(--space-3);
+    }
+
+    /* ── Map iframe ────────────────────────────────────────────────────── */
+    #map-iframe {
+      display: block;
+      width: 100%;
+      height: 500px;
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    /* ── Disclaimer / caption ──────────────────────────────────────────── */
+    .disclaimer {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      line-height: var(--leading-snug);
+      margin-top: var(--space-4);
+      padding: var(--space-3) var(--space-4);
+      border: 1px solid var(--color-rule);
+      border-radius: var(--radius-sm);
+      background: var(--color-bg-alt);
+    }
+    .caption {
+      font-size: var(--text-xs);
+      color: var(--color-ink-3);
+      margin-top: var(--space-3);
+    }
+
+    /* ── Staleness warning ─────────────────────────────────────────────── */
+    .stale-warning {
+      display: none;
+      padding: var(--space-3) var(--space-4);
+      background: #FFFBE6;
+      border: 1px solid #D4A01A;
+      border-radius: var(--radius-md);
+      font-size: var(--text-xs);
+      color: #7A5500;
+      margin-bottom: var(--space-6);
+    }
+    .stale-warning.visible { display: block; }
+
+    /* ── Footer ────────────────────────────────────────────────────────── */
+    .footer {
+      border-top: 3px solid var(--color-ink);
+      background: var(--color-ink);
+      color: #C8CAD0;
+      padding: var(--space-10) 0;
+    }
+    .footer-disclaimer {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: var(--leading-loose);
+      margin-bottom: var(--space-4);
+      color: #8A8E99;
+    }
+    .footer-sources {
+      font-size: var(--text-xs);
+      margin-bottom: var(--space-4);
+    }
+    .footer-sources a {
+      color: #7BA8E8;
+      text-decoration: none;
+    }
+    .footer-sources a:hover { opacity: 0.8; }
+    .footer-credit {
+      font-size: var(--text-xs);
+      color: #8A8E99;
+    }
+    .footer-credit strong { color: #C8CAD0; }
+    .footer-updated {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: #8A8E99;
+      margin-bottom: var(--space-4);
+    }
+
+    /* ── Loading state ─────────────────────────────────────────────────── */
+    .loading {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--color-ink-3);
+      padding: var(--space-6) 0;
+    }
+    .error-msg {
+      padding: var(--space-4) var(--space-5);
+      border: 1px solid var(--color-nino);
+      border-radius: var(--radius-md);
+      background: var(--color-nino-bg);
+      color: var(--color-nino);
+      font-size: var(--text-sm);
+    }
+
+    /* ── Accessibility: reduced motion ─────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- MASTHEAD                                                            -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <header class="masthead">
+    <div class="container">
+      <div class="masthead-kicker">Boletín ENSO · Argentina · NOAA CPC · CHIRPS v2.0</div>
+      <h1 class="masthead-title">Argentina ENSO<br>Impact Tracker</h1>
+      <p class="masthead-sub">
+        Estado del ENSO y correlación histórica con precipitación en 5 regiones argentinas.
+        Todos los datos provienen de fuentes públicas verificables (NOAA CPC, CHIRPS v2.0).
+      </p>
+      <div class="masthead-meta">
+        por <strong>Ing. Ammar Mahfoud</strong> &nbsp;·&nbsp;
+        Actualizado: <span id="last-updated">cargando…</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- HERO: ENSO state                                                    -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-kicker">Estado actual</div>
+
+      <div id="stale-warning" class="stale-warning" role="alert">
+        ⚠ Los datos ENSO pueden no estar actualizados. Verificar en <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/" target="_blank" rel="noopener">NOAA CPC</a>.
+      </div>
+
+      <!-- Phase label -->
+      <div class="hero-phase" id="hero-phase" aria-live="polite">
+        <span class="hero-phase-dot" id="hero-dot"></span>
+        <span id="hero-phase-text">Cargando…</span>
+      </div>
+
+      <!-- Gradient scale -->
+      <div class="scale-wrap" aria-label="Escala ONI" role="img">
+        <div class="scale-label-row">
+          <span>La Niña</span>
+          <span>Neutral</span>
+          <span>El Niño</span>
+        </div>
+        <div class="scale-bar-wrap" id="scale-bar">
+          <div class="scale-marker" id="scale-marker" aria-hidden="true"></div>
+        </div>
+        <div class="scale-value-row">
+          <span>−3.0</span>
+          <span>−1.5</span>
+          <span>0</span>
+          <span>+1.5</span>
+          <span>+3.0</span>
+        </div>
+      </div>
+
+      <!-- Indicator cards -->
+      <div class="cards" role="list">
+        <div class="card" role="listitem">
+          <div class="card-label">ONI · <span id="oni-season">—</span></div>
+          <div class="card-value" id="oni-value">—</div>
+          <div class="card-date" id="oni-date"></div>
+          <div class="card-caption">
+            Oceanic Niño Index — media móvil 3 meses anomalía SST Niño 3.4 (base 1991–2020).
+            Umbral: ±0.5°C por ≥5 temporadas consecutivas.
+          </div>
+        </div>
+        <div class="card" role="listitem">
+          <div class="card-label">Niño 3.4 SST Anomalía</div>
+          <div class="card-value" id="nino34-value">—</div>
+          <div class="card-date" id="nino34-date"></div>
+          <div class="card-caption">
+            Anomalía mensual SST región Niño 3.4 (ERSSTv5, NOAA).
+            La fase oficial se basa en el ONI; el Niño 3.4 mensual puede divergir.
+          </div>
+        </div>
+        <div class="card" role="listitem">
+          <div class="card-label">SOI</div>
+          <div class="card-value" id="soi-value">—</div>
+          <div class="card-date" id="soi-date"></div>
+          <div class="card-caption">
+            Índice de Oscilación del Sur — diferencia estandarizada de presión
+            entre Tahití y Darwin (NOAA CPC).
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- ONI CHART                                                           -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--alt">
+    <div class="container--wide">
+      <div class="section-kicker">Índice ONI</div>
+      <h2 class="section-title">Serie histórica ONI</h2>
+      <p class="section-desc">
+        Oceanic Niño Index desde 1950. Bandas coloreadas = episodios confirmados
+        ≥5 temporadas consecutivas (criterio NOAA CPC).
+      </p>
+      <div class="chart-wrap" role="img" aria-label="Gráfico ONI histórico">
+        <svg id="oni-chart" viewBox="0 0 900 220" preserveAspectRatio="none"
+             aria-hidden="true" focusable="false"></svg>
+      </div>
+      <p class="caption" id="oni-chart-caption"></p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- CORRELATION HEATMAP                                                 -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-kicker">Análisis estadístico</div>
+      <h2 class="section-title">Correlación ENSO — Precipitación</h2>
+      <p class="section-desc">
+        Correlación de Pearson entre ONI y precipitación mensual regional (CHIRPS v2.0).
+        <strong>Lag</strong> = meses que ONI lidera la precipitación.
+        &nbsp;* p&lt;0.05 &nbsp;** p&lt;0.01 &nbsp;*** p&lt;0.001
+      </p>
+      <div id="corr-heatmap" role="region" aria-label="Tabla de correlaciones"></div>
+      <p class="caption" id="corr-caption"></p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- PRONÓSTICO — official links only (no chart — no structured data)   -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--alt">
+    <div class="container">
+      <div class="section-kicker">Outlook</div>
+      <h2 class="section-title">Pronóstico ENSO</h2>
+      <div class="forecast-note" role="note">
+        <p>
+          <strong>Pronóstico oficial: ver fuentes.</strong>
+          El pronóstico probabilístico (plume IRI/NOAA) no está disponible en esta versión automática —
+          el parseo estructurado de datos IRI está en la hoja de ruta (BACKLOG.md).
+          Consultar directamente las fuentes autorizadas:
+        </p>
+        <div class="source-links">
+          <a class="source-link"
+             href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/"
+             target="_blank" rel="noopener">
+            NOAA ENSO Advisory →
+          </a>
+          <a class="source-link"
+             href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/"
+             target="_blank" rel="noopener">
+            IRI ENSO Forecast →
+          </a>
+          <a class="source-link"
+             href="https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
+             target="_blank" rel="noopener">
+            Serie ONI (NOAA) →
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- RISK IMPLICATIONS                                                   -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-kicker">Implicaciones</div>
+      <h2 class="section-title">Riesgo hídrico por región</h2>
+      <p class="section-desc">
+        Señal derivada de la fase ENSO actual y la correlación histórica ONI–precipitación.
+        Señal estadística — no pronóstico operacional. Validar con NOAA/IRI.
+      </p>
+      <div class="region-nav" id="region-nav" role="tablist" aria-label="Selección de región"></div>
+      <div class="advice-box advice-box--none" id="advice-box" role="tabpanel" aria-live="polite">
+        <span class="loading">Seleccione una región…</span>
+      </div>
+      <p class="disclaimer" id="risk-disclaimer"></p>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- MAP                                                                 -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <section class="section section--alt">
+    <div class="container--wide">
+      <div class="section-kicker">Visualización geográfica</div>
+      <h2 class="section-title">Mapa de correlaciones regionales</h2>
+      <p class="section-desc">
+        Círculos proporcionales a |r Pearson| (mejor lag). Rojo = correlación positiva con ONI
+        (más lluvia en El Niño). Azul = correlación negativa (menos lluvia en El Niño).
+      </p>
+      <iframe
+        src="map.html"
+        id="map-iframe"
+        title="Mapa de correlaciones ENSO–precipitación en Argentina"
+        loading="lazy"
+        sandbox="allow-scripts allow-same-origin">
+      </iframe>
+    </div>
+  </section>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- FOOTER                                                              -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-updated">Datos actualizados: <span id="footer-updated">—</span></div>
+      <div class="footer-disclaimer" id="footer-disclaimer"></div>
+      <div class="footer-sources">
+        <strong style="color:#C8CAD0">Fuentes:</strong>&nbsp;
+        <a href="https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt" target="_blank" rel="noopener">ONI (NOAA CPC)</a> ·
+        <a href="https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii" target="_blank" rel="noopener">Niño 3.4 (NOAA)</a> ·
+        <a href="https://www.cpc.ncep.noaa.gov/data/indices/soi" target="_blank" rel="noopener">SOI (NOAA CPC)</a> ·
+        <a href="https://www.chc.ucsb.edu/data/chirps" target="_blank" rel="noopener">CHIRPS v2.0 (CHG/UCSB)</a> ·
+        <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">IRI ENSO Forecast</a>
+      </div>
+      <div class="footer-credit">
+        Desarrollado por <strong>Ing. Ammar Mahfoud</strong> &nbsp;·&nbsp;
+        FRIS — FloodRisk Intelligence System
+      </div>
+    </div>
+  </footer>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- SCRIPTS                                                             -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <script src="js/advice.js"></script>
+  <script>
+  /* ======================================================================
+     Main rendering script — all data from data/enso.json.
+     Every number rendered is read from the JSON produced by build.py.
+     ====================================================================== */
+
+  const ONI_MIN = -3.0;
+  const ONI_MAX =  3.0;
+  const SIG_THRESHOLD = 0.05;
+
+  /* Phase palette */
+  const PHASE_CLASS = {
+    'El Niño': { dot: 'dot-nino',  text: 'phase-nino',  card: 'card-value--nino'  },
+    'La Niña': { dot: 'dot-nina',  text: 'phase-nina',  card: 'card-value--nina'  },
+    'Neutral': { dot: 'dot-neutral', text: 'phase-neutral', card: 'card-value--neutral' },
+  };
+
+  /* ── Utility ────────────────────────────────────────────────────────── */
+  function fmt(v, digits, forceSign) {
+    const s = Math.abs(v).toFixed(digits);
+    const sign = v >= 0 ? '+' : '−';
+    return forceSign ? sign + s : (v < 0 ? '−' + s : s);
+  }
+
+  function fmtDate(isoStr) {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('es-AR', { year: 'numeric', month: 'short' });
+  }
+
+  function fmtTs(isoStr) {
+    if (!isoStr) return '—';
+    const d = new Date(isoStr);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  /* ── Phase: current state section ──────────────────────────────────── */
+  function renderHero(data) {
+    const c = data.current;
+    const phase = c.phase;
+    const pc = PHASE_CLASS[phase] || PHASE_CLASS['Neutral'];
+
+    /* Phase heading */
+    document.getElementById('hero-phase-text').textContent = phase;
+    document.getElementById('hero-phase').className = 'hero-phase ' + pc.text;
+    const dot = document.getElementById('hero-dot');
+    dot.className = 'hero-phase-dot ' + pc.dot;
+
+    /* Gradient marker */
+    const ratio = Math.min(1, Math.max(0, (c.oni_value - ONI_MIN) / (ONI_MAX - ONI_MIN)));
+    document.getElementById('scale-marker').style.left = (ratio * 100) + '%';
+
+    /* Cards */
+    document.getElementById('oni-season').textContent = c.oni_season;
+    const oniEl = document.getElementById('oni-value');
+    oniEl.textContent = fmt(c.oni_value, 2, true) + ' °C';
+    oniEl.className = 'card-value ' + pc.card;
+    document.getElementById('oni-date').textContent = 'Actualizado: ' + fmtDate(c.oni_date);
+
+    const n34El = document.getElementById('nino34-value');
+    n34El.textContent = fmt(c.nino34_value, 2, true) + ' °C';
+    n34El.className = 'card-value ' + pc.card;
+    document.getElementById('nino34-date').textContent = 'Actualizado: ' + fmtDate(c.nino34_date);
+
+    /* SOI: avoid display of "-0.0" */
+    let soiStr = fmt(c.soi_value, 1, true);
+    if (soiStr === '−0.0') soiStr = '+0.0';
+    const soiEl = document.getElementById('soi-value');
+    soiEl.textContent = soiStr;
+    soiEl.className = 'card-value card-value--neutral';
+    document.getElementById('soi-date').textContent = 'Actualizado: ' + fmtDate(c.soi_date);
+
+    /* Timestamps */
+    document.getElementById('last-updated').textContent = fmtTs(data.last_updated);
+    document.getElementById('footer-updated').textContent = data.last_updated;
+    document.getElementById('footer-disclaimer').textContent = data.disclaimer;
+  }
+
+  /* ── ONI SVG chart ──────────────────────────────────────────────────── */
+  function renderOniChart(data) {
+    const svg = document.getElementById('oni-chart');
+    const series = data.oni_series;           /* full series               */
+    const episodes = data.episodes;           /* precomputed by build.py   */
+
+    if (!series || series.length === 0) {
+      svg.innerHTML = '<text x="50%" y="50%" text-anchor="middle" fill="#79818E" font-size="12">Sin datos ONI</text>';
+      return;
+    }
+
+    /* Chart geometry */
+    const W = 900, H = 220;
+    const PAD = { top: 24, right: 60, bottom: 36, left: 48 };
+    const plotW = W - PAD.left - PAD.right;
+    const plotH = H - PAD.top - PAD.bottom;
+
+    /* Domain */
+    const dates = series.map(d => new Date(d.date));
+    const tMin = dates[0].getTime();
+    const tMax = dates[dates.length - 1].getTime();
+    const vMin = -2.8, vMax = 2.8;
+
+    const xScale = t => PAD.left + (t - tMin) / (tMax - tMin) * plotW;
+    const yScale = v => PAD.top + (1 - (v - vMin) / (vMax - vMin)) * plotH;
+    const y0 = yScale(0);
+    const yNino = yScale(0.5);
+    const yNina = yScale(-0.5);
+
+    let html = '';
+
+    /* ── Episode bands ─────────────────────────────────────────────────── */
+    episodes.forEach(ep => {
+      const x1 = xScale(new Date(ep.start).getTime());
+      const x2 = xScale(new Date(ep.end).getTime());
+      const isNino = ep.type === 'El Niño';
+      const fill = isNino ? '#C2382A' : '#2A55D0';
+      const fillY = isNino ? yNino : PAD.top;
+      const fillH = isNino ? (plotH + PAD.top - yNino) : (yNina - PAD.top);
+      html += `<rect x="${x1.toFixed(1)}" y="${fillY.toFixed(1)}" width="${Math.max(0,(x2-x1)).toFixed(1)}" height="${fillH.toFixed(1)}" fill="${fill}" opacity="0.12"/>`;
+    });
+
+    /* ── Threshold band fills (always-on subtle shading) ───────────────── */
+    html += `<rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${(yNino - PAD.top).toFixed(1)}" fill="#C2382A" opacity="0.04"/>`;
+    html += `<rect x="${PAD.left}" y="${yNina.toFixed(1)}" width="${plotW}" height="${(PAD.top + plotH - yNina).toFixed(1)}" fill="#2A55D0" opacity="0.04"/>`;
+
+    /* ── Threshold lines ─────────────────────────────────────────────────  */
+    const dashArr = '4 3';
+    html += `<line x1="${PAD.left}" y1="${yNino.toFixed(1)}" x2="${W - PAD.right}" y2="${yNino.toFixed(1)}" stroke="#C2382A" stroke-width="1" stroke-dasharray="${dashArr}" opacity="0.7"/>`;
+    html += `<line x1="${PAD.left}" y1="${yNina.toFixed(1)}" x2="${W - PAD.right}" y2="${yNina.toFixed(1)}" stroke="#2A55D0" stroke-width="1" stroke-dasharray="${dashArr}" opacity="0.7"/>`;
+    html += `<line x1="${PAD.left}" y1="${y0.toFixed(1)}" x2="${W - PAD.right}" y2="${y0.toFixed(1)}" stroke="#C0C4CC" stroke-width="0.8"/>`;
+
+    /* Threshold labels */
+    html += `<text x="${(W - PAD.right + 4).toFixed(1)}" y="${(yNino + 4).toFixed(1)}" font-family="IBM Plex Mono,monospace" font-size="8" fill="#C2382A">+0.5</text>`;
+    html += `<text x="${(W - PAD.right + 4).toFixed(1)}" y="${(yNina + 4).toFixed(1)}" font-family="IBM Plex Mono,monospace" font-size="8" fill="#2A55D0">−0.5</text>`;
+
+    /* ── ONI line ───────────────────────────────────────────────────────── */
+    const pts = series.map((d, i) =>
+      `${xScale(dates[i].getTime()).toFixed(1)},${yScale(d.oni).toFixed(1)}`
+    ).join(' ');
+    html += `<polyline points="${pts}" fill="none" stroke="#14161A" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>`;
+
+    /* ── "You are here" marker ──────────────────────────────────────────── */
+    const last = series[series.length - 1];
+    const lx = xScale(dates[dates.length - 1].getTime());
+    const ly = yScale(last.oni);
+    const mc = last.oni >= 0.5 ? '#C2382A' : (last.oni <= -0.5 ? '#2A55D0' : '#4A4E58');
+    html += `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="5" fill="${mc}" stroke="#FFFFFF" stroke-width="2"/>`;
+    html += `<text x="${(lx + 8).toFixed(1)}" y="${(ly + 4).toFixed(1)}" font-family="IBM Plex Mono,monospace" font-size="9" fill="${mc}">${fmt(last.oni, 2, true)}</text>`;
+
+    /* ── X-axis: year labels ────────────────────────────────────────────── */
+    const firstYear = new Date(tMin).getFullYear();
+    const lastYear  = new Date(tMax).getFullYear();
+    const yearStep  = firstYear < 1980 ? 10 : 5;
+    for (let y = Math.ceil(firstYear / yearStep) * yearStep; y <= lastYear; y += yearStep) {
+      const tx = xScale(new Date(y, 0, 1).getTime());
+      if (tx < PAD.left || tx > W - PAD.right) continue;
+      html += `<line x1="${tx.toFixed(1)}" y1="${(PAD.top + plotH).toFixed(1)}" x2="${tx.toFixed(1)}" y2="${(PAD.top + plotH + 4).toFixed(1)}" stroke="#C0C4CC" stroke-width="1"/>`;
+      html += `<text x="${tx.toFixed(1)}" y="${(PAD.top + plotH + 14).toFixed(1)}" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="#79818E">${y}</text>`;
+    }
+
+    /* ── Y-axis: value labels ───────────────────────────────────────────── */
+    [-2, -1, 0, 1, 2].forEach(v => {
+      const ty = yScale(v);
+      html += `<line x1="${(PAD.left - 3).toFixed(1)}" y1="${ty.toFixed(1)}" x2="${PAD.left.toFixed(1)}" y2="${ty.toFixed(1)}" stroke="#C0C4CC" stroke-width="1"/>`;
+      html += `<text x="${(PAD.left - 6).toFixed(1)}" y="${(ty + 3.5).toFixed(1)}" text-anchor="end" font-family="IBM Plex Mono,monospace" font-size="9" fill="#79818E">${v > 0 ? '+' : ''}${v}</text>`;
+    });
+
+    /* ── Chart border ───────────────────────────────────────────────────── */
+    html += `<rect x="${PAD.left}" y="${PAD.top}" width="${plotW}" height="${plotH}" fill="none" stroke="#E0E0DC" stroke-width="0.8"/>`;
+
+    svg.innerHTML = html;
+
+    /* Caption */
+    const cc = data.correlation_cache;
+    const period = cc && cc.start_year ? `${cc.start_year}–${cc.end_year}` : '1981–presente';
+    document.getElementById('oni-chart-caption').textContent =
+      `ONI histórico (NOAA CPC). Período correlaciones: CHIRPS ${period}. ` +
+      `Bandas = episodios confirmados NOAA (≥${5} temporadas consecutivas). ` +
+      `Valores: fuente NOAA CPC — no constituye declaración oficial.`;
+  }
+
+  /* ── Correlation heatmap ────────────────────────────────────────────── */
+  function _rToColor(r, isSig) {
+    /* Map r in [-0.6, 0.6] to a red/white/blue scale */
+    const abs = Math.min(1, Math.abs(r) / 0.6);
+    const alpha = isSig ? (0.15 + abs * 0.6) : (0.05 + abs * 0.15);
+    if (r > 0) return `rgba(194,56,42,${alpha.toFixed(2)})`;   /* nino red  */
+    if (r < 0) return `rgba(42,85,208,${alpha.toFixed(2)})`;   /* nina blue */
+    return `rgba(200,200,200,${alpha.toFixed(2)})`;
+  }
+
+  function renderCorrelationHeatmap(data) {
+    const container = document.getElementById('corr-heatmap');
+    const corrs = data.correlations;
+    const regionOrder = data.region_order;
+    const lags = [0, 1, 2, 3];
+
+    /* Index by region+lag for O(1) lookup */
+    const idx = {};
+    corrs.forEach(c => { idx[`${c.region}|${c.lag}`] = c; });
+
+    let html = '<table class="heatmap-table" role="table"><thead><tr>';
+    html += '<th class="th-region" scope="col">Región</th>';
+    lags.forEach(l => {
+      html += `<th scope="col">Lag ${l}m</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    regionOrder.forEach(region => {
+      html += `<tr><td class="td-region">${region}</td>`;
+      lags.forEach(l => {
+        const c = idx[`${region}|${l}`];
+        if (!c) { html += '<td>—</td>'; return; }
+        const isSig = c.pearson_p < SIG_THRESHOLD;
+        const bg = _rToColor(c.pearson_r, isSig);
+        const rStr = (c.pearson_r >= 0 ? '+' : '') + c.pearson_r.toFixed(3);
+        const title = `r=${rStr}, p=${c.pearson_p.toFixed(4)}, n=${c.n_obs}`;
+        html += `<td style="background:${bg}" title="${title}">`;
+        html += `<span class="cell-r">${rStr}<sup class="cell-stars">${c.pearson_stars}</sup></span>`;
+        if (!isSig) html += `<span class="cell-ns">n.s.</span>`;
+        html += '</td>';
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+
+    const cc = data.correlation_cache;
+    const period = cc && cc.start_year ? `${cc.start_year}–${cc.end_year}` : '1981–pres.';
+    const computed = cc && cc.computed_at ? cc.computed_at.slice(0, 10) : '—';
+    document.getElementById('corr-caption').textContent =
+      `CHIRPS v2.0, ${period}. Calculado: ${computed}. ` +
+      `Celdas resaltadas = Pearson p<0.05. "n.s." = no significativo. ` +
+      `Fuente única: CHIRPS (validación ERA5 pendiente, ver BACKLOG).`;
+  }
+
+  /* ── Risk / advice section ──────────────────────────────────────────── */
+  function renderRiskSection(data) {
+    const regionOrder = data.region_order;
+    const corrs = data.correlations;
+    const phase  = data.current.phase;
+    const nav    = document.getElementById('region-nav');
+    const box    = document.getElementById('advice-box');
+
+    /* Build per-region best-correlation index */
+    const bestByRegion = {};
+    regionOrder.forEach(region => {
+      const rows = corrs.filter(c => c.region === region);
+      const sig  = rows.filter(c => c.pearson_p < SIG_THRESHOLD);
+      const pool = sig.length > 0 ? sig : rows;
+      if (pool.length === 0) { bestByRegion[region] = null; return; }
+      bestByRegion[region] = pool.reduce((a, b) =>
+        Math.abs(a.pearson_r) >= Math.abs(b.pearson_r) ? a : b
+      );
+    });
+
+    /* Render navigation buttons */
+    nav.innerHTML = '';
+    regionOrder.forEach((region, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'region-btn' + (i === 0 ? ' active' : '');
+      btn.textContent = region;
+      btn.setAttribute('role', 'tab');
+      btn.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      btn.dataset.region = region;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.region-btn').forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        showAdvice(region);
+      });
+      nav.appendChild(btn);
+    });
+
+    function showAdvice(region) {
+      const best = bestByRegion[region];
+      const result = getRegionAdvice(region, phase, best);
+
+      box.className = 'advice-box advice-box--' + result.signal;
+      const meta = best
+        ? `<div class="advice-meta">` +
+          `Mejor lag: ${best.lag}m · r=${best.pearson_r >= 0 ? '+' : ''}${best.pearson_r.toFixed(4)}${best.pearson_stars} · ` +
+          `p=${best.pearson_p.toFixed(4)} · n=${best.n_obs}` +
+          `</div>`
+        : '';
+      box.innerHTML = `<div>${result.text}</div>${meta}`;
+    }
+
+    /* Show first region on load */
+    if (regionOrder.length > 0) showAdvice(regionOrder[0]);
+
+    /* Risk section disclaimer */
+    document.getElementById('risk-disclaimer').textContent =
+      'Señal probabilística — no certeza. Solo regiones con Pearson p<0.05 muestran ' +
+      'señal direccional. Validar con pronóstico oficial NOAA/IRI antes de tomar decisiones. ' +
+      data.disclaimer;
+  }
+
+  /* ── Staleness check ────────────────────────────────────────────────── */
+  function checkStaleness(data) {
+    const now = Date.now();
+    const updated = new Date(data.last_updated).getTime();
+    const ageDays = (now - updated) / (1000 * 60 * 60 * 24);
+    if (ageDays > 45) {
+      document.getElementById('stale-warning').classList.add('visible');
+    }
+  }
+
+  /* ── Main entry point ───────────────────────────────────────────────── */
+  async function init() {
+    try {
+      const resp = await fetch('data/enso.json');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+
+      renderHero(data);
+      renderOniChart(data);
+      renderCorrelationHeatmap(data);
+      renderRiskSection(data);
+      checkStaleness(data);
+
+    } catch (err) {
+      console.error('Error loading enso.json:', err);
+      document.body.insertAdjacentHTML('afterbegin',
+        `<div class="container"><div class="error-msg" role="alert">
+          Error cargando datos: ${err.message}. Verificar que data/enso.json existe.
+        </div></div>`
+      );
+    }
+  }
+
+  init();
+  </script>
+</body>
+</html>

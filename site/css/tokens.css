@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Design tokens — Argentina ENSO Tracker v2
+   Editorial bulletin palette (white background).
+
+   Fonts loaded in <head>:
+     Libre Franklin (body) · IBM Plex Mono (data / code)
+   Via Google Fonts.
+   ========================================================================== */
+
+:root {
+  /* ── Colour palette ───────────────────────────────────────────────────── */
+  --color-bg:        #FFFFFF;
+  --color-bg-alt:    #F5F5F3;       /* alternate section background          */
+  --color-ink:       #14161A;       /* primary text                          */
+  --color-ink-2:     #4A4E58;       /* secondary / captions                  */
+  --color-ink-3:     #79818E;       /* tertiary / metadata                   */
+  --color-rule:      #E0E0DC;       /* horizontal rules, borders             */
+
+  /* Phase colours */
+  --color-nino:      #C2382A;       /* El Niño red                           */
+  --color-nino-bg:   #FDF0EF;       /* El Niño tinted background             */
+  --color-nina:      #2A55D0;       /* La Niña blue                          */
+  --color-nina-bg:   #EEF2FB;       /* La Niña tinted background             */
+  --color-neutral:   #79818E;       /* Neutral gray                          */
+  --color-neutral-bg:#F2F2F0;       /* Neutral tinted background             */
+
+  /* Accent */
+  --color-accent:    #1A3F8F;       /* dark blue for links / headers         */
+  --color-accent-2:  #D4A01A;       /* amber — used for warnings             */
+
+  /* Significance highlight */
+  --color-sig-bg:    #FFFBE6;       /* highlighted significant cell bg        */
+
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --font-body:    'Libre Franklin', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+
+  --text-xs:   0.72rem;   /* 11.5px */
+  --text-sm:   0.82rem;   /* 13px   */
+  --text-base: 0.95rem;   /* 15px   */
+  --text-lg:   1.1rem;    /* 17.6px */
+  --text-xl:   1.3rem;
+  --text-2xl:  1.7rem;
+  --text-3xl:  2.4rem;
+  --text-hero: 3.2rem;
+
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semi:    600;
+  --weight-bold:    700;
+  --weight-black:   900;
+
+  --leading-tight:  1.2;
+  --leading-snug:   1.4;
+  --leading-normal: 1.6;
+  --leading-loose:  1.85;
+
+  /* ── Spacing ──────────────────────────────────────────────────────────── */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+
+  /* ── Layout ───────────────────────────────────────────────────────────── */
+  --max-width: 860px;
+  --max-width-wide: 1100px;
+
+  /* ── Borders & radius ─────────────────────────────────────────────────── */
+  --radius-sm:  3px;
+  --radius-md:  6px;
+  --radius-lg: 10px;
+
+  /* ── Shadows ──────────────────────────────────────────────────────────── */
+  --shadow-card:  0 1px 4px rgba(20,22,26,0.08);
+  --shadow-hover: 0 4px 16px rgba(20,22,26,0.12);
+
+  /* ── Transitions ──────────────────────────────────────────────────────── */
+  --transition: 150ms ease;
+}
+
+/* ── Gradient scale (ENSO hero) ─────────────────────────────────────────── */
+:root {
+  --gradient-enso: linear-gradient(
+    to right,
+    var(--color-nina)   0%,
+    #7BA8E8             30%,
+    #D4D4D0             50%,
+    #E89090             70%,
+    var(--color-nino)  100%
+  );
+}
