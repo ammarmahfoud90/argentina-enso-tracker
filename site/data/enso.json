@@ -5,8 +5,8 @@
     "oni_date": "2026-05-15",
     "nino34_value": 1.44,
     "nino34_date": "2026-06-15",
-    "soi_value": -0.9,
-    "soi_date": "2026-05-15",
+    "soi_value": -1.4,
+    "soi_date": "2026-06-15",
     "phase": "Neutral",
     "phase_source": "ONI (NOAA CPC)"
   },
@@ -6461,6 +6461,6 @@
       }
     ]
   },
-  "last_updated": "2026-08-04T09:39:12Z",
+  "last_updated": "2026-08-05T09:37:45Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
