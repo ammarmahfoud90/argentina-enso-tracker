@@ -49,22 +49,17 @@ nivel de rigor percibido por clientes institucionales.
 
 ---
 
-## 3. Parseo del pronóstico IRI / NOAA
+## 3. ~~Parseo del pronóstico IRI / NOAA~~ (PARCIALMENTE RESUELTO)
 
-**Problema:** la sección 2 del dashboard linkea a fuentes externas
-porque IRI y NOAA publican pronósticos como imagen/PDF, no como datos
-estructurados. El cliente tiene que navegar afuera.
+**Estado:** Implementado en Phase 2.3 (agosto 2026). El dashboard ahora
+embebe las visualizaciones SVG del IRI/CCSR directamente (histograma de
+probabilidades + pluma de modelos). URLs auto-calculadas por fecha.
 
-**Implementación v2:** explorar OCR del plume IRI (imagen con
-probabilidades por fase y trimestre) o scraping controlado del
-advisory NOAA mensual. Incluir validación manual humana antes de
-incorporar a un entregable pago.
+**Pendiente v2:** IRI no expone datos como JSON/API — las probabilidades
+numéricas por fase siguen sin ser parseables. Para reportes comerciales,
+considerar OCR o scraping controlado con validación manual.
 
-**Riesgo:** si la fuente cambia formato, el parser se rompe. Necesita
-monitoreo.
-
-**Valor comercial:** permite integrar pronóstico + correlaciones
-históricas en un solo entregable, que es lo que justifica el precio.
+**Valor comercial:** ya parcialmente cubierto por la integración visual.
 
 ---
 
@@ -122,6 +117,5 @@ análisis" a "consultoría de decisión".
 
 ---
 
-*Última actualización: 2026-04-19*
-*Próxima revisión: al cerrar primer cliente o a fin de mayo 2026,
-lo que ocurra primero.*
+*Ultima actualizacion: 2026-08-26*
+*Proxima revision: al cerrar primer cliente.*

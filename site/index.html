@@ -5,6 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Argentina ENSO Impact Tracker</title>
   <meta name="description" content="Estado del ENSO y correlación histórica con precipitación en 5 regiones argentinas. Datos NOAA CPC y CHIRPS v2.0.">
+  <meta property="og:title" content="Argentina ENSO Impact Tracker">
+  <meta property="og:description" content="Estado ENSO en tiempo real y correlación histórica con precipitación en 5 regiones argentinas.">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Argentina ENSO Impact Tracker">
+  <meta name="twitter:description" content="Estado ENSO en tiempo real y correlación histórica con precipitación en 5 regiones argentinas.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -131,12 +137,20 @@
     @media(max-width:600px){
       .page{padding:0 16px 60px;}
       .masthead h1{font-size:32px;}
+      .masthead{gap:12px;padding:24px 0 16px;}
       .hero-phase{font-size:28px;}
+      .hero{gap:28px;padding:28px 0 24px;}
       .indicator-value{font-size:36px;}
+      .indicators{grid-template-columns:1fr;}
+      .section h2{font-size:22px;}
+      .chart-layout{flex-direction:column;gap:20px;}
+      .chart-inset-wrap{flex:1 1 auto;min-width:0;}
       .forecast-link-row{grid-template-columns:1fr auto;gap:8px;}
       .forecast-source-name,.forecast-tag,.forecast-desc{display:block;}
       .forecast-tag{margin-top:4px;}
       .forecast-desc{display:none;}
+      .risk-grid{grid-template-columns:1fr;gap:24px;}
+      .risk-map-iframe{aspect-ratio:1/1;}
     }
   </style>
 </head>
@@ -311,6 +325,20 @@
         <span class="forecast-cta">Ver →</span>
       </a>
     </div>
+  </section>
+
+  <!-- 5b. Historical ENSO event comparison -->
+  <section class="section" style="animation:omFadeUp .55s ease .33s backwards;">
+    <div class="section-header">
+      <h2>Comparación histórica</h2>
+      <div class="section-meta">Eventos seleccionados vs episodio actual</div>
+    </div>
+    <p class="section-desc section-desc-wide">Superposición del ONI actual sobre trayectorias de episodios ENSO históricos notables. Cada curva se alinea al mes de inicio del episodio. Permite evaluar si la evolución actual sigue un patrón similar a eventos pasados.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+      <button class="range-btn active" data-compare="nino" id="compare-btn-nino">El Niño históricos</button>
+      <button class="range-btn" data-compare="nina" id="compare-btn-nina">La Niña históricos</button>
+    </div>
+    <div id="compare-plotly" style="width:100%;height:360px;" role="img" aria-label="Comparación del episodio ENSO actual con eventos históricos"></div>
   </section>
 
   <!-- 6. Correlation heatmap -->
@@ -656,6 +684,122 @@ function soiTrend(soi24m) {
   if (avg <= -0.5) return { label: 'Tendencia negativa', color: '#DC8E80' };
   if (avg >= 0.5) return { label: 'Tendencia positiva', color: '#8098E0' };
   return { label: 'Neutral', color: '#79818E' };
+}
+
+/* ── Historical event comparison (Plotly) ── */
+const NOTABLE_EVENTS = {
+  nino: [
+    { label: '1997–98 (muy fuerte)', startYear: 1997, startMonth: 5 },
+    { label: '2015–16 (muy fuerte)', startYear: 2015, startMonth: 3 },
+    { label: '1982–83 (muy fuerte)', startYear: 1982, startMonth: 4 },
+    { label: '2009–10 (moderado)',   startYear: 2009, startMonth: 6 },
+    { label: '2002–03 (moderado)',   startYear: 2002, startMonth: 5 },
+  ],
+  nina: [
+    { label: '1988–89 (fuerte)',     startYear: 1988, startMonth: 5 },
+    { label: '1999–00 (fuerte)',     startYear: 1999, startMonth: 5 },
+    { label: '2010–11 (fuerte)',     startYear: 2010, startMonth: 6 },
+    { label: '2020–23 (triple)',     startYear: 2020, startMonth: 4 },
+    { label: '2007–08 (moderada)',   startYear: 2007, startMonth: 7 },
+  ],
+};
+
+function buildComparisonChart(divId, oniSeries, episodes, compareType) {
+  const events = NOTABLE_EVENTS[compareType] || [];
+  const traces = [];
+  const historicalColors = ['#A7AEBB', '#C7CCD6', '#D4D8DF', '#B8BDC7', '#DDE0E6'];
+
+  /* Extract ONI values for a given start point, aligned to month 0 */
+  function extractEpisode(startYear, startMonth, maxMonths) {
+    const months = [];
+    const values = [];
+    for (const pt of oniSeries) {
+      const d = new Date(pt.date + 'T12:00:00Z');
+      const yr = d.getUTCFullYear();
+      const mo = d.getUTCMonth() + 1;
+      const offset = (yr - startYear) * 12 + (mo - startMonth);
+      if (offset >= 0 && offset <= maxMonths) {
+        months.push(offset);
+        values.push(pt.oni);
+      }
+    }
+    return { months, values };
+  }
+
+  /* Historical events */
+  events.forEach((ev, i) => {
+    const ep = extractEpisode(ev.startYear, ev.startMonth, 24);
+    if (ep.months.length < 3) return;
+    traces.push({
+      x: ep.months, y: ep.values,
+      type: 'scatter', mode: 'lines',
+      line: { color: historicalColors[i % historicalColors.length], width: 1.5 },
+      name: ev.label,
+      hovertemplate: `<b>${ev.label}</b><br>Mes %{x}: ONI %{y:+.2f}<extra></extra>`,
+    });
+  });
+
+  /* Current episode — find the most recent episode of matching type */
+  const phaseType = compareType === 'nino' ? 'El Niño' : 'La Niña';
+  const recentEps = episodes.filter(e => e.type === phaseType);
+  let currentStart = null;
+  if (recentEps.length > 0) {
+    const lastEp = recentEps[recentEps.length - 1];
+    const d = new Date(lastEp.start + 'T12:00:00Z');
+    currentStart = { year: d.getUTCFullYear(), month: d.getUTCMonth() + 1 };
+  }
+
+  /* Fallback: use last 18 months if no matching episode */
+  if (!currentStart) {
+    const lastPt = oniSeries[oniSeries.length - 1];
+    const d = new Date(lastPt.date + 'T12:00:00Z');
+    currentStart = { year: d.getUTCFullYear() - 1, month: d.getUTCMonth() + 1 };
+  }
+
+  const current = extractEpisode(currentStart.year, currentStart.month, 24);
+  if (current.months.length > 0) {
+    traces.push({
+      x: current.months, y: current.values,
+      type: 'scatter', mode: 'lines+markers',
+      line: { color: compareType === 'nino' ? '#C2382A' : '#2A55D0', width: 2.5 },
+      marker: { size: 4 },
+      name: `Actual (${currentStart.year})`,
+      hovertemplate: `<b>Actual</b><br>Mes %{x}: ONI %{y:+.2f}<extra></extra>`,
+    });
+  }
+
+  const layout = {
+    margin: { t: 10, r: 20, b: 50, l: 50 },
+    xaxis: {
+      title: { text: 'Meses desde inicio del episodio', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      gridcolor: '#E4E7EC',
+    },
+    yaxis: {
+      title: { text: 'ONI (°C)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      gridcolor: '#E4E7EC', zeroline: true, zerolinecolor: '#C7CCD6',
+    },
+    shapes: [
+      { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0.5, y1: 0.5,
+        line: { color: '#C2382A', width: 1, dash: 'dot' } },
+      { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -0.5, y1: -0.5,
+        line: { color: '#2A55D0', width: 1, dash: 'dot' } },
+    ],
+    legend: { font: { family: 'IBM Plex Mono', size: 11, color: '#555C68' }, x: 0, y: 1 },
+    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    hovermode: 'closest',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+    displaylogo: false,
+  };
+
+  Plotly.newPlot(divId, traces, layout, config);
 }
 
 /* ── Subsurface temperature heatmap (Plotly) ── */
@@ -1058,6 +1202,18 @@ async function main() {
         `${MONTHS_ES[pStart.getUTCMonth()]} – ${MONTHS_ES[pEnd.getUTCMonth()]} ${pEnd.getUTCFullYear()} · TAO/TRITON`;
     }
   }
+
+  /* ── Historical comparison ── */
+  let currentCompare = 'nino';
+  function setCompare(type) {
+    currentCompare = type;
+    buildComparisonChart('compare-plotly', data.oni_series, data.episodes, type);
+    document.getElementById('compare-btn-nino').classList.toggle('active', type === 'nino');
+    document.getElementById('compare-btn-nina').classList.toggle('active', type === 'nina');
+  }
+  document.getElementById('compare-btn-nino').addEventListener('click', () => setCompare('nino'));
+  document.getElementById('compare-btn-nina').addEventListener('click', () => setCompare('nina'));
+  setCompare('nino');
 
   /* ── Heatmap ── */
   renderHeatmap(data.correlations, regionOrder);

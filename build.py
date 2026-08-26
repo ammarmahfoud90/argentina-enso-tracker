@@ -333,6 +333,23 @@ def build_payload() -> dict:
 
 
 def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Build enso.json for the Argentina ENSO Tracker")
+    parser.add_argument(
+        "--force-recompute", action="store_true",
+        help="Bypass HTTP cache — fetch fresh data from all sources",
+    )
+    args = parser.parse_args()
+
+    if args.force_recompute:
+        from src.config import CACHE_DIR
+        import shutil
+        cache_dir = Path(CACHE_DIR)
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+            logger.info("Cache cleared: %s", cache_dir)
+
     logger.info("=== build.py: start ===")
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
