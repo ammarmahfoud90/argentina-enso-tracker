@@ -14,7 +14,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8" defer></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html{scroll-behavior:smooth;}
@@ -1115,13 +1115,14 @@ async function main() {
   document.getElementById('soi-note').textContent = `Valores negativos consistentes con condiciones El Niño en debilitamiento.`;
 
   /* ── ONI Chart (Plotly) ── */
+  const plotlyReady = typeof Plotly !== 'undefined';
   let currentDesde = 1970;
 
   function setRange(desde) {
     currentDesde = desde;
     const lastYear = new Date(data.oni_series[data.oni_series.length - 1].date + 'T12:00:00Z').getUTCFullYear();
     document.getElementById('chart-range-label').textContent = `${desde}–${lastYear} · mensual · NOAA CPC`;
-    buildOniPlotly('oni-plotly', data.oni_series, data.episodes, desde);
+    if (plotlyReady) buildOniPlotly('oni-plotly', data.oni_series, data.episodes, desde);
   }
 
   document.querySelectorAll('.range-btn').forEach(btn => {
@@ -1191,7 +1192,7 @@ async function main() {
   }
 
   /* ── Subsurface temperature heatmap ── */
-  if (data.subsurface) {
+  if (data.subsurface && plotlyReady) {
     const shown = buildSubsurfaceHeatmap('subsurface-plotly', data.subsurface);
     if (shown) {
       document.getElementById('subsurface-section').style.display = '';
@@ -1207,7 +1208,7 @@ async function main() {
   let currentCompare = 'nino';
   function setCompare(type) {
     currentCompare = type;
-    buildComparisonChart('compare-plotly', data.oni_series, data.episodes, type);
+    if (plotlyReady) buildComparisonChart('compare-plotly', data.oni_series, data.episodes, type);
     document.getElementById('compare-btn-nino').classList.toggle('active', type === 'nino');
     document.getElementById('compare-btn-nina').classList.toggle('active', type === 'nina');
   }
@@ -1296,10 +1297,32 @@ async function main() {
   }
 }
 
-main().catch(err => {
-  document.getElementById('loading').textContent = 'Error: ' + err.message;
-  console.error(err);
-});
+/* Wait for DOM + deferred scripts (Plotly) before running */
+function boot() {
+  main().catch(err => {
+    document.getElementById('loading').textContent = 'Error: ' + err.message;
+    console.error(err);
+  });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  /* If Plotly hasn't loaded yet, wait a bit */
+  if (typeof Plotly === 'undefined') {
+    let attempts = 0;
+    const waitForPlotly = setInterval(() => {
+      attempts++;
+      if (typeof Plotly !== 'undefined') { clearInterval(waitForPlotly); boot(); }
+      else if (attempts > 50) {
+        clearInterval(waitForPlotly);
+        document.getElementById('loading').textContent = 'Error: no se pudo cargar Plotly.js. Recargue la página.';
+      }
+    }, 200);
+  } else {
+    boot();
+  }
+}
 </script>
 </body>
 </html>
