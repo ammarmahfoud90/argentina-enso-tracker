@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html{scroll-behavior:smooth;}
@@ -232,7 +233,7 @@
     </div>
     <div class="chart-layout">
       <div class="chart-main">
-        <svg id="oni-svg" viewBox="0 0 1120 250" style="width:100%;height:auto;display:block;" role="img" aria-label="Serie histórica del Índice ONI (Oceanic Niño Index) desde el año seleccionado hasta la fecha más reciente disponible"></svg>
+        <div id="oni-plotly" style="width:100%;height:320px;" role="img" aria-label="Serie histórica del Índice ONI (Oceanic Niño Index) desde el año seleccionado hasta la fecha más reciente disponible"></div>
       </div>
       <div class="chart-inset-wrap">
         <div class="inset-label">Últimos 24 meses</div>
@@ -260,27 +261,53 @@
     <svg id="soi-svg" viewBox="0 0 1120 220" style="width:100%;height:auto;display:block;" role="img" aria-label="Serie de los últimos 24 meses del Índice de Oscilación Sur (SOI)"></svg>
   </section>
 
-  <!-- 5. Forecast links -->
+  <!-- 4c. Subsurface temperature cross-section -->
+  <section class="section" id="subsurface-section" style="display:none;animation:omFadeUp .55s ease .29s backwards;">
+    <div class="section-header">
+      <h2>Temperatura subsuperficial ecuatorial</h2>
+      <div class="section-meta" id="subsurface-meta"></div>
+    </div>
+    <p class="section-desc section-desc-wide">Perfil de temperatura (°C) a lo largo del Pacífico ecuatorial (0° latitud, 165°E–95°W) hasta 300 m de profundidad. La inclinación de la termoclina revela el estado ENSO: durante El Niño, aguas cálidas se acumulan en el Pacífico oriental; durante La Niña, la termoclina se eleva en el este. Fuente: boyas TAO/TRITON (NOAA PMEL).</p>
+    <div id="subsurface-plotly" style="width:100%;height:400px;" role="img" aria-label="Heatmap de temperatura subsuperficial del Pacífico ecuatorial, profundidad vs longitud"></div>
+  </section>
+
+  <!-- 5. Forecast section — IRI plume + links -->
   <section class="section" style="animation:omFadeUp .55s ease .3s backwards;">
-    <h2 style="margin-bottom:6px;">Pronóstico ENSO oficial</h2>
-    <p class="section-desc section-desc-wide">Probabilidades por fase para los próximos trimestres. El pronóstico operacional lo emiten NOAA e IRI — consultar fuentes oficiales directamente.</p>
-    <div class="forecast-links">
+    <div class="section-header">
+      <h2>Pronóstico ENSO</h2>
+      <div class="section-meta" id="forecast-meta"></div>
+    </div>
+    <p class="section-desc section-desc-wide">Probabilidades por fase para los próximos trimestres (IRI/CCSR) y predicciones individuales de modelos climáticos (pluma ENSO). Fuente: International Research Institute, Columbia University.</p>
+
+    <!-- IRI forecast visualizations -->
+    <div id="iri-forecast-panel" style="display:none;">
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
+        <button class="range-btn active" data-forecast="probs" id="forecast-btn-probs">Probabilidades</button>
+        <button class="range-btn" data-forecast="plume" id="forecast-btn-plume">Pluma de modelos</button>
+      </div>
+      <div id="iri-forecast-container" style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
+        <img id="iri-forecast-img" alt="IRI ENSO forecast" style="max-width:100%;height:auto;display:inline-block;" crossorigin="anonymous">
+        <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR — Columbia University. <a id="iri-forecast-link" href="" target="_blank" rel="noopener">Ver en IRI →</a></p>
+      </div>
+    </div>
+
+    <div class="forecast-links" style="margin-top:20px;">
       <a class="forecast-link-row" href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml" target="_blank" rel="noopener">
         <span class="forecast-source-name">NOAA ENSO Advisory</span>
         <span class="forecast-tag" style="color:#1E3FAE;">Mensual</span>
-        <span class="forecast-desc">Diagnóstico y pronóstico oficial del NOAA Climate Prediction Center, con probabilidades por fase para los próximos trimestres.</span>
+        <span class="forecast-desc">Diagnóstico y pronóstico oficial del NOAA Climate Prediction Center.</span>
         <span class="forecast-cta">Ver →</span>
       </a>
       <a class="forecast-link-row" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">
         <span class="forecast-source-name">IRI ENSO Forecast</span>
         <span class="forecast-tag" style="color:#C2382A;">Probabilístico</span>
-        <span class="forecast-desc">Pronóstico del International Research Institute (Columbia University) — pluma de probabilidades por trimestre.</span>
+        <span class="forecast-desc">Pronóstico completo del IRI — probabilidades, pluma de modelos, análisis.</span>
         <span class="forecast-cta">Ver →</span>
       </a>
       <a class="forecast-link-row" href="https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php" target="_blank" rel="noopener">
         <span class="forecast-source-name">NOAA ONI — series</span>
         <span class="forecast-tag" style="color:#79818E;">Histórico</span>
-        <span class="forecast-desc">Serie histórica del Oceanic Niño Index y valores proyectados publicados por NOAA CPC.</span>
+        <span class="forecast-desc">Serie histórica del Oceanic Niño Index y valores proyectados.</span>
         <span class="forecast-cta">Ver →</span>
       </a>
     </div>
@@ -404,85 +431,108 @@ function countUp(el, target, fmt, duration = 1100) {
   requestAnimationFrame(tick);
 }
 
-/* ── ONI chart ── */
-function buildOniChart(svgEl_, series, episodes, desde) {
-  svgEl_.innerHTML = '';
-  const tMin = desde;
-  const lastPt = series[series.length - 1];
-  const tMax = d2y(lastPt.date) + 1/24;
-  const X = t => oniX(t, tMin, tMax);
-  const Y = v => oniY(v);
-
-  /* Episode bands */
-  for (const ep of episodes) {
-    const t0 = d2y(ep.start);
-    const t1 = d2y(ep.end) + 1/12;
-    if (t1 < tMin || t0 > tMax) continue;
-    const xa = Math.max(C.x0, X(Math.max(t0, tMin)));
-    const xb = Math.min(C.x1, X(Math.min(t1, tMax)));
-    if (xb <= xa) continue;
-    const fill = ep.type === 'El Niño' ? '#C2382A' : '#2A55D0';
-    svgEl('rect', { x: xa.toFixed(1), y: 10, width: Math.max(2, xb - xa).toFixed(1), height: 209, fill, opacity: 0.09, style: 'animation:omIn .7s ease 1.5s backwards' }, svgEl_);
-
-    /* Episode label for strong events */
-    const peak = series.filter(pt => { const t = d2y(pt.date); return t >= t0 && t <= t1; })
-      .reduce((m, pt) => Math.max(m, Math.abs(pt.oni)), 0);
-    const mid = ((xa + xb) / 2).toFixed(1);
-    if (peak >= 1.5 && (xb - xa) > 26) {
-      const yA = String(Math.floor(t0)).slice(-2);
-      const yB = String(Math.floor(t1)).slice(-2);
-      const label = yA === yB ? "'" + yA : "'" + yA + '–' + "'" + yB;
-      svgText(svgEl_, mid, 24, label, {
-        'text-anchor': 'middle', 'font-family': 'IBM Plex Mono', 'font-size': 10.5,
-        'font-weight': 600, fill, style: 'animation:omIn .5s ease 1.8s backwards'
-      });
-    }
-  }
-
-  /* Reference lines */
-  const Y05 = oniY(0.5).toFixed(1), Yn05 = oniY(-0.5).toFixed(1), Y0 = oniY(0).toFixed(1);
-  svgEl('line', { x1:44, y1:Y05, x2:1110, y2:Y05, stroke:'#C2382A', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.5 }, svgEl_);
-  svgEl('line', { x1:44, y1:Yn05, x2:1110, y2:Yn05, stroke:'#2A55D0', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.5 }, svgEl_);
-  svgEl('line', { x1:44, y1:Y0, x2:1110, y2:Y0, stroke:'#C7CCD6', 'stroke-width':1 }, svgEl_);
-
-  /* Y-axis labels */
-  const lAttrs = { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':11 };
-  svgText(svgEl_, 38, (parseFloat(Y05)+4).toFixed(0), '+0.5', { ...lAttrs, fill:'#C2382A' });
-  svgText(svgEl_, 38, (parseFloat(Yn05)+4).toFixed(0), '−0.5', { ...lAttrs, fill:'#2A55D0' });
-  svgText(svgEl_, 38, (parseFloat(Y0)+4).toFixed(0), '0', { ...lAttrs, fill:'#79818E' });
-
-  /* X-axis ticks */
-  const step = desde <= 1975 ? 10 : desde <= 2000 ? 5 : 2;
-  const startY = Math.ceil(desde / step) * step;
-  for (let yr = startY; yr <= 2026; yr += step) {
-    const tx = X(yr).toFixed(0);
-    if (tx < C.x0 - 5 || tx > C.x1 + 5) continue;
-    svgText(svgEl_, tx, 242, String(yr), { 'text-anchor':'middle', 'font-family':'IBM Plex Mono', 'font-size':11, fill:'#79818E' });
-  }
-
-  /* ONI path */
-  let d = '';
-  for (const pt of series) {
-    const t = d2y(pt.date);
-    if (t < tMin - 1/24) continue;
-    const px = X(t).toFixed(1), py = Y(pt.oni).toFixed(1);
-    d += d ? `L${px} ${py}` : `M${px} ${py}`;
-  }
-  const pathEl = svgEl('path', { d, fill:'none', stroke:'#14161A', 'stroke-width':'1.4' }, svgEl_);
-  const len = pathEl.getTotalLength ? pathEl.getTotalLength() : 4200;
-  pathEl.style.strokeDasharray = len;
-  pathEl.style.strokeDashoffset = len;
-  pathEl.style.animation = 'omDraw 1.5s ease-out 0.45s forwards';
-
-  /* Terminal dot + label */
-  const lx = X(d2y(lastPt.date)).toFixed(1);
-  const ly = Y(lastPt.oni).toFixed(1);
-  svgEl('circle', { cx:lx, cy:ly, r:4, fill:'#C2382A', style:'animation:omIn .4s ease 1.85s backwards' }, svgEl_);
-  const sign = lastPt.oni >= 0 ? '+' : '';
-  svgText(svgEl_, (parseFloat(lx)-12).toFixed(1), (parseFloat(ly)-10).toFixed(1), sign + lastPt.oni.toFixed(2), {
-    'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':12, 'font-weight':600,
-    fill:'#C2382A', style:'animation:omIn .4s ease 1.85s backwards'
+/* ── ONI Plotly chart ── */
+function buildOniPlotly(divId, series, episodes, desde) {
+  const filtered = series.filter(pt => {
+    const yr = new Date(pt.date + 'T12:00:00Z').getUTCFullYear();
+    return yr >= desde;
   });
+  if (!filtered.length) return;
+
+  const dates = filtered.map(pt => pt.date);
+  const onis = filtered.map(pt => pt.oni);
+
+  /* Color each point by value: red for El Niño, blue for La Niña, gray for neutral */
+  const colors = onis.map(v => {
+    if (v >= 0.5) return '#C2382A';
+    if (v <= -0.5) return '#2A55D0';
+    return '#79818E';
+  });
+
+  /* Create fill traces for El Niño (above 0.5) and La Niña (below -0.5) */
+  const ninoFillY = onis.map(v => v >= 0.5 ? v : 0.5);
+  const ninaFillY = onis.map(v => v <= -0.5 ? v : -0.5);
+
+  const traces = [
+    /* El Niño fill */
+    { x: dates, y: ninoFillY, type:'scatter', mode:'none', fill:'tozeroy',
+      fillcolor:'rgba(194,56,42,0.12)', line:{width:0},
+      hoverinfo:'skip', showlegend:false,
+      yaxis:'y' },
+    /* La Niña fill */
+    { x: dates, y: ninaFillY, type:'scatter', mode:'none', fill:'tozeroy',
+      fillcolor:'rgba(42,85,208,0.12)', line:{width:0},
+      hoverinfo:'skip', showlegend:false },
+    /* Main ONI line */
+    { x: dates, y: onis, type:'scatter', mode:'lines',
+      line: { color:'#14161A', width:1.5 },
+      name: 'ONI',
+      hovertemplate: '<b>%{x|%b %Y}</b><br>ONI: %{y:+.2f} °C<extra></extra>' },
+    /* Latest point marker */
+    { x: [dates[dates.length-1]], y: [onis[onis.length-1]],
+      type:'scatter', mode:'markers+text',
+      marker: { color:'#C2382A', size:8 },
+      text: [(onis[onis.length-1] >= 0 ? '+' : '') + onis[onis.length-1].toFixed(2)],
+      textposition: 'top left',
+      textfont: { family:'IBM Plex Mono', size:12, color:'#C2382A' },
+      hoverinfo:'skip', showlegend:false },
+  ];
+
+  /* Episode annotations */
+  const shapes = [];
+  const annotations = [];
+  for (const ep of episodes) {
+    const epStart = new Date(ep.start + 'T12:00:00Z');
+    const epEnd = new Date(ep.end + 'T12:00:00Z');
+    const startYr = epStart.getUTCFullYear();
+    if (startYr < desde) continue;
+    const fillColor = ep.type === 'El Niño' ? 'rgba(194,56,42,0.06)' : 'rgba(42,85,208,0.06)';
+    shapes.push({
+      type:'rect', xref:'x', yref:'paper',
+      x0: ep.start, x1: ep.end, y0:0, y1:1,
+      fillcolor: fillColor, line:{width:0}, layer:'below'
+    });
+  }
+
+  const layout = {
+    margin: { t:10, r:20, b:40, l:50 },
+    xaxis: {
+      type:'date', gridcolor:'#E4E7EC', linecolor:'#C7CCD6',
+      tickfont: { family:'IBM Plex Mono', size:11, color:'#79818E' },
+    },
+    yaxis: {
+      title: { text:'ONI (°C)', font:{ family:'IBM Plex Mono', size:11, color:'#79818E' } },
+      gridcolor:'#E4E7EC', linecolor:'#C7CCD6', zeroline:true, zerolinecolor:'#C7CCD6',
+      tickfont: { family:'IBM Plex Mono', size:11, color:'#79818E' },
+    },
+    shapes: [
+      /* +0.5 threshold */
+      { type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:0.5, y1:0.5,
+        line:{ color:'#C2382A', width:1, dash:'dot' } },
+      /* -0.5 threshold */
+      { type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:-0.5, y1:-0.5,
+        line:{ color:'#2A55D0', width:1, dash:'dot' } },
+      ...shapes,
+    ],
+    annotations: [
+      { xref:'paper', yref:'y', x:1.02, y:0.5, text:'+0.5', showarrow:false,
+        font:{ family:'IBM Plex Mono', size:10, color:'#C2382A' }, xanchor:'left' },
+      { xref:'paper', yref:'y', x:1.02, y:-0.5, text:'−0.5', showarrow:false,
+        font:{ family:'IBM Plex Mono', size:10, color:'#2A55D0' }, xanchor:'left' },
+    ],
+    paper_bgcolor:'#FFFFFF', plot_bgcolor:'#FFFFFF',
+    hovermode:'x unified',
+    hoverlabel: { bgcolor:'#14161A', font:{ family:'IBM Plex Mono', size:12, color:'#FFFFFF' } },
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+    displaylogo: false,
+  };
+
+  Plotly.newPlot(divId, traces, layout, config);
 }
 
 /* ── 24m inset chart ── */
@@ -606,6 +656,78 @@ function soiTrend(soi24m) {
   if (avg <= -0.5) return { label: 'Tendencia negativa', color: '#DC8E80' };
   if (avg >= 0.5) return { label: 'Tendencia positiva', color: '#8098E0' };
   return { label: 'Neutral', color: '#79818E' };
+}
+
+/* ── Subsurface temperature heatmap (Plotly) ── */
+function buildSubsurfaceHeatmap(divId, subsurface) {
+  if (!subsurface || !subsurface.temperatures) return false;
+
+  const depths = subsurface.depths;
+  const lonLabels = subsurface.lon_labels;
+  const temps = subsurface.temperatures;
+
+  /* Build hover text */
+  const hoverText = temps.map((row, di) =>
+    row.map((val, li) =>
+      val != null
+        ? `<b>${lonLabels[li]}</b>, ${depths[di]}m<br>${val.toFixed(1)} °C`
+        : `<b>${lonLabels[li]}</b>, ${depths[di]}m<br>sin datos`
+    )
+  );
+
+  const trace = {
+    z: temps,
+    x: lonLabels,
+    y: depths,
+    type: 'heatmap',
+    colorscale: [
+      [0, '#1E3FAE'],
+      [0.15, '#5B8BD0'],
+      [0.3, '#8AC0E8'],
+      [0.45, '#C6E5F5'],
+      [0.55, '#FAEBC8'],
+      [0.7, '#F5C26B'],
+      [0.85, '#E87D3E'],
+      [1, '#C2382A'],
+    ],
+    colorbar: {
+      title: { text: '\u00B0C', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      thickness: 14,
+      len: 0.9,
+    },
+    hovertext: hoverText,
+    hoverinfo: 'text',
+    zsmooth: 'best',
+    connectgaps: true,
+  };
+
+  const layout = {
+    margin: { t: 10, r: 80, b: 50, l: 60 },
+    xaxis: {
+      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      side: 'bottom',
+    },
+    yaxis: {
+      title: { text: 'Profundidad (m)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      autorange: 'reversed',
+    },
+    paper_bgcolor: '#FFFFFF',
+    plot_bgcolor: '#FFFFFF',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+    displaylogo: false,
+  };
+
+  Plotly.newPlot(divId, [trace], layout, config);
+  return true;
 }
 
 /* ── Data freshness indicator ── */
@@ -799,10 +921,20 @@ async function main() {
   const regionOrder = data.region_order || ['NEA', 'Pampa Húmeda', 'NOA', 'Cuyo', 'Patagonia'];
   let selRegion = regionOrder[0];
 
+  /* SOI trend for advice module */
+  const soi24mData = data.soi_series_24m || [];
+  const adviceSoiTrend = typeof soiTrend === 'function' ? soiTrend(soi24mData) : null;
+
   function updateAdvice(region) {
     const bestCorr = best[region];
+    const extras = {
+      oni_value: cur.oni_value,
+      soi_value: cur.soi_value,
+      soi_trend: adviceSoiTrend,
+      precip_anomaly: (data.precip_anomaly_12m || {})[region] || null,
+    };
     const advice = (typeof getRegionAdvice === 'function')
-      ? getRegionAdvice(region, phase, bestCorr)
+      ? getRegionAdvice(region, phase, bestCorr, extras)
       : { text: region };
     document.getElementById('advice-panel').innerHTML = advice.text;
     document.querySelectorAll('.region-pill').forEach(btn => {
@@ -838,15 +970,14 @@ async function main() {
   document.getElementById('sst-note').textContent = `Valor mensual — puede divergir del ONI. Fecha: ${cur.nino34_date}.`;
   document.getElementById('soi-note').textContent = `Valores negativos consistentes con condiciones El Niño en debilitamiento.`;
 
-  /* ── ONI Chart ── */
-  const oniSvg = document.getElementById('oni-svg');
+  /* ── ONI Chart (Plotly) ── */
   let currentDesde = 1970;
 
   function setRange(desde) {
     currentDesde = desde;
     const lastYear = new Date(data.oni_series[data.oni_series.length - 1].date + 'T12:00:00Z').getUTCFullYear();
     document.getElementById('chart-range-label').textContent = `${desde}–${lastYear} · mensual · NOAA CPC`;
-    buildOniChart(oniSvg, data.oni_series, data.episodes, desde);
+    buildOniPlotly('oni-plotly', data.oni_series, data.episodes, desde);
   }
 
   document.querySelectorAll('.range-btn').forEach(btn => {
@@ -884,6 +1015,48 @@ async function main() {
       `${MONTHS_ES[firstDate.getUTCMonth()]} ${firstDate.getUTCFullYear()} – ${MONTHS_ES[lastDate.getUTCMonth()]} ${lastDate.getUTCFullYear()} · mensual · NOAA`;
 
     buildSoiChart(document.getElementById('soi-svg'), soi24m);
+  }
+
+  /* ── IRI Forecast panel ── */
+  const iriForecast = data.iri_forecast;
+  if (iriForecast) {
+    const panel = document.getElementById('iri-forecast-panel');
+    panel.style.display = '';
+    const img = document.getElementById('iri-forecast-img');
+    const link = document.getElementById('iri-forecast-link');
+    link.href = 'https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/';
+
+    let currentView = 'probs';
+    function setForecastView(view) {
+      currentView = view;
+      img.src = view === 'probs' ? iriForecast.probs_svg : iriForecast.plume_svg;
+      img.alt = view === 'probs'
+        ? 'IRI/CCSR ENSO probability forecast — El Nino, Neutral, La Nina por trimestre'
+        : 'IRI ENSO model predictions plume — Nino 3.4 SST anomaly forecasts';
+      document.getElementById('forecast-btn-probs').classList.toggle('active', view === 'probs');
+      document.getElementById('forecast-btn-plume').classList.toggle('active', view === 'plume');
+    }
+
+    document.getElementById('forecast-btn-probs').addEventListener('click', () => setForecastView('probs'));
+    document.getElementById('forecast-btn-plume').addEventListener('click', () => setForecastView('plume'));
+    setForecastView('probs');
+
+    const forecastMonths = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    document.getElementById('forecast-meta').textContent =
+      `${forecastMonths[(iriForecast.month || 1) - 1]} ${iriForecast.year} · IRI/CCSR`;
+  }
+
+  /* ── Subsurface temperature heatmap ── */
+  if (data.subsurface) {
+    const shown = buildSubsurfaceHeatmap('subsurface-plotly', data.subsurface);
+    if (shown) {
+      document.getElementById('subsurface-section').style.display = '';
+      const sub = data.subsurface;
+      const pStart = new Date(sub.period_start + 'T12:00:00Z');
+      const pEnd = new Date(sub.period_end + 'T12:00:00Z');
+      document.getElementById('subsurface-meta').textContent =
+        `${MONTHS_ES[pStart.getUTCMonth()]} – ${MONTHS_ES[pEnd.getUTCMonth()]} ${pEnd.getUTCFullYear()} · TAO/TRITON`;
+    }
   }
 
   /* ── Heatmap ── */

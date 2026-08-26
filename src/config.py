@@ -48,11 +48,44 @@ ERDDAP_SOI_URL = (
 """ERDDAP monthly SOI from NOAA ERD oscillation indices.
 Returns CSV: time (ISO), soi (standardised). Monthly, 1948–present."""
 
+# ---------------------------------------------------------------------------
+# TAO/TRITON subsurface temperature (ERDDAP)
+# ---------------------------------------------------------------------------
+
+TAO_ERDDAP_URL = (
+    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/pmelTaoMonT.csv"
+    "?time,longitude,depth,T_20"
+    "&latitude=0"
+    "&longitude>=165&longitude<=265"
+    "&depth<=300"
+    "&orderBy(%22time,longitude,depth%22)"
+)
+"""TAO/TRITON monthly temperature at equatorial Pacific buoy locations.
+Latitude fixed at 0°, longitudes 165°E–265°E (95°W), depths 0–300m.
+Returns CSV: time, longitude, depth, T_20 (°C)."""
+
+TAO_RECENT_MONTHS: int = 3
+"""Number of recent months to average for subsurface cross-section."""
+
+TAO_TARGET_DEPTHS: list[int] = [1, 25, 50, 80, 100, 125, 150, 200, 250, 300]
+"""Depth levels (m) to extract from TAO data for the heatmap."""
+
 IRI_ENSO_FORECAST_URL = (
     "https://iri.columbia.edu/our-expertise/climate/enso/"
 )
 """IRI ENSO forecast page — human-readable plume; no structured API.
 Probabilities scraped from JSON embedded in page when available."""
+
+IRI_FORECAST_PROBS_SVG = (
+    "https://ensoforecast2.iri.columbia.edu/figure3_plot/{year}/{month}"
+)
+"""IRI/CCSR model-based ENSO probability forecast — stacked bar chart (SVG).
+Shows El Nino / Neutral / La Nina probabilities per trimester."""
+
+IRI_FORECAST_PLUME_SVG = (
+    "https://ensoforecast2.iri.columbia.edu/figure4_plot/{year}/{month}"
+)
+"""IRI ENSO model predictions plume — individual model Nino 3.4 forecasts (SVG)."""
 
 NOAA_CPC_ADVISORY_URL = (
     "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/"

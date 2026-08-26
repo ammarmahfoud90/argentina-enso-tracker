@@ -34,12 +34,15 @@ from src.config import (
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
+    IRI_FORECAST_PLUME_SVG,
+    IRI_FORECAST_PROBS_SVG,
     PAIRS_CACHE_PATH,
     REGION_ORDER,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
 from src.fetch_enso import fetch_enso_snapshot
+from src.fetch_subsurface import fetch_subsurface_cross_section
 
 logging.basicConfig(
     level=logging.INFO,
@@ -274,7 +277,26 @@ def build_payload() -> dict:
     else:
         logger.warning("Pairs Parquet not found at %s — precip_anomaly_12m will be empty", pairs_path)
 
-    # 9. Assemble final payload
+    # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
+    logger.info("Fetching subsurface temperature data…")
+    subsurface = fetch_subsurface_cross_section()
+    if subsurface:
+        logger.info("Subsurface: %d lons x %d depths", len(subsurface["longitudes"]), len(subsurface["depths"]))
+    else:
+        logger.warning("Subsurface data unavailable — section will be hidden in frontend")
+
+    # 10. IRI forecast URLs (computed from current date)
+    now = datetime.now(timezone.utc)
+    iri_forecast = {
+        "probs_svg": IRI_FORECAST_PROBS_SVG.format(year=now.year, month=now.month),
+        "plume_svg": IRI_FORECAST_PLUME_SVG.format(year=now.year, month=now.month),
+        "month": now.month,
+        "year": now.year,
+        "source": "IRI/CCSR (Columbia University)",
+    }
+    logger.info("IRI forecast URLs: probs=%s, plume=%s", iri_forecast["probs_svg"], iri_forecast["plume_svg"])
+
+    # 11. Assemble final payload
     payload = {
         "current": {
             "oni_value":   round(snapshot.oni_value, 2),
@@ -297,6 +319,8 @@ def build_payload() -> dict:
         "episodes":      episodes,
         "correlation_cache": cache_meta,
         "precip_anomaly_12m": precip_anomaly_12m,
+        "subsurface":    subsurface,
+        "iri_forecast":  iri_forecast,
         "data_sources":  snapshot.data_sources or {},
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
