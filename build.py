@@ -30,18 +30,18 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.config import (
     CHIRPS_START_YEAR,
+    CORRELATION_LAGS,
     CORRELATIONS_CACHE_PATH,
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
-    IRI_FORECAST_PLUME_SVG,
-    IRI_FORECAST_PROBS_SVG,
     PAIRS_CACHE_PATH,
     REGION_ORDER,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
 from src.fetch_enso import fetch_enso_snapshot
+from src.fetch_iri_forecast import fetch_iri_forecast
 from src.fetch_sst_map import fetch_sst_map
 from src.fetch_subsurface import fetch_subsurface_cross_section
 
@@ -279,6 +279,50 @@ def build_payload() -> dict:
     else:
         logger.warning("Pairs Parquet not found at %s — precip_anomaly_12m will be empty", pairs_path)
 
+    # 8b. Seasonal correlations (SON/DEF/MAM/JJA) from pairs Parquet
+    seasonal_correlations: dict = {}
+    if pairs_path.exists():
+        from scipy import stats as _stats
+
+        _season_months = {
+            "SON": [9, 10, 11],
+            "DEF": [12, 1, 2],
+            "MAM": [3, 4, 5],
+            "JJA": [6, 7, 8],
+        }
+        for season_name, months_list in _season_months.items():
+            season_df = pairs_df[pairs_df["month"].isin(months_list)]
+            season_records = []
+            for lag in CORRELATION_LAGS:
+                for region in REGION_ORDER:
+                    if region not in season_df.columns or "oni" not in season_df.columns:
+                        continue
+                    paired = season_df[["oni", region]].dropna()
+                    n = len(paired)
+                    if n < 20:
+                        continue
+                    x = paired["oni"].values
+                    y = paired[region].values
+                    pr, pp = _stats.pearsonr(x, y)
+                    sr, sp = _stats.spearmanr(x, y)
+                    season_records.append({
+                        "region": region,
+                        "lag": lag,
+                        "pearson_r": round(float(pr), 4),
+                        "pearson_p": round(float(pp), 4),
+                        "pearson_stars": _sig_stars(float(pp)),
+                        "spearman_r": round(float(sr), 4),
+                        "spearman_p": round(float(sp), 4),
+                        "n_obs": n,
+                    })
+            seasonal_correlations[season_name] = season_records
+        logger.info(
+            "Seasonal correlations: %s",
+            {k: len(v) for k, v in seasonal_correlations.items()},
+        )
+    else:
+        logger.warning("Pairs Parquet not found — seasonal correlations skipped")
+
     # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
     logger.info("Fetching subsurface temperature data…")
     subsurface = fetch_subsurface_cross_section()
@@ -287,16 +331,17 @@ def build_payload() -> dict:
     else:
         logger.warning("Subsurface data unavailable — section will be hidden in frontend")
 
-    # 10. IRI forecast URLs (computed from current date)
-    now = datetime.now(timezone.utc)
-    iri_forecast = {
-        "probs_svg": IRI_FORECAST_PROBS_SVG.format(year=now.year, month=now.month),
-        "plume_svg": IRI_FORECAST_PLUME_SVG.format(year=now.year, month=now.month),
-        "month": now.month,
-        "year": now.year,
-        "source": "IRI/CCSR (Columbia University)",
-    }
-    logger.info("IRI forecast URLs: probs=%s, plume=%s", iri_forecast["probs_svg"], iri_forecast["plume_svg"])
+    # 10. IRI forecast (parsed probabilities + SVG URLs)
+    logger.info("Fetching IRI forecast…")
+    iri_forecast = fetch_iri_forecast()
+    if iri_forecast:
+        logger.info(
+            "IRI forecast: %d trimesters, month=%d/%d",
+            len(iri_forecast.get("probabilities") or []),
+            iri_forecast["year"], iri_forecast["month"],
+        )
+    else:
+        logger.warning("IRI forecast unavailable — section will show fallback")
 
     # 11. Assemble final payload
     payload = {
@@ -316,6 +361,7 @@ def build_payload() -> dict:
         "soi_series":    soi_records,
         "soi_series_24m": soi_24m,
         "correlations":  corr_records,
+        "seasonal_correlations": seasonal_correlations,
         "region_meta":   region_meta,
         "region_order":  REGION_ORDER,
         "episodes":      episodes,

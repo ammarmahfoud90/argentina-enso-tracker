@@ -50,7 +50,8 @@ jobs:
           import json, sys
           with open('site/data/enso.json') as f:
               d = json.load(f)
-          required = ['current', 'oni_series', 'correlations', 'episodes', 'last_updated']
+          required = ['current', 'oni_series', 'correlations', 'episodes',
+                      'seasonal_correlations', 'iri_forecast', 'last_updated']
           missing = [k for k in required if k not in d]
           if missing:
               print(f'FAIL: missing keys: {missing}', file=sys.stderr)
@@ -60,10 +61,16 @@ jobs:
           assert c['phase'] in ('El Niño', 'La Niña', 'Neutral'), 'invalid phase'
           assert len(d['oni_series']) > 100, 'oni_series too short'
           assert len(d['correlations']) > 0, 'no correlation rows'
+          sc = d['seasonal_correlations']
+          assert all(k in sc for k in ['SON','DEF','MAM','JJA']), 'missing seasonal keys'
+          iri = d['iri_forecast']
+          assert iri is not None, 'iri_forecast is None'
           print(f"OK: phase={c['phase']}, ONI={c['oni_value']}, "
                 f"{len(d['oni_series'])} ONI points, "
                 f"{len(d['correlations'])} correlation rows, "
-                f"{len(d['episodes'])} episodes")
+                f"{len(d['episodes'])} episodes, "
+                f"seasonal={list(sc.keys())}, "
+                f"IRI={'probs' if iri.get('probabilities') else 'urls-only'}")
           EOF
 
       # ── Commit and push if changed ────────────────────────────────────────

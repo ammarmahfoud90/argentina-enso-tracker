@@ -191,6 +191,7 @@
     html.dark #loading{background:#0f0f1a;}
     html.dark #dark-mode-toggle{background:#1a1a2e;border-color:#444;color:#e0e0e8;}
     html.dark .risk-map-iframe{border-color:#2a2a3a;}
+    html.dark #season-select{background:#1a1a2e;color:#e0e0e8;border-color:#444;}
   </style>
 </head>
 <body>
@@ -366,16 +367,23 @@
     <!-- IRI forecast visualizations -->
     <div id="iri-forecast-panel" style="display:none;">
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;">
-        <button class="range-btn active" data-forecast="probs" id="forecast-btn-probs">Probabilidades por fase</button>
-        <button class="range-btn" data-forecast="plume" id="forecast-btn-plume">Pluma de modelos (20+ modelos)</button>
+        <button class="range-btn active" id="forecast-btn-probs">Probabilidades por fase</button>
+        <button class="range-btn" id="forecast-btn-plume">Pluma de modelos</button>
       </div>
-      <div id="iri-forecast-container" style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
-        <p id="iri-forecast-desc" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#555C68;margin-bottom:12px;text-align:left;"></p>
-        <img id="iri-forecast-img" alt="IRI ENSO forecast" style="max-width:100%;height:auto;display:inline-block;" crossorigin="anonymous"
-          onerror="this.style.display='none';this.nextElementSibling.style.display='';">
-        <p id="iri-forecast-fallback" style="display:none;font-size:14px;color:#79818E;padding:40px 0;">Visualización IRI no disponible temporalmente. <a id="iri-forecast-link-fallback" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver directamente en IRI →</a></p>
-        <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR — Columbia University. <a id="iri-forecast-link" href="" target="_blank" rel="noopener">Ver en IRI →</a></p>
+      <div id="iri-probs-view">
+        <div id="iri-probs-plotly" style="width:100%;height:360px;" role="img" aria-label="Probabilidades ENSO por trimestre — El Niño, Neutral, La Niña"></div>
       </div>
+      <div id="iri-plume-view" style="display:none;">
+        <div style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
+          <img id="iri-plume-img" alt="IRI ENSO model predictions plume" style="max-width:100%;height:auto;display:inline-block;"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+          <p id="iri-plume-fallback" style="display:none;font-size:13px;color:#79818E;padding:40px 0;">Pluma de modelos no disponible. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver en IRI →</a></p>
+        </div>
+      </div>
+      <div id="iri-no-data" style="display:none;background:#F4F6F9;border-radius:4px;padding:40px 20px;text-align:center;">
+        <p style="font-size:14px;color:#79818E;">Pronóstico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver directamente en IRI →</a></p>
+      </div>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR — Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver en IRI →</a></p>
     </div>
 
     <div class="forecast-links" style="margin-top:20px;">
@@ -418,6 +426,17 @@
   <section class="section" id="corr-section" style="animation:omFadeUp .55s ease .36s backwards;">
     <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
     <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (base 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal puede ser más fuerte en primavera-verano (SON-DEF) que en otoño-invierno.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
+      <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;">Estación:</label>
+      <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
+        <option value="annual">Anual</option>
+        <option value="SON">Primavera (SON)</option>
+        <option value="DEF">Verano (DEF)</option>
+        <option value="MAM">Otoño (MAM)</option>
+        <option value="JJA">Invierno (JJA)</option>
+      </select>
+      <span id="season-note" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;"></span>
+    </div>
     <div id="corr-bar-chart" style="width:100%;height:320px;margin-bottom:28px;" role="img" aria-label="Gráfico de barras de correlación ENSO-precipitación por región"></div>
     <details style="margin-bottom:20px;">
       <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;">Tabla detallada por lag ▸</summary>
@@ -429,7 +448,7 @@
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 → +0.25</span>
     </div>
     <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;">Lectura: el NEA y la Pampa Húmeda muestran la señal ENSO más fuerte — años El Niño tienden a ser más lluviosos, con el ONI liderando 0–2 meses. En NOA, Cuyo y Patagonia la señal es débil o nula.</p>
-    <p style="margin:10px 0 0;font-size:12px;color:#79818E;max-width:76ch;line-height:1.55;font-family:'IBM Plex Mono',monospace;background:#FFFBE6;padding:8px 12px;border-radius:3px;border-left:3px solid #EAB308;">Limitación: estas correlaciones son promedios anuales (todos los meses, 1981–2025). La señal ENSO sobre precipitación en Argentina es probablemente más fuerte en primavera-verano (SON-DEF) y más débil en otoño-invierno. Desagregación estacional pendiente.</p>
+    <p style="margin:10px 0 0;font-size:12px;color:#79818E;max-width:76ch;line-height:1.55;font-family:'IBM Plex Mono',monospace;background:#F0F4FF;padding:8px 12px;border-radius:3px;border-left:3px solid #1E3FAE;">Use el selector "Estación" para comparar la señal ENSO por trimestre. La teleconexión suele ser más fuerte en primavera-verano (SON-DEF). En otoño-invierno, otros forzantes (ej. SAM — Southern Annular Mode) dominan la variabilidad.</p>
   </section>
 
   <!-- 7. Regional risk -->
@@ -504,7 +523,7 @@
             </tr>
           </tbody>
         </table>
-        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI (base 1991–2020) y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral, umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 regiones de Argentina (1981–2025). Correlaciones calculadas sobre todos los meses del año (agregación anual); la desagregación estacional (por trimestre) está pendiente y puede revelar señales más fuertes en SON-DEF.</p>
+        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI (base 1991–2020) y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral, umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 regiones de Argentina (1981–2025). Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
         <p style="margin-top:8px;"><strong>Detección de episodios:</strong> Criterio NOAA CPC — ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
         <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py) → JSON → HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
       </div>
@@ -520,7 +539,7 @@
     </div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span>Índices automáticos — no constituyen declaración oficial</span>
-      <span>Correlaciones anuales agregadas (1981–2025) — la señal ENSO varía por estación</span>
+      <span>Correlaciones anuales y estacionales (1981–2025) · CHIRPS v2.0</span>
     </div>
   </footer>
 
@@ -1135,6 +1154,70 @@ function buildSSTMap(divId, sstData) {
   return true;
 }
 
+/* ── IRI probability stacked bar chart ── */
+function buildIRIProbsChart(divId, probabilities) {
+  if (!probabilities || probabilities.length === 0) return false;
+
+  const trimesters = probabilities.map(p => p.trimester);
+  const laNina = probabilities.map(p => p.la_nina);
+  const neutral = probabilities.map(p => p.neutral);
+  const elNino = probabilities.map(p => p.el_nino);
+
+  const traces = [
+    {
+      name: 'La Niña', x: trimesters, y: laNina, type: 'bar',
+      marker: { color: '#2A55D0' },
+      hovertemplate: '%{x}: La Niña %{y}%<extra></extra>',
+    },
+    {
+      name: 'Neutral', x: trimesters, y: neutral, type: 'bar',
+      marker: { color: '#A7AEBB' },
+      hovertemplate: '%{x}: Neutral %{y}%<extra></extra>',
+    },
+    {
+      name: 'El Niño', x: trimesters, y: elNino, type: 'bar',
+      marker: { color: '#C2382A' },
+      hovertemplate: '%{x}: El Niño %{y}%<extra></extra>',
+    },
+  ];
+
+  const layout = {
+    barmode: 'stack',
+    margin: { t: 30, r: 20, b: 50, l: 50 },
+    yaxis: {
+      title: { text: 'Probabilidad (%)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      range: [0, 105],
+      ticksuffix: '%',
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+    },
+    xaxis: {
+      title: { text: 'Trimestre', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+    },
+    legend: {
+      orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08,
+      font: { family: 'IBM Plex Mono', size: 11 },
+    },
+    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    shapes: [{
+      type: 'line', x0: -0.5, x1: trimesters.length - 0.5,
+      y0: 33.3, y1: 33.3, yref: 'y',
+      line: { color: '#79818E', width: 1, dash: 'dot' },
+    }],
+    annotations: [{
+      x: trimesters.length - 0.5, y: 34, yref: 'y',
+      text: 'Climatología', showarrow: false, xanchor: 'right',
+      font: { family: 'IBM Plex Mono', size: 10, color: '#79818E' },
+    }],
+  };
+
+  Plotly.newPlot(divId, traces, layout, {
+    responsive: true, displayModeBar: false, displaylogo: false,
+  });
+  return true;
+}
+
 /* ── Correlation bar chart (best r per region) ── */
 function buildCorrelationBarChart(divId, correlations, regionOrder) {
   const best = bestByRegion(correlations, regionOrder);
@@ -1549,34 +1632,41 @@ async function main() {
   if (iriForecast) {
     const panel = document.getElementById('iri-forecast-panel');
     panel.style.display = '';
-    const img = document.getElementById('iri-forecast-img');
-    const link = document.getElementById('iri-forecast-link');
-    link.href = 'https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/';
 
-    let currentView = 'probs';
-    const descEl_ = document.getElementById('iri-forecast-desc');
+    const probsView = document.getElementById('iri-probs-view');
+    const plumeView = document.getElementById('iri-plume-view');
+    const noDataView = document.getElementById('iri-no-data');
+
+    /* Render probability stacked bar chart */
+    if (iriForecast.probabilities && plotlyReady) {
+      buildIRIProbsChart('iri-probs-plotly', iriForecast.probabilities);
+    } else if (iriForecast.probs_svg) {
+      /* Fallback: show SVG as image */
+      probsView.innerHTML = '<div style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;"><img src="' +
+        iriForecast.probs_svg + '" alt="IRI ENSO probability forecast" style="max-width:100%;height:auto;" ' +
+        'onerror="this.parentElement.innerHTML=\'<p style=color:#79818E;padding:40px>Pronóstico no disponible.</p>\'"></div>';
+    } else {
+      probsView.style.display = 'none';
+      noDataView.style.display = '';
+    }
+
+    /* Plume image */
+    if (iriForecast.plume_svg) {
+      document.getElementById('iri-plume-img').src = iriForecast.plume_svg;
+    }
+
+    /* Toggle buttons */
     function setForecastView(view) {
-      currentView = view;
-      img.style.display = '';
-      document.getElementById('iri-forecast-fallback').style.display = 'none';
-      img.src = view === 'probs' ? iriForecast.probs_svg : iriForecast.plume_svg;
-      img.alt = view === 'probs'
-        ? 'IRI/CCSR ENSO probability forecast — El Nino, Neutral, La Nina por trimestre'
-        : 'IRI ENSO model predictions plume — Nino 3.4 SST anomaly forecasts';
-      descEl_.textContent = view === 'probs'
-        ? 'Probabilidades de El Niño / Neutral / La Niña para los próximos trimestres (SON, OND, NDJ, etc.). Barras más altas = mayor probabilidad.'
-        : 'Predicciones individuales de 20+ modelos climáticos para el Niño 3.4 SST. La dispersión indica la incertidumbre del pronóstico.';
+      probsView.style.display = view === 'probs' ? '' : 'none';
+      plumeView.style.display = view === 'plume' ? '' : 'none';
       document.getElementById('forecast-btn-probs').classList.toggle('active', view === 'probs');
       document.getElementById('forecast-btn-plume').classList.toggle('active', view === 'plume');
     }
-
     document.getElementById('forecast-btn-probs').addEventListener('click', () => setForecastView('probs'));
     document.getElementById('forecast-btn-plume').addEventListener('click', () => setForecastView('plume'));
-    setForecastView('probs');
 
-    const forecastMonths = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
     document.getElementById('forecast-meta').textContent =
-      `${forecastMonths[(iriForecast.month || 1) - 1]} ${iriForecast.year} · IRI/CCSR`;
+      `${MONTHS_ES[(iriForecast.month || 1) - 1]} ${iriForecast.year} · IRI/CCSR`;
   }
 
   /* ── Subsurface temperature heatmap ── */
@@ -1629,9 +1719,23 @@ async function main() {
   document.getElementById('compare-btn-nina').addEventListener('click', () => setCompare('nina'));
   setCompare('nino');
 
-  /* ── Correlation bar chart + heatmap ── */
-  if (plotlyReady) buildCorrelationBarChart('corr-bar-chart', data.correlations, regionOrder);
-  renderHeatmap(data.correlations, regionOrder);
+  /* ── Correlation bar chart + heatmap + seasonal dropdown ── */
+  const seasonalCorr = data.seasonal_correlations || {};
+  function updateCorrelationView(season) {
+    const corrs = season === 'annual' ? data.correlations : (seasonalCorr[season] || []);
+    if (plotlyReady) buildCorrelationBarChart('corr-bar-chart', corrs, regionOrder);
+    renderHeatmap(corrs, regionOrder);
+    const noteEl = document.getElementById('season-note');
+    if (season === 'annual') {
+      noteEl.textContent = 'Todos los meses (1981–2025)';
+    } else {
+      const n = corrs.length > 0 ? corrs[0].n_obs : 0;
+      const labels = { SON: 'Sep–Nov (primavera)', DEF: 'Dic–Feb (verano)', MAM: 'Mar–May (otoño)', JJA: 'Jun–Ago (invierno)' };
+      noteEl.textContent = (labels[season] || season) + (n ? ` · n=${n}` : '');
+    }
+  }
+  document.getElementById('season-select').addEventListener('change', (e) => updateCorrelationView(e.target.value));
+  updateCorrelationView('annual');
 
   /* ── Risk section ── */
   /* Sort by significance then |r| */

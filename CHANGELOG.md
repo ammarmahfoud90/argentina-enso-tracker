@@ -1,5 +1,28 @@
 # Changelog
 
+## 2026-08-26 — v3.1 Final Polish Release
+
+### Critical Fixes
+- **IRI forecast visualization**: Replaced broken embedded SVG approach with Plotly stacked bar chart showing El Nino/Neutral/La Nina probabilities per trimester. Probabilities parsed from IRI/CCSR matplotlib SVG during build. Model plume toggle retained as image.
+- **Seasonal correlation disaggregation**: Added per-trimester correlations (SON/DEF/MAM/JJA) computed from pairs Parquet. New dropdown selector in the correlation section lets users compare annual vs seasonal signals.
+
+### New Data Sources
+- **Pacific SST anomaly map**: Interactive Plotly heatmap of OISST v2.1 equatorial Pacific anomalies (120E-70W, 20S-20N) with Nino region box overlays and 12-month time slider. Data stored in separate `sst_map.json`.
+- **IRI forecast data fetcher**: New `src/fetch_iri_forecast.py` parses probability values from the IRI/CCSR figure3_plot SVG, extracting structured data for Plotly rendering.
+
+### Scientific Integrity (from prior session)
+- Subsurface heatmap labeled as absolute temperature (not anomaly)
+- Teleconnection footnote about SAM (Southern Annular Mode)
+- R-squared values in correlation bar chart
+- Accurate latency notes per data source
+- Stale data warning banner (>15 days)
+
+### Documentation
+- README updated with v3.1 features, SST map, IRI parser, seasonal correlations
+- CHANGELOG updated with v3.1 release notes
+
+---
+
 ## 2026-08-26 — v3.0 Ultimate Enhancement Release
 
 ### UX & Navigation
