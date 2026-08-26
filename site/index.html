@@ -204,6 +204,7 @@
     <a href="#oni-section">ONI</a>
     <a href="#soi-section">SOI</a>
     <a href="#subsurface-section">Subsuperficial</a>
+    <a href="#sst-map-section">Mapa TSM</a>
     <a href="#forecast-section">Pronóstico</a>
     <a href="#compare-section">Comparación</a>
     <a href="#corr-section">Correlaciones</a>
@@ -338,6 +339,20 @@
     </div>
     <p class="section-desc section-desc-wide">Perfil de <strong>temperatura absoluta</strong> (°C, no anomalía) a lo largo del Pacífico ecuatorial (0° latitud, 165°E–95°W) hasta 300 m de profundidad. La inclinación de la termoclina revela el estado ENSO: durante El Niño, aguas cálidas se acumulan en el Pacífico oriental; durante La Niña, la termoclina se eleva en el este. Fuente: boyas TAO/TRITON (NOAA PMEL) — observaciones in situ, no reanálisis.</p>
     <div id="subsurface-plotly" style="width:100%;height:400px;" role="img" aria-label="Heatmap de temperatura subsuperficial del Pacífico ecuatorial, profundidad vs longitud"></div>
+  </section>
+
+  <!-- 4d. Interactive Pacific SST anomaly map -->
+  <section class="section" id="sst-map-section" style="display:none;animation:omFadeUp .55s ease .295s backwards;">
+    <div class="section-header">
+      <h2>Mapa de anomalía TSM — Pacífico Ecuatorial</h2>
+      <div class="section-meta" id="sst-map-meta"></div>
+    </div>
+    <p class="section-desc section-desc-wide">Anomalía de Temperatura Superficial del Mar (TSM) — Pacífico Ecuatorial (Base 1991–2020). Fuente: NOAA OISST v2.1 (resolución ~2°). Los recuadros indican las regiones Niño de monitoreo. Use el deslizador para ver la evolución mensual y la propagación de la señal.</p>
+    <div id="sst-map-plotly" style="width:100%;height:480px;" role="img" aria-label="Mapa interactivo de anomalía de temperatura superficial del mar en el Pacífico ecuatorial"></div>
+    <div id="sst-map-fallback" style="display:none;background:#F4F6F9;border-radius:4px;padding:24px;text-align:center;">
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;">No se pudo cargar el mapa satelital de TSM. Mostrando datos de ONI en su lugar.</p>
+      <p style="font-size:13px;color:#555C68;margin-top:8px;">Consulte la sección de Serie histórica ONI arriba para el estado actual del ENSO.</p>
+    </div>
   </section>
 
   <!-- 5. Forecast section — IRI plume + links -->
@@ -1007,6 +1022,119 @@ function buildSubsurfaceHeatmap(divId, subsurface) {
   return true;
 }
 
+/* ── Interactive Pacific SST anomaly map ── */
+function buildSSTMap(divId, sstData) {
+  if (!sstData || !sstData.grids || sstData.grids.length === 0) return false;
+
+  const { times, lats, lons, lon_labels, grids, nino_boxes } = sstData;
+  const nTimes = times.length;
+
+  /* Tick labels for longitude axis (show every ~5th label) */
+  const lonTickVals = [];
+  const lonTickText = [];
+  const step = Math.max(1, Math.floor(lons.length / 12));
+  for (let i = 0; i < lons.length; i += step) {
+    lonTickVals.push(lons[i]);
+    lonTickText.push(lon_labels[i]);
+  }
+
+  /* Format date labels for slider */
+  const dateLabels = times.map(t => {
+    const d = new Date(t + 'T12:00:00Z');
+    return MONTHS_ES[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
+  });
+
+  /* Initial trace — last (most recent) time step */
+  const lastIdx = nTimes - 1;
+  const trace = {
+    z: grids[lastIdx],
+    x: lons,
+    y: lats,
+    type: 'heatmap',
+    colorscale: [
+      [0, '#1E3FAE'], [0.15, '#5B8BD0'], [0.3, '#8AC0E8'],
+      [0.45, '#D6EAF8'], [0.5, '#F5F5F5'],
+      [0.55, '#FDE8D0'], [0.7, '#F5C26B'],
+      [0.85, '#E87D3E'], [1, '#C2382A'],
+    ],
+    zmid: 0,
+    zmin: -3, zmax: 3,
+    colorbar: {
+      title: { text: 'Anomalia TSM (°C)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      thickness: 14, len: 0.9,
+    },
+    hovertemplate: 'Lat: %{y:.1f}°<br>Lon: %{x:.0f}°<br>Anomalia: %{z:.2f} °C<extra></extra>',
+    zsmooth: 'best',
+    connectgaps: false,
+  };
+
+  /* Nino box shapes */
+  const shapes = (nino_boxes || []).map(box => ({
+    type: 'rect', xref: 'x', yref: 'y',
+    x0: box.lon0, x1: box.lon1, y0: box.lat0, y1: box.lat1,
+    line: { color: '#14161A', width: 1.5, dash: 'dot' },
+    fillcolor: 'rgba(0,0,0,0)',
+  }));
+
+  /* Nino box labels */
+  const annotations = (nino_boxes || []).map(box => ({
+    x: (box.lon0 + box.lon1) / 2,
+    y: box.lat1 + 1.5,
+    text: box.name,
+    showarrow: false,
+    font: { family: 'IBM Plex Mono', size: 10, color: '#14161A' },
+  }));
+
+  const layout = {
+    margin: { t: 30, r: 80, b: 60, l: 60 },
+    title: { text: dateLabels[lastIdx], font: { family: 'IBM Plex Mono', size: 13, color: '#555C68' }, y: 0.98 },
+    xaxis: {
+      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickvals: lonTickVals, ticktext: lonTickText,
+      tickfont: { family: 'IBM Plex Mono', size: 10, color: '#79818E' },
+    },
+    yaxis: {
+      title: { text: 'Latitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      ticksuffix: '°',
+    },
+    shapes: shapes,
+    annotations: annotations,
+    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    /* Time slider */
+    sliders: [{
+      active: lastIdx,
+      pad: { t: 30 },
+      currentvalue: { prefix: '', font: { family: 'IBM Plex Mono', size: 12, color: '#14161A' } },
+      steps: times.map((t, i) => ({
+        label: dateLabels[i],
+        method: 'restyle',
+        args: [{ z: [grids[i]], 'colorbar.title.text': 'Anomalia TSM (°C)' }],
+      })),
+    }],
+  };
+
+  const config = {
+    responsive: true,
+    displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+    displaylogo: false,
+  };
+
+  Plotly.newPlot(divId, [trace], layout, config);
+
+  /* Update title when slider changes */
+  const plotDiv = document.getElementById(divId);
+  plotDiv.on('plotly_sliderchange', function(e) {
+    const idx = e.slider.active;
+    Plotly.relayout(divId, { 'title.text': dateLabels[idx] });
+  });
+
+  return true;
+}
+
 /* ── Correlation bar chart (best r per region) ── */
 function buildCorrelationBarChart(divId, correlations, regionOrder) {
   const best = bestByRegion(correlations, regionOrder);
@@ -1462,6 +1590,31 @@ async function main() {
       document.getElementById('subsurface-meta').textContent =
         `${MONTHS_ES[pStart.getUTCMonth()]} – ${MONTHS_ES[pEnd.getUTCMonth()]} ${pEnd.getUTCFullYear()} · TAO/TRITON`;
     }
+  }
+
+  /* ── Interactive Pacific SST anomaly map ── */
+  if (plotlyReady) {
+    fetch('data/sst_map.json')
+      .then(r => r.ok ? r.json() : null)
+      .then(sstData => {
+        if (sstData) {
+          const shown = buildSSTMap('sst-map-plotly', sstData);
+          if (shown) {
+            document.getElementById('sst-map-section').style.display = '';
+            const lastTime = sstData.times[sstData.times.length - 1];
+            const d = new Date(lastTime + 'T12:00:00Z');
+            document.getElementById('sst-map-meta').textContent =
+              `${MONTHS_ES[d.getUTCMonth()]} ${d.getUTCFullYear()} · OISST v2.1 · Base ${sstData.baseline}`;
+          } else {
+            document.getElementById('sst-map-section').style.display = '';
+            document.getElementById('sst-map-plotly').style.display = 'none';
+            document.getElementById('sst-map-fallback').style.display = '';
+          }
+        }
+      })
+      .catch(() => {
+        /* SST map not available — section stays hidden */
+      });
   }
 
   /* ── Historical comparison ── */

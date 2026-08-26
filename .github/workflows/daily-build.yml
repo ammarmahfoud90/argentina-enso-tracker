@@ -67,14 +67,14 @@ jobs:
           EOF
 
       # ── Commit and push if changed ────────────────────────────────────────
-      - name: Commit updated enso.json
+      - name: Commit updated data files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add site/data/enso.json
-          # Only commit if the file actually changed
+          git add site/data/enso.json site/data/sst_map.json
+          # Only commit if files actually changed
           if git diff --cached --quiet; then
-            echo "No changes in enso.json — nothing to commit."
+            echo "No changes in data files — nothing to commit."
           else
             git commit -m "data: daily ENSO update $(date -u +%Y-%m-%d)"
             git push

@@ -42,6 +42,7 @@ from src.config import (
     SIGNIFICANCE_THRESHOLD,
 )
 from src.fetch_enso import fetch_enso_snapshot
+from src.fetch_sst_map import fetch_sst_map
 from src.fetch_subsurface import fetch_subsurface_cross_section
 
 logging.basicConfig(
@@ -52,6 +53,7 @@ logging.basicConfig(
 logger = logging.getLogger("build")
 
 OUT_PATH = Path("site/data/enso.json")
+SST_MAP_PATH = Path("site/data/sst_map.json")
 
 
 # ---------------------------------------------------------------------------
@@ -368,6 +370,24 @@ def main() -> None:
         len(payload["episodes"]),
         len(payload["correlations"]),
     )
+
+    # 12. SST anomaly map (separate file to avoid bloating enso.json)
+    logger.info("Fetching OISST v2.1 SST anomaly map…")
+    sst_map = fetch_sst_map(months=12)
+    if sst_map:
+        with open(SST_MAP_PATH, "w", encoding="utf-8") as fh:
+            json.dump(sst_map, fh, ensure_ascii=False)
+        logger.info(
+            "Written %s (%.1f KB) — %d snapshots, %dx%d grid",
+            SST_MAP_PATH,
+            SST_MAP_PATH.stat().st_size / 1024,
+            len(sst_map["times"]),
+            len(sst_map["lats"]),
+            len(sst_map["lons"]),
+        )
+    else:
+        logger.warning("SST map unavailable — frontend will show fallback text")
+
     logger.info("=== build.py: done ===")
 
 
