@@ -20,6 +20,7 @@ build/
 # Data — ignore the heavy CHIRPS directory and large binary formats.
 # data/raw/ is NOT ignored as a directory so the auto-refresh workflow
 # can commit the three small NOAA ASCII index files directly.
+data/cache/
 data/raw/chirps/
 data/processed/
 *.nc

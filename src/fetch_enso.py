@@ -1,11 +1,15 @@
-"""Fetch and parse ENSO indices from NOAA CPC.
+"""Fetch and parse ENSO indices from NOAA CPC and ERDDAP.
 
 Indices retrieved:
 - ONI (Oceanic Niño Index) — 3-month running mean of Niño 3.4 SST anomalies
-- Niño 3.4 SST anomaly — monthly values from ERSSTv5
+- Niño 3.4 SST anomaly — monthly values from ERSSTv5 / ERDDAP weekly
 - SOI (Southern Oscillation Index) — Tahiti minus Darwin SLP difference
 
-Sources:
+Primary sources (ERDDAP — structured CSV):
+    Niño 3.4: https://coastwatch.pfeg.noaa.gov/erddap/tabledap/ncepNinoSSTwk
+    SOI:      https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdlasNoix
+
+Fallback sources (CPC ASCII text):
     ONI:    https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt
     Niño:   https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii
     SOI:    https://www.cpc.ncep.noaa.gov/data/indices/soi
@@ -25,6 +29,8 @@ from src.config import (
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
+    ERDDAP_NINO34_URL,
+    ERDDAP_SOI_URL,
     NOAA_NINO34_URL,
     NOAA_ONI_URL,
     NOAA_SOI_URL,
@@ -54,6 +60,8 @@ class ENSOSnapshot:
         phase: Classified ENSO phase: "El Niño", "La Niña", or "Neutral".
         phase_source: Always "ONI (NOAA CPC)" — for UI provenance label.
         oni_series: Full ONI time series as a DataFrame (columns: date, season, oni).
+        soi_series: Full SOI time series as a DataFrame (columns: date, soi).
+        data_sources: Dict mapping index name to the source used ("ERDDAP" or "CPC").
     """
 
     oni_value: float
@@ -66,6 +74,8 @@ class ENSOSnapshot:
     phase: str
     phase_source: str
     oni_series: pd.DataFrame
+    soi_series: pd.DataFrame = None
+    data_sources: dict = None
 
 
 # ---------------------------------------------------------------------------
@@ -266,6 +276,81 @@ def parse_soi(raw_text: str) -> pd.DataFrame:
 
 
 # ---------------------------------------------------------------------------
+# ERDDAP parsers — structured CSV access (primary for Niño 3.4 & SOI)
+# ---------------------------------------------------------------------------
+
+
+def parse_erddap_nino34(csv_text: str) -> pd.DataFrame:
+    """Parse ERDDAP Niño 3.4 weekly CSV into monthly averages.
+
+    The ERDDAP dataset returns weekly SST anomalies. We resample to
+    monthly to match the CPC monthly format.
+
+    Args:
+        csv_text: Raw CSV from ERDDAP ncepNinoSSTwk endpoint.
+
+    Returns:
+        DataFrame with columns: ``date`` (datetime64), ``nino34`` (float).
+    """
+    # ERDDAP CSV has 2 header rows: column names + units
+    lines = csv_text.strip().splitlines()
+    if len(lines) < 3:
+        raise ValueError("ERDDAP Niño 3.4 CSV too short")
+
+    # Skip the units row (second line)
+    header = lines[0]
+    data_lines = [header] + lines[2:]
+    csv_clean = "\n".join(data_lines)
+
+    df = pd.read_csv(io.StringIO(csv_clean))
+    df["time"] = pd.to_datetime(df["time"])
+    df = df.rename(columns={"Nino34_ssta": "nino34"})
+    df = df.dropna(subset=["nino34"])
+
+    # Resample weekly → monthly (mean)
+    df = df.set_index("time")
+    monthly = df.resample("MS").mean().reset_index()
+    monthly["date"] = monthly["time"] + pd.Timedelta(days=14)
+    monthly = monthly[monthly["nino34"].notna()].reset_index(drop=True)
+
+    logger.info(
+        "ERDDAP Niño 3.4: %d monthly records (%s — %s)",
+        len(monthly), monthly["date"].iloc[0].date(), monthly["date"].iloc[-1].date(),
+    )
+    return monthly[["date", "nino34"]]
+
+
+def parse_erddap_soi(csv_text: str) -> pd.DataFrame:
+    """Parse ERDDAP SOI griddap CSV.
+
+    Args:
+        csv_text: Raw CSV from ERDDAP erdlasNoix endpoint.
+
+    Returns:
+        DataFrame with columns: ``date`` (datetime64), ``soi`` (float).
+    """
+    lines = csv_text.strip().splitlines()
+    if len(lines) < 3:
+        raise ValueError("ERDDAP SOI CSV too short")
+
+    # Skip the units row (second line)
+    header = lines[0]
+    data_lines = [header] + lines[2:]
+    csv_clean = "\n".join(data_lines)
+
+    df = pd.read_csv(io.StringIO(csv_clean))
+    df["time"] = pd.to_datetime(df["time"])
+    df = df.dropna(subset=["soi"])
+    df["date"] = df["time"].dt.normalize() + pd.Timedelta(days=14)
+
+    logger.info(
+        "ERDDAP SOI: %d records (%s — %s)",
+        len(df), df["date"].iloc[0].date(), df["date"].iloc[-1].date(),
+    )
+    return df[["date", "soi"]].reset_index(drop=True)
+
+
+# ---------------------------------------------------------------------------
 # ENSO phase classifier
 # ---------------------------------------------------------------------------
 
@@ -300,11 +385,45 @@ def classify_enso_phase(oni_series: pd.DataFrame) -> str:
 # ---------------------------------------------------------------------------
 
 
+def _fetch_with_fallback(
+    primary_url: str,
+    primary_label: str,
+    primary_parser,
+    fallback_url: str,
+    fallback_label: str,
+    fallback_parser,
+) -> tuple:
+    """Try primary source (ERDDAP), fall back to secondary (CPC) on failure.
+
+    Returns:
+        (DataFrame, source_label) — the parsed data and which source was used.
+    """
+    # Try primary (ERDDAP)
+    try:
+        raw = fetch_text(primary_url, label=primary_label, timeout=45)
+        df = primary_parser(raw)
+        if len(df) > 0:
+            return df, "ERDDAP"
+    except Exception as exc:
+        logger.warning("Primary source %s failed: %s — trying fallback", primary_label, exc)
+
+    # Fallback (CPC text)
+    try:
+        raw = fetch_text(fallback_url, label=fallback_label)
+        df = fallback_parser(raw)
+        return df, "CPC"
+    except Exception as exc:
+        raise RuntimeError(
+            f"Both primary ({primary_label}) and fallback ({fallback_label}) failed. "
+            f"Last error: {exc}"
+        ) from exc
+
+
 def fetch_enso_snapshot() -> ENSOSnapshot:
     """Fetch all three ENSO indices and return a current-state snapshot.
 
-    Fetches ONI, Niño 3.4, and SOI from NOAA CPC.  Raises ``RuntimeError``
-    (with a user-friendly message) if any source is unavailable.
+    Uses ERDDAP as primary source for Niño 3.4 and SOI (structured CSV),
+    with CPC ASCII text files as fallback. ONI is always from CPC (canonical).
 
     Returns:
         :class:`ENSOSnapshot` with the latest available values and the
@@ -314,21 +433,37 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         RuntimeError: If data cannot be fetched or parsed.
     """
     logger.info("=== Iniciando ingesta ENSO ===")
+    data_sources = {}
 
-    # --- ONI ---
+    # --- ONI (always from CPC — canonical source, no ERDDAP equivalent) ---
     oni_raw = fetch_text(NOAA_ONI_URL, label="NOAA ONI")
     oni_df = parse_oni(oni_raw)
     latest_oni = oni_df.iloc[-1]
+    data_sources["oni"] = "CPC"
 
-    # --- Niño 3.4 ---
-    nino_raw = fetch_text(NOAA_NINO34_URL, label="NOAA Niño 3.4")
-    nino_df = parse_nino34(nino_raw)
+    # --- Niño 3.4 (ERDDAP primary, CPC fallback) ---
+    nino_df, nino_source = _fetch_with_fallback(
+        primary_url=ERDDAP_NINO34_URL,
+        primary_label="ERDDAP Niño 3.4",
+        primary_parser=parse_erddap_nino34,
+        fallback_url=NOAA_NINO34_URL,
+        fallback_label="CPC Niño 3.4",
+        fallback_parser=parse_nino34,
+    )
     latest_nino = nino_df.iloc[-1]
+    data_sources["nino34"] = nino_source
 
-    # --- SOI ---
-    soi_raw = fetch_text(NOAA_SOI_URL, label="NOAA SOI")
-    soi_df = parse_soi(soi_raw)
+    # --- SOI (ERDDAP primary, CPC fallback) ---
+    soi_df, soi_source = _fetch_with_fallback(
+        primary_url=ERDDAP_SOI_URL,
+        primary_label="ERDDAP SOI",
+        primary_parser=parse_erddap_soi,
+        fallback_url=NOAA_SOI_URL,
+        fallback_label="CPC SOI",
+        fallback_parser=parse_soi,
+    )
     latest_soi = soi_df.iloc[-1]
+    data_sources["soi"] = soi_source
 
     # --- Phase classification ---
     phase = classify_enso_phase(oni_df)
@@ -344,6 +479,8 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         phase=phase,
         phase_source="ONI (NOAA CPC)",
         oni_series=oni_df,
+        soi_series=soi_df,
+        data_sources=data_sources,
     )
 
     logger.info(
@@ -354,4 +491,5 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         snapshot.soi_value,
         snapshot.phase,
     )
+    logger.info("Data sources: %s", data_sources)
     return snapshot

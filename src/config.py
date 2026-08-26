@@ -30,6 +30,24 @@ NOAA_SOI_URL = (
 """Southern Oscillation Index (SOI) — standardised difference of
 sea-level pressure between Tahiti and Darwin.  Updated monthly."""
 
+# ---------------------------------------------------------------------------
+# ERDDAP endpoints — structured CSV/JSON access (primary for Niño 3.4 & SOI)
+# ---------------------------------------------------------------------------
+
+ERDDAP_NINO34_URL = (
+    "https://coastwatch.pfeg.noaa.gov/erddap/tabledap/ncepNinoSSTwk.csv"
+    "?time,Nino34_ssta"
+)
+"""ERDDAP weekly Niño 3.4 SST anomaly from OISST v2 (NCEP).
+Returns CSV: time (ISO), Nino34_ssta (°C). Weekly, 1981–present."""
+
+ERDDAP_SOI_URL = (
+    "https://coastwatch.pfeg.noaa.gov/erddap/griddap/erdlasNoix.csv"
+    "?soi[(1950-01-16T12:00:00Z):1:(last)]"
+)
+"""ERDDAP monthly SOI from NOAA ERD oscillation indices.
+Returns CSV: time (ISO), soi (standardised). Monthly, 1948–present."""
+
 IRI_ENSO_FORECAST_URL = (
     "https://iri.columbia.edu/our-expertise/climate/enso/"
 )
@@ -156,6 +174,13 @@ PAIRS_CACHE_PATH: str = "data/processed/oni_precip_pairs.parquet"
 DATA_STALENESS_THRESHOLD_DAYS: int = 60
 """Warn when any individual data source's latest date lags the most-recent
 source by more than this many days (indicates a source has stopped updating)."""
+
+# ---------------------------------------------------------------------------
+# API response cache
+# ---------------------------------------------------------------------------
+
+CACHE_DIR: str = "data/cache"
+CACHE_TTL_SECONDS: int = 3600  # 1 hour — prevents rate-limiting during builds
 
 # ---------------------------------------------------------------------------
 # Network settings

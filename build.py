@@ -184,6 +184,17 @@ def build_payload() -> dict:
         })
     oni_24m = oni_records[-24:]
 
+    # 4b. SOI series — full + last 24 months (for SOI Tracker section)
+    soi_records: list[dict] = []
+    if snapshot.soi_series is not None:
+        for _, row in snapshot.soi_series.iterrows():
+            soi_records.append({
+                "date": row["date"].date().isoformat(),
+                "soi":  round(float(row["soi"]), 2),
+            })
+    soi_24m = soi_records[-24:] if soi_records else []
+    logger.info("SOI series: %d total, %d last 24m", len(soi_records), len(soi_24m))
+
     # 5. Correlation records (region × lag)
     corr_records: list[dict] = []
     for _, row in corr_df.iterrows():
@@ -278,12 +289,15 @@ def build_payload() -> dict:
         },
         "oni_series":    oni_records,
         "oni_series_24m": oni_24m,
+        "soi_series":    soi_records,
+        "soi_series_24m": soi_24m,
         "correlations":  corr_records,
         "region_meta":   region_meta,
         "region_order":  REGION_ORDER,
         "episodes":      episodes,
         "correlation_cache": cache_meta,
         "precip_anomaly_12m": precip_anomaly_12m,
+        "data_sources":  snapshot.data_sources or {},
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
             "Índice automático — no constituye declaración oficial de NOAA. "

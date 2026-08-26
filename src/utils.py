@@ -1,7 +1,9 @@
-"""Shared utilities: HTTP fetching with retry, logging setup."""
+"""Shared utilities: HTTP fetching with retry, logging setup, file-based caching."""
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
 import time
@@ -12,7 +14,13 @@ from typing import Optional, Tuple
 
 import requests
 
-from src.config import REQUEST_MAX_RETRIES, REQUEST_RETRY_WAIT_SECONDS, REQUEST_TIMEOUT_SECONDS
+from src.config import (
+    CACHE_DIR,
+    CACHE_TTL_SECONDS,
+    REQUEST_MAX_RETRIES,
+    REQUEST_RETRY_WAIT_SECONDS,
+    REQUEST_TIMEOUT_SECONDS,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +47,67 @@ def get_logger(name: str) -> logging.Logger:
     return log
 
 
+# ---------------------------------------------------------------------------
+# File-based response cache
+# ---------------------------------------------------------------------------
+
+def _cache_key(url: str) -> str:
+    """Generate a filesystem-safe cache key from a URL."""
+    return hashlib.sha256(url.encode()).hexdigest()[:16]
+
+
+def _cache_path(url: str) -> Path:
+    """Return the cache file path for a given URL."""
+    cache_dir = Path(CACHE_DIR)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir / f"{_cache_key(url)}.cache"
+
+
+def cache_get(url: str, ttl: int = CACHE_TTL_SECONDS) -> Optional[str]:
+    """Return cached response text if fresh, else None."""
+    path = _cache_path(url)
+    if not path.exists():
+        return None
+    try:
+        meta_path = path.with_suffix(".meta")
+        if meta_path.exists():
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+            cached_at = meta.get("cached_at", 0)
+        else:
+            cached_at = path.stat().st_mtime
+        age = time.time() - cached_at
+        if age > ttl:
+            logger.info("Cache expired for %s (age=%.0fs, ttl=%ds)", url, age, ttl)
+            return None
+        text = path.read_text(encoding="utf-8")
+        logger.info("Cache hit for %s (age=%.0fs)", url, age)
+        return text
+    except Exception as exc:
+        logger.warning("Cache read error for %s: %s", url, exc)
+        return None
+
+
+def cache_put(url: str, text: str) -> None:
+    """Store response text in the file cache."""
+    try:
+        path = _cache_path(url)
+        path.write_text(text, encoding="utf-8")
+        meta_path = path.with_suffix(".meta")
+        meta_path.write_text(
+            json.dumps({"url": url, "cached_at": time.time()}),
+            encoding="utf-8",
+        )
+    except Exception as exc:
+        logger.warning("Cache write error for %s: %s", url, exc)
+
+
 def fetch_text(
     url: str,
     timeout: int = REQUEST_TIMEOUT_SECONDS,
     max_retries: int = REQUEST_MAX_RETRIES,
     retry_wait: int = REQUEST_RETRY_WAIT_SECONDS,
     label: Optional[str] = None,
+    use_cache: bool = True,
 ) -> str:
     """Fetch plain-text content from *url* with retry logic.
 
@@ -63,13 +126,23 @@ def fetch_text(
             suitable for display in the Streamlit UI.
     """
     tag = label or url
+
+    # Check cache first
+    if use_cache:
+        cached = cache_get(url)
+        if cached is not None:
+            return cached
+
     for attempt in range(1, max_retries + 1):
         try:
             logger.info("Fetching %s (attempt %d/%d)", tag, attempt, max_retries)
-            resp = requests.get(url, timeout=timeout)
+            resp = requests.get(url, timeout=timeout, allow_redirects=True)
             resp.raise_for_status()
             logger.info("OK — received %d bytes from %s", len(resp.content), tag)
-            return resp.text
+            text = resp.text
+            if use_cache:
+                cache_put(url, text)
+            return text
         except requests.exceptions.Timeout:
             msg = f"Timeout al conectar con {tag} (intento {attempt}/{max_retries})"
             logger.warning(msg)
