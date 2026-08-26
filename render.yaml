@@ -1,43 +1,16 @@
 services:
-  # ── OPTION A — Static Site (recommended, requires new Render service) ──────
-  #
-  # Render cannot convert an existing Python Web Service to a Static Site
-  # via render.yaml alone. To deploy the static site:
-  #   1. In Render dashboard: New → Static Site → connect this repo
-  #   2. Publish directory: site
-  #   3. Build command: (leave empty — enso.json is committed by GitHub Action)
-  #   4. Delete or suspend the old Python web service
-  #
-  # Uncomment the block below once the new Static Site service is created:
-  #
-  # - type: web
-  #   name: argentina-enso-tracker-static
-  #   env: static
-  #   staticPublishPath: site
-  #   headers:
-  #     - path: /*
-  #       name: Cache-Control
-  #       value: public, max-age=3600, stale-while-revalidate=86400
-  #     - path: /data/enso.json
-  #       name: Cache-Control
-  #       value: public, max-age=1800, stale-while-revalidate=3600
-
-  # ── OPTION B — Legacy Python Web Service (current active service) ─────────
-  #
-  # Keeps the existing Streamlit app running while the static site is set up.
-  # app.py was moved to legacy/app.py in the static-site refactor.
-  #
   - type: web
     name: argentina-enso-tracker
-    runtime: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "streamlit run legacy/app.py --server.port $PORT --server.address 0.0.0.0 --server.headless true"
+    runtime: static
+    staticPublishPath: ./site
+    buildCommand: ""
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: public, max-age=3600, stale-while-revalidate=86400
+      - path: /data/enso.json
+        name: Cache-Control
+        value: public, max-age=1800, stale-while-revalidate=3600
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.11.0"
-      - key: CONTACT_EMAIL
-        sync: false
-      - key: GITHUB_REPO_URL
-        sync: false
-    autoDeploy: true
+      - key: SKIP_INSTALL_DEPS
+        value: "true"
