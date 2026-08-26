@@ -4,7 +4,8 @@ Primer entregable de **FRIS (FloodRisk Intelligence System)**.
 Sitio editorial estatico que muestra el estado actual del ENSO (El Nino / La Nina)
 y su correlacion historica con precipitacion en 5 regiones de Argentina.
 
-**Live:** [argentina-enso-tracker.onrender.com](https://argentina-enso-tracker.onrender.com/)
+**Live (Render):** [argentina-enso-tracker.onrender.com](https://argentina-enso-tracker.onrender.com/)
+**Mirror (GitHub Pages):** [ammarmahfoud90.github.io/argentina-enso-tracker](https://ammarmahfoud90.github.io/argentina-enso-tracker/)
 
 ---
 
@@ -46,15 +47,25 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 - **Subsurface temperature heatmap**: Equatorial Pacific cross-section (165E-95W, 0-300m depth) from TAO/TRITON buoys via ERDDAP — shows thermocline tilt as ENSO diagnostic
 - **IRI ENSO forecast panel**: Embedded probability histogram and model plume from IRI/CCSR with toggle
 - **Data-driven risk advice**: Regional guidance using ONI magnitude, SOI trend, and recent precipitation anomalies
+- **Correlation bar chart**: Plotly bar chart of best Pearson r per region with significance indicators
+- **SOI Plotly chart**: Interactive bar + line chart with 3-month moving average overlay
 
 ### Argentina Context (Phase 3)
 - **Historical event comparison**: Interactive overlay of current ENSO trajectory against major past events (1997-98, 2015-16, 1982-83, etc.)
 - **Regional impact map**: D3 choropleth with correlation-sized signal circles
 
-### Performance (Phase 4)
+### UX & Navigation (v3)
+- **Sticky navigation menu**: Section anchors with scroll-spy highlighting
+- **Dark mode toggle**: CSS custom properties + localStorage persistence
+- **ENSO alert banner**: Automatic warning for strong events (|ONI| >= 1.0)
+- **CSV export**: Download ONI + SOI series as CSV
+- **Data sources panel**: Collapsible methodology and sources table
+
+### Performance (Phase 4 + v3)
 - **`--force-recompute` flag**: Bypasses HTTP cache for fresh data
-- **Prerender-ready**: Open Graph and Twitter Card meta tags
+- **Prerender-ready**: Dynamic Open Graph and Twitter Card meta tags (phase + ONI value)
 - **Mobile responsive**: Optimized layout for small screens
+- **SEO**: sitemap.xml, robots.txt, dynamic page title
 
 ---
 
@@ -190,6 +201,12 @@ argentina-enso-tracker/
     +-- test_correlations.py
     +-- test_fetch_enso.py
 ```
+
+---
+
+## How to Contribute
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and contribution guidelines.
 
 ---
 

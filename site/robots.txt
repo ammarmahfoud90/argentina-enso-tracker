@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://argentina-enso-tracker.onrender.com/sitemap.xml

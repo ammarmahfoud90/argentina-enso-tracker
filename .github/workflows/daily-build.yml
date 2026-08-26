@@ -1,10 +1,12 @@
 name: Daily ENSO build
 
-# Runs every day at 07:00 UTC (04:00 ART / 08:00 ART+1)
+# Runs every day at 08:00 UTC and on every push to main.
 # NOAA CPC typically updates monthly data within the first days of each month.
 on:
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 8 * * *'
+  push:
+    branches: [main]
   workflow_dispatch:           # allow manual trigger from GitHub Actions UI
 
 permissions:

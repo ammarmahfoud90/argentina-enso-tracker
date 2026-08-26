@@ -131,6 +131,14 @@
     /* Footer */
     .footer{margin-top:40px;padding-top:20px;border-top:3px solid #14161A;animation:omFadeUp .55s ease .5s backwards;display:flex;justify-content:space-between;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;flex-wrap:wrap;}
 
+    /* Sticky nav */
+    .sticky-nav{position:sticky;top:0;z-index:50;background:var(--nav-bg,#FFFFFF);border-bottom:1px solid #E4E7EC;display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .sticky-nav-inner{display:flex;gap:0;max-width:1180px;margin:0 auto;padding:0 16px;}
+    .sticky-nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;color:#79818E;text-decoration:none;padding:10px 14px;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;}
+    .sticky-nav a:hover{color:#14161A;text-decoration:none;}
+    .sticky-nav a.active{color:#14161A;border-bottom-color:#C2382A;font-weight:600;}
+    @media(max-width:600px){.sticky-nav a{padding:10px 10px;font-size:10px;}}
+
     /* Loading state */
     #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;z-index:100;}
 
@@ -152,11 +160,58 @@
       .risk-grid{grid-template-columns:1fr;gap:24px;}
       .risk-map-iframe{aspect-ratio:1/1;}
     }
+    /* Dark mode */
+    html.dark{--nav-bg:#1a1a2e;}
+    html.dark body{background:#0f0f1a;color:#e0e0e8;}
+    html.dark .page{color:#e0e0e8;}
+    html.dark a{color:#6d9fff;}
+    html.dark a:hover{color:#ff8a7a;}
+    html.dark .masthead{border-bottom-color:#333;}
+    html.dark .masthead-kicker,html.dark .indicator-label,html.dark .section-meta,html.dark .inset-label,html.dark .region-selector-label,html.dark .heatmap-legend span,html.dark .risk-list-label,html.dark .accordions-label,html.dark .acc-bar-note,html.dark .masthead-meta .label,html.dark .masthead-meta .desc{color:#888;}
+    html.dark .masthead-meta .date,html.dark .masthead h1{color:#e0e0e8;}
+    html.dark .hero-desc,html.dark .section-desc,html.dark .indicator-note,html.dark .acc-prov,html.dark .forecast-desc,html.dark .risk-summary,html.dark .acc-detail{color:#aab;}
+    html.dark .hero{border-bottom-color:#2a2a3a;}
+    html.dark .indicators{background:#2a2a3a;border-bottom-color:#2a2a3a;}
+    html.dark .indicator-cell{background:#0f0f1a;}
+    html.dark .section{border-bottom-color:#2a2a3a;}
+    html.dark .indicator-value{color:#e0e0e8;}
+    html.dark .region-pill{border-color:#444;color:#aab;}
+    html.dark .region-pill.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
+    html.dark .range-btn{border-color:#444;color:#aab;}
+    html.dark .range-btn.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
+    html.dark .advice-panel{background:#1a1a2e;color:#e0e0e8;}
+    html.dark .forecast-link-row{color:#e0e0e8;border-top-color:#2a2a3a;}
+    html.dark .forecast-link-row:hover{background:#1a1a2e;}
+    html.dark #inset-svg{background:#1a1a2e;border-color:#2a2a3a;}
+    html.dark details.region-accordion{border-top-color:#2a2a3a;}
+    html.dark .footer{border-top-color:#333;color:#666;}
+    html.dark .sticky-nav{background:#1a1a2e;border-bottom-color:#2a2a3a;}
+    html.dark .sticky-nav a{color:#888;}
+    html.dark .sticky-nav a.active{color:#e0e0e8;}
+    html.dark #loading{background:#0f0f1a;}
+    html.dark #dark-mode-toggle{background:#1a1a2e;border-color:#444;color:#e0e0e8;}
+    html.dark .risk-map-iframe{border-color:#2a2a3a;}
   </style>
 </head>
 <body>
 
 <a href="#main" class="skip-link">Saltar al contenido principal</a>
+
+<!-- Sticky navigation -->
+<nav class="sticky-nav" id="sticky-nav" aria-label="Navegación por sección">
+  <div class="sticky-nav-inner">
+    <a href="#estado-section">Estado ENSO</a>
+    <a href="#oni-section">ONI</a>
+    <a href="#soi-section">SOI</a>
+    <a href="#subsurface-section">Subsuperficial</a>
+    <a href="#forecast-section">Pronóstico</a>
+    <a href="#compare-section">Comparación</a>
+    <a href="#corr-section">Correlaciones</a>
+    <a href="#risk-section">Riesgo regional</a>
+    <a href="#data-sources-section">Fuentes</a>
+  </div>
+</nav>
+
 <div id="loading" role="status" aria-live="polite">Cargando datos…</div>
 
 <main class="page" id="main" style="display:none">
@@ -175,7 +230,7 @@
   </header>
 
   <!-- 2. Status hero -->
-  <section class="hero">
+  <section class="hero" id="estado-section">
     <div>
       <div class="hero-status">
         <span class="status-dot" id="status-dot"></span>
@@ -234,7 +289,7 @@
   </section>
 
   <!-- 4. ONI historical chart -->
-  <section class="section" style="animation:omFadeUp .55s ease .24s backwards;">
+  <section class="section" id="oni-section" style="animation:omFadeUp .55s ease .24s backwards;">
     <div class="section-header">
       <h2>Serie histórica ONI</h2>
       <div class="section-meta" id="chart-range-label"></div>
@@ -257,7 +312,7 @@
   </section>
 
   <!-- 4b. SOI Tracker — early warning indicator -->
-  <section class="section" style="animation:omFadeUp .55s ease .27s backwards;">
+  <section class="section" id="soi-section" style="animation:omFadeUp .55s ease .27s backwards;">
     <div class="section-header">
       <h2>SOI Tracker</h2>
       <div class="section-meta" id="soi-range-label"></div>
@@ -272,7 +327,7 @@
       </div>
       <div id="soi-trend-badge" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;border:1px solid currentColor;border-radius:3px;padding:4px 10px;"></div>
     </div>
-    <svg id="soi-svg" viewBox="0 0 1120 220" style="width:100%;height:auto;display:block;" role="img" aria-label="Serie de los últimos 24 meses del Índice de Oscilación Sur (SOI)"></svg>
+    <div id="soi-plotly" style="width:100%;height:320px;" role="img" aria-label="Serie temporal del SOI con media móvil de 3 meses"></div>
   </section>
 
   <!-- 4c. Subsurface temperature cross-section -->
@@ -286,7 +341,7 @@
   </section>
 
   <!-- 5. Forecast section — IRI plume + links -->
-  <section class="section" style="animation:omFadeUp .55s ease .3s backwards;">
+  <section class="section" id="forecast-section" style="animation:omFadeUp .55s ease .3s backwards;">
     <div class="section-header">
       <h2>Pronóstico ENSO</h2>
       <div class="section-meta" id="forecast-meta"></div>
@@ -295,12 +350,15 @@
 
     <!-- IRI forecast visualizations -->
     <div id="iri-forecast-panel" style="display:none;">
-      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
-        <button class="range-btn active" data-forecast="probs" id="forecast-btn-probs">Probabilidades</button>
-        <button class="range-btn" data-forecast="plume" id="forecast-btn-plume">Pluma de modelos</button>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px;">
+        <button class="range-btn active" data-forecast="probs" id="forecast-btn-probs">Probabilidades por fase</button>
+        <button class="range-btn" data-forecast="plume" id="forecast-btn-plume">Pluma de modelos (20+ modelos)</button>
       </div>
       <div id="iri-forecast-container" style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
-        <img id="iri-forecast-img" alt="IRI ENSO forecast" style="max-width:100%;height:auto;display:inline-block;" crossorigin="anonymous">
+        <p id="iri-forecast-desc" style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#555C68;margin-bottom:12px;text-align:left;"></p>
+        <img id="iri-forecast-img" alt="IRI ENSO forecast" style="max-width:100%;height:auto;display:inline-block;" crossorigin="anonymous"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='';">
+        <p id="iri-forecast-fallback" style="display:none;font-size:14px;color:#79818E;padding:40px 0;">Visualización IRI no disponible temporalmente. <a id="iri-forecast-link-fallback" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver directamente en IRI →</a></p>
         <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR — Columbia University. <a id="iri-forecast-link" href="" target="_blank" rel="noopener">Ver en IRI →</a></p>
       </div>
     </div>
@@ -328,7 +386,7 @@
   </section>
 
   <!-- 5b. Historical ENSO event comparison -->
-  <section class="section" style="animation:omFadeUp .55s ease .33s backwards;">
+  <section class="section" id="compare-section" style="animation:omFadeUp .55s ease .33s backwards;">
     <div class="section-header">
       <h2>Comparación histórica</h2>
       <div class="section-meta">Eventos seleccionados vs episodio actual</div>
@@ -342,10 +400,14 @@
   </section>
 
   <!-- 6. Correlation heatmap -->
-  <section class="section" style="animation:omFadeUp .55s ease .36s backwards;">
+  <section class="section" id="corr-section" style="animation:omFadeUp .55s ease .36s backwards;">
     <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
     <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001.</p>
-    <div id="heatmap-grid"></div>
+    <div id="corr-bar-chart" style="width:100%;height:320px;margin-bottom:28px;" role="img" aria-label="Gráfico de barras de correlación ENSO-precipitación por región"></div>
+    <details style="margin-bottom:20px;">
+      <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;">Tabla detallada por lag ▸</summary>
+      <div id="heatmap-grid" style="margin-top:12px;"></div>
+    </details>
     <div class="heatmap-legend">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">correlación</span>
       <div class="heatmap-legend-bar"></div>
@@ -355,7 +417,7 @@
   </section>
 
   <!-- 7. Regional risk -->
-  <section class="section" style="border-top:1px solid #E4E7EC;margin-top:36px;animation:omFadeUp .55s ease .42s backwards;">
+  <section class="section" id="risk-section" style="border-top:1px solid #E4E7EC;margin-top:36px;animation:omFadeUp .55s ease .42s backwards;">
     <h2 style="margin-bottom:6px;">Implicaciones de riesgo por región</h2>
     <p class="section-desc section-desc-wide">Señal forward-looking = pronóstico ENSO × correlación histórica regional. Las correlaciones son promedios regionales sobre lo observado 1981–2025 — no usar para decisiones a escala provincial sin validación local.</p>
     <div class="risk-grid">
@@ -370,7 +432,58 @@
     <div id="accordions"></div>
   </section>
 
-  <!-- 8. Footer -->
+  <!-- 8. Data sources panel -->
+  <section class="section" id="data-sources-section" style="animation:omFadeUp .55s ease .48s backwards;">
+    <details>
+      <summary style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:20px;font-weight:800;letter-spacing:-0.01em;">
+        <span>Fuentes de datos y metodología</span>
+        <span style="font-size:12px;color:#79818E;font-weight:400;">▸</span>
+      </summary>
+      <div style="margin-top:20px;font-size:14px;color:#555C68;line-height:1.7;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+          <thead>
+            <tr style="border-bottom:2px solid #E4E7EC;text-align:left;">
+              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;">Índice</th>
+              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;">Fuente</th>
+              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;">Frecuencia</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;">ONI (Oceanic Niño Index)</td>
+              <td style="padding:8px 12px;">NOAA CPC (ERDDAP / CPC ASCII fallback)</td>
+              <td style="padding:8px 12px;">Mensual</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;">SOI</td>
+              <td style="padding:8px 12px;">NOAA / BOM (ERDDAP)</td>
+              <td style="padding:8px 12px;">Mensual</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;">Temperatura subsuperficial</td>
+              <td style="padding:8px 12px;">TAO/TRITON (NOAA PMEL via ERDDAP)</td>
+              <td style="padding:8px 12px;">Mensual</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;">Precipitación</td>
+              <td style="padding:8px 12px;">CHIRPS v2.0 (UCSB, 1981–presente)</td>
+              <td style="padding:8px 12px;">Mensual</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;">Pronóstico ENSO</td>
+              <td style="padding:8px 12px;">IRI/CCSR (Columbia University)</td>
+              <td style="padding:8px 12px;">Mensual</td>
+            </tr>
+          </tbody>
+        </table>
+        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral, umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 regiones de Argentina (1981–2025).</p>
+        <p style="margin-top:8px;"><strong>Detección de episodios:</strong> Criterio NOAA CPC — ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
+        <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py) → JSON → HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
+      </div>
+    </details>
+  </section>
+
+  <!-- 9. Footer -->
   <footer class="footer" role="contentinfo">
     <span>Fuentes: NOAA CPC · IRI Columbia · CHIRPS v2.0 (UCSB)</span>
     <span>Índices automáticos — no constituyen declaración oficial</span>
@@ -874,6 +987,117 @@ function buildSubsurfaceHeatmap(divId, subsurface) {
   return true;
 }
 
+/* ── Correlation bar chart (best r per region) ── */
+function buildCorrelationBarChart(divId, correlations, regionOrder) {
+  const best = bestByRegion(correlations, regionOrder);
+  const regions = [];
+  const rValues = [];
+  const colors = [];
+  const texts = [];
+
+  for (const region of regionOrder) {
+    const b = best[region];
+    if (!b) continue;
+    regions.push(region);
+    rValues.push(b.pearson_r);
+    const isSig = b.pearson_p < SIG_THRESHOLD;
+    colors.push(isSig ? (b.pearson_r >= 0 ? '#C2382A' : '#2A55D0') : '#C7CCD6');
+    const sign = b.pearson_r >= 0 ? '+' : '';
+    texts.push(`${sign}${b.pearson_r.toFixed(3)}${b.pearson_stars || ''} (lag ${b.lag}m)`);
+  }
+
+  const trace = {
+    x: regions, y: rValues, type: 'bar',
+    marker: { color: colors, line: { color: '#14161A', width: 0.5 } },
+    text: texts, textposition: 'outside',
+    textfont: { family: 'IBM Plex Mono', size: 11, color: '#14161A' },
+    hovertemplate: '<b>%{x}</b><br>Pearson r: %{y:+.3f}<extra></extra>',
+  };
+
+  const layout = {
+    margin: { t: 20, r: 20, b: 50, l: 50 },
+    xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: '#14161A' } },
+    yaxis: {
+      title: { text: 'Pearson r', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      zeroline: true, zerolinecolor: '#C7CCD6', gridcolor: '#E4E7EC',
+      range: [-0.1, 0.3],
+    },
+    shapes: [
+      { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0, y1: 0,
+        line: { color: '#C7CCD6', width: 1 } },
+    ],
+    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+  };
+
+  Plotly.newPlot(divId, [trace], layout, {
+    responsive: true, displayModeBar: false, displaylogo: false,
+  });
+}
+
+/* ── SOI Plotly line chart with 3-month moving average ── */
+function buildSoiPlotly(divId, soiSeries) {
+  if (!soiSeries || soiSeries.length < 3) return;
+
+  const dates = soiSeries.map(d => d.date);
+  const values = soiSeries.map(d => d.soi);
+
+  /* 3-month moving average */
+  const ma3 = values.map((v, i) => {
+    if (i < 2) return null;
+    return (values[i] + values[i-1] + values[i-2]) / 3;
+  });
+
+  const traces = [
+    { x: dates, y: values, type: 'bar', name: 'SOI mensual',
+      marker: { color: values.map(v => v >= 0 ? 'rgba(42,85,208,0.7)' : 'rgba(194,56,42,0.7)') },
+      hovertemplate: '<b>%{x|%b %Y}</b><br>SOI: %{y:+.1f}<extra></extra>',
+    },
+    { x: dates, y: ma3, type: 'scatter', mode: 'lines', name: 'Media móvil 3m',
+      line: { color: '#14161A', width: 2 },
+      hovertemplate: '<b>%{x|%b %Y}</b><br>MA(3): %{y:+.1f}<extra></extra>',
+      connectgaps: true,
+    },
+  ];
+
+  const layout = {
+    margin: { t: 10, r: 20, b: 40, l: 50 },
+    xaxis: {
+      type: 'date', gridcolor: '#E4E7EC',
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+    },
+    yaxis: {
+      title: { text: 'SOI', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      gridcolor: '#E4E7EC', zeroline: true, zerolinecolor: '#C7CCD6',
+    },
+    shapes: [
+      { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -1, y1: -1,
+        line: { color: '#C2382A', width: 1, dash: 'dot' } },
+      { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 1, y1: 1,
+        line: { color: '#2A55D0', width: 1, dash: 'dot' } },
+    ],
+    annotations: [
+      { xref: 'paper', yref: 'y', x: 1.02, y: -1, text: 'El Niño', showarrow: false,
+        font: { family: 'IBM Plex Mono', size: 10, color: '#C2382A' }, xanchor: 'left' },
+      { xref: 'paper', yref: 'y', x: 1.02, y: 1, text: 'La Niña', showarrow: false,
+        font: { family: 'IBM Plex Mono', size: 10, color: '#2A55D0' }, xanchor: 'left' },
+    ],
+    legend: { font: { family: 'IBM Plex Mono', size: 11, color: '#555C68' }, x: 0, y: 1 },
+    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    hovermode: 'x unified',
+    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    bargap: 0.15,
+  };
+
+  Plotly.newPlot(divId, traces, layout, {
+    responsive: true, displayModeBar: true,
+    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
+    displaylogo: false,
+  });
+}
+
 /* ── Data freshness indicator ── */
 function updateFreshnessIndicator(lastUpdated) {
   const dot = document.getElementById('freshness-dot');
@@ -881,10 +1105,10 @@ function updateFreshnessIndicator(lastUpdated) {
   const updDate = new Date(lastUpdated);
   const now = new Date();
   const daysSince = (now - updDate) / (1000 * 60 * 60 * 24);
-  if (daysSince <= 7) {
+  if (daysSince <= 3) {
     dot.style.background = '#22C55E'; // green — fresh
-    dot.title = 'Datos actualizados (< 7 días)';
-  } else if (daysSince <= 30) {
+    dot.title = 'Datos actualizados (< 3 días)';
+  } else if (daysSince <= 10) {
     dot.style.background = '#EAB308'; // yellow — aging
     dot.title = `Datos de hace ${Math.round(daysSince)} días`;
   } else {
@@ -1159,7 +1383,7 @@ async function main() {
     document.getElementById('soi-range-label').textContent =
       `${MONTHS_ES[firstDate.getUTCMonth()]} ${firstDate.getUTCFullYear()} – ${MONTHS_ES[lastDate.getUTCMonth()]} ${lastDate.getUTCFullYear()} · mensual · NOAA`;
 
-    buildSoiChart(document.getElementById('soi-svg'), soi24m);
+    if (plotlyReady) buildSoiPlotly('soi-plotly', soi24m);
   }
 
   /* ── IRI Forecast panel ── */
@@ -1172,12 +1396,18 @@ async function main() {
     link.href = 'https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/';
 
     let currentView = 'probs';
+    const descEl_ = document.getElementById('iri-forecast-desc');
     function setForecastView(view) {
       currentView = view;
+      img.style.display = '';
+      document.getElementById('iri-forecast-fallback').style.display = 'none';
       img.src = view === 'probs' ? iriForecast.probs_svg : iriForecast.plume_svg;
       img.alt = view === 'probs'
         ? 'IRI/CCSR ENSO probability forecast — El Nino, Neutral, La Nina por trimestre'
         : 'IRI ENSO model predictions plume — Nino 3.4 SST anomaly forecasts';
+      descEl_.textContent = view === 'probs'
+        ? 'Probabilidades de El Niño / Neutral / La Niña para los próximos trimestres (SON, OND, NDJ, etc.). Barras más altas = mayor probabilidad.'
+        : 'Predicciones individuales de 20+ modelos climáticos para el Niño 3.4 SST. La dispersión indica la incertidumbre del pronóstico.';
       document.getElementById('forecast-btn-probs').classList.toggle('active', view === 'probs');
       document.getElementById('forecast-btn-plume').classList.toggle('active', view === 'plume');
     }
@@ -1216,7 +1446,8 @@ async function main() {
   document.getElementById('compare-btn-nina').addEventListener('click', () => setCompare('nina'));
   setCompare('nino');
 
-  /* ── Heatmap ── */
+  /* ── Correlation bar chart + heatmap ── */
+  if (plotlyReady) buildCorrelationBarChart('corr-bar-chart', data.correlations, regionOrder);
   renderHeatmap(data.correlations, regionOrder);
 
   /* ── Risk section ── */
@@ -1295,6 +1526,91 @@ async function main() {
 
     accordionEl.appendChild(detail);
   }
+
+  /* ── Sticky nav: show after scroll past masthead, highlight active section ── */
+  const stickyNav = document.getElementById('sticky-nav');
+  const navLinks = stickyNav.querySelectorAll('a');
+  const sectionIds = Array.from(navLinks).map(a => a.getAttribute('href').slice(1));
+  const sections = sectionIds.map(id => document.getElementById(id)).filter(Boolean);
+
+  function updateNav() {
+    const scrollY = window.scrollY || window.pageYOffset;
+    /* Show nav after scrolling 300px */
+    stickyNav.style.display = scrollY > 300 ? '' : 'none';
+
+    /* Highlight active section */
+    let activeId = sectionIds[0];
+    for (const sec of sections) {
+      if (sec.offsetTop - 80 <= scrollY) activeId = sec.id;
+    }
+    navLinks.forEach(a => {
+      a.classList.toggle('active', a.getAttribute('href') === '#' + activeId);
+    });
+  }
+  window.addEventListener('scroll', updateNav, { passive: true });
+  updateNav();
+
+  /* ── ENSO alert banner ── */
+  const oniAbs = Math.abs(cur.oni_value);
+  if (oniAbs >= 1.0) {
+    const alertBanner = document.createElement('div');
+    alertBanner.id = 'enso-alert';
+    const alertType = cur.oni_value >= 1.0 ? 'El Niño fuerte' : 'La Niña fuerte';
+    const alertBg = cur.oni_value >= 1.0 ? '#FDF0EF' : '#EEF2FB';
+    const alertColor = cur.oni_value >= 1.0 ? '#C2382A' : '#2A55D0';
+    alertBanner.style.cssText = `background:${alertBg};color:${alertColor};padding:10px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;border-bottom:1px solid ${alertColor}20;`;
+    alertBanner.textContent = `Evento ENSO fuerte en curso — ${alertType} (ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)})`;
+    document.getElementById('main').insertBefore(alertBanner, document.getElementById('main').firstChild);
+  }
+
+  /* ── CSV export button ── */
+  const csvBtn = document.createElement('button');
+  csvBtn.textContent = 'Descargar series (CSV)';
+  csvBtn.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 16px;min-height:36px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;margin-top:16px;transition:background .2s,color .2s;";
+  csvBtn.addEventListener('mouseenter', () => { csvBtn.style.background = '#14161A'; csvBtn.style.color = '#FFFFFF'; });
+  csvBtn.addEventListener('mouseleave', () => { csvBtn.style.background = 'transparent'; csvBtn.style.color = '#555C68'; });
+  csvBtn.addEventListener('click', () => {
+    let csv = 'date,oni,season,soi\n';
+    const soiMap = {};
+    (data.soi_series || []).forEach(s => { soiMap[s.date] = s.soi; });
+    (data.oni_series || []).forEach(pt => {
+      csv += `${pt.date},${pt.oni},${pt.season},${soiMap[pt.date] != null ? soiMap[pt.date] : ''}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'enso_data.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+  document.querySelector('.footer').appendChild(csvBtn);
+
+  /* ── Dark mode toggle ── */
+  const dmBtn = document.createElement('button');
+  dmBtn.id = 'dark-mode-toggle';
+  dmBtn.setAttribute('aria-label', 'Alternar modo oscuro');
+  dmBtn.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:60;width:44px;height:44px;border-radius:50%;border:1px solid #C7CCD6;background:#FFFFFF;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);transition:background .2s,border-color .2s;";
+  document.body.appendChild(dmBtn);
+
+  function applyDarkMode(dark) {
+    document.documentElement.classList.toggle('dark', dark);
+    dmBtn.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
+    localStorage.setItem('enso-dark-mode', dark ? '1' : '0');
+  }
+  const prefersDark = localStorage.getItem('enso-dark-mode') === '1';
+  applyDarkMode(prefersDark);
+  dmBtn.addEventListener('click', () => {
+    applyDarkMode(!document.documentElement.classList.contains('dark'));
+  });
+
+  /* ── Dynamic page title ── */
+  const phaseLabel = phase === 'El Niño' ? 'El Niño activo' : phase === 'La Niña' ? 'La Niña activa' : 'Neutral';
+  document.title = `Argentina ENSO Tracker — ${phaseLabel} (ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)})`;
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) ogTitle.content = document.title;
+  const twTitle = document.querySelector('meta[name="twitter:title"]');
+  if (twTitle) twTitle.content = document.title;
+  const ogDesc = document.querySelector('meta[property="og:description"]');
+  if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${phaseLabel}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
 }
 
 /* Wait for DOM + deferred scripts (Plotly) before running */

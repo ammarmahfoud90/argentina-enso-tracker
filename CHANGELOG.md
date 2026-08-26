@@ -1,5 +1,36 @@
 # Changelog
 
+## 2026-08-26 — v3.0 Ultimate Enhancement Release
+
+### UX & Navigation
+- **Sticky navigation menu**: Horizontal nav with section anchors and scroll-spy active state highlighting
+- **Dark mode toggle**: Fixed button with CSS custom properties theming and localStorage persistence
+- **ENSO alert banner**: Automatic warning for strong events (|ONI| >= 1.0)
+
+### Visual Upgrades
+- **Correlation bar chart**: Plotly bar chart showing best Pearson r per region with significance markers, replacing table-first display
+- **SOI Plotly line chart**: Interactive bar chart with 3-month moving average overlay, replacing SVG-only bars
+- **IRI forecast panel**: Enhanced with descriptive text, image error fallback, and better toggle labels
+
+### New Features
+- **CSV export button**: Download full ONI + SOI time series as CSV from the footer
+- **Data sources panel**: Collapsible section with methodology, data sources table, and pipeline description
+
+### SEO & Performance
+- **Dynamic meta tags**: OG/Twitter title and description update based on current ENSO phase and ONI value
+- **sitemap.xml and robots.txt**: Added for search engine discoverability
+- **Data freshness thresholds**: Updated to 3/10 days (from 7/30) for more accurate staleness indication
+
+### CI/CD
+- **GitHub Action updated**: Runs at 08:00 UTC and on every push to main (previously only scheduled + manual)
+
+### Documentation
+- **README.md**: Added v3 features, GitHub Pages mirror link, "How to Contribute" section
+- **CONTRIBUTING.md**: New file with setup instructions and contribution guidelines
+- **CHANGELOG.md**: Added v3.0 release notes
+
+---
+
 ## 2026-08-26 — Phase 2-5 Enhancement Release
 
 ### Phase 2: Visualizations & UX
