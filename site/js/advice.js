@@ -113,13 +113,18 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const rSign = r > 0 ? 'positiva' : 'negativa';
   const oni   = ext.oni_value;
 
+  /* CHIRPS snowfall limitation caveat for mountain regions */
+  const _chirpsCaveat = (regionName === 'Cuyo' || regionName === 'Patagonia')
+    ? ' Nota: CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO en la zona cordillerana puede estar subestimada. Consultar correlación estacional JJA para señal invernal.'
+    : '';
+
   /* ── Correlation not significant ── */
   if (!isSig) {
     let text =
       `<strong>${regionName}</strong>: la correlación ONI–precipitación no es ` +
       `estadísticamente significativa ` +
       `(mejor r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}, p&nbsp;=&nbsp;${p.toFixed(3)}, ` +
-      `n&nbsp;=&nbsp;${n}). No se emite señal direccional.`;
+      `n&nbsp;=&nbsp;${n}). No se emite señal direccional.${_chirpsCaveat}`;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
     return { signal: 'none', text };
@@ -142,7 +147,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   /* ── Active phase (El Niño / La Niña) ── */
   const direction = _precipDirection(phase, r);
   const intensity = _rLabel(absR);
-  const r2pct = Math.round(r * r * 100);
+  const r2pct = (r * r * 100).toFixed(1);
 
   /* ONI intensity grading */
   const oniLabel = oni != null ? _oniIntensity(oni) : null;
@@ -152,10 +157,10 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   let dirText, implication;
   if (direction === 'excess') {
-    dirText     = 'precipitación históricamente sobre lo normal';
+    dirText     = 'precipitación sobre lo normal';
     implication = 'riesgo de exceso hídrico';
   } else {
-    dirText     = 'precipitación históricamente bajo lo normal';
+    dirText     = 'precipitación bajo lo normal';
     implication = 'riesgo de déficit hídrico';
   }
 

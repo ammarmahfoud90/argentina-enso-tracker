@@ -169,6 +169,40 @@ class TestParseSOI:
         assert last["date"].year == 2025
         assert last["date"].month == 2
 
+    def test_dual_section_reads_only_standardised(self):
+        """CPC file has raw + standardised sections; parser must read only standardised."""
+        dual = (
+            "(STAND TAHITI - STAND DARWIN)  SEA LEVEL PRESS\n"
+            "                         ANOMALY\n"
+            "\n"
+            "YEAR   JAN   FEB   MAR\n"
+            "2026   1.8   2.4   2.0\n"
+            "(STAND TAHITI - STAND DARWIN)  SEA LEVEL PRESS\n"
+            "                     STANDARDIZED    DATA\n"
+            "\n"
+            "YEAR   JAN   FEB   MAR\n"
+            "2026   1.1   1.4   1.2\n"
+        )
+        df = parse_soi(dual)
+        # Should have 3 records from the standardised section only
+        assert len(df) == 3
+        assert df.iloc[0]["soi"] == pytest.approx(1.1)
+        assert df.iloc[1]["soi"] == pytest.approx(1.4)
+        assert df.iloc[2]["soi"] == pytest.approx(1.2)
+
+    def test_concatenated_tokens_split_correctly(self):
+        """Values like '-2.4-999.9' must be split into separate values."""
+        sample = (
+            "STANDARDIZED    DATA\n"
+            "YEAR JAN FEB MAR APR MAY JUN JUL AUG SEP OCT NOV DEC\n"
+            "2026   1.1   1.4   1.2  -0.6  -0.9  -1.4  -2.4-999.9-999.9-999.9-999.9-999.9\n"
+        )
+        df = parse_soi(sample)
+        # Should parse 7 valid months (Jan-Jul), skipping -999.9 sentinels
+        assert len(df) == 7
+        assert df.iloc[-1]["soi"] == pytest.approx(-2.4)
+        assert df.iloc[-1]["date"].month == 7
+
 
 # ---------------------------------------------------------------------------
 # Unit tests — ENSO phase classifier

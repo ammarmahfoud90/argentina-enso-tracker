@@ -232,12 +232,31 @@ def parse_nino34(raw_text: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
+def _split_soi_tokens(raw_tokens: list[str]) -> list[str]:
+    """Split SOI tokens that may be concatenated without spaces.
+
+    The CPC SOI file sometimes concatenates adjacent values when a negative
+    number immediately follows another (e.g. "-2.4-999.9").  This helper
+    re-splits on interior minus signs to recover individual values.
+    """
+    import re
+    result = []
+    for tok in raw_tokens:
+        # Split on minus signs that follow a digit (interior sign = new value)
+        parts = re.split(r'(?<=\d)-', tok)
+        for i, p in enumerate(parts):
+            result.append(p if i == 0 else '-' + p)
+    return result
+
+
 def parse_soi(raw_text: str) -> pd.DataFrame:
     """Parse the NOAA CPC SOI ASCII file.
 
-    The file has an irregular structure with yearly rows.  After the header,
-    each data line starts with a 4-digit year followed by 12 monthly values
-    (missing coded as -999.9).
+    The CPC file contains TWO sections: raw anomaly data followed by
+    standardised data (after the "STANDARDIZED" header).  We read only
+    the standardised section, which matches the convention used by ERDDAP
+    erdlasNoix and by this tracker.  If no "STANDARDIZED" header is found,
+    we fall back to reading the entire file (single-section format).
 
     Args:
         raw_text: Raw string content of the SOI file.
@@ -245,9 +264,21 @@ def parse_soi(raw_text: str) -> pd.DataFrame:
     Returns:
         DataFrame with columns: ``date`` (datetime64), ``soi`` (float).
     """
+    all_lines = raw_text.strip().splitlines()
+
+    # Find the start of the standardised section
+    std_start = None
+    for i, line in enumerate(all_lines):
+        if "STANDARDIZED" in line.upper():
+            std_start = i + 1
+            break
+
+    # Use only the standardised section if found; otherwise use all lines
+    lines_to_parse = all_lines[std_start:] if std_start is not None else all_lines
+
     rows = []
     in_data = False
-    for line in raw_text.strip().splitlines():
+    for line in lines_to_parse:
         parts = line.split()
         if not parts:
             continue
@@ -258,9 +289,9 @@ def parse_soi(raw_text: str) -> pd.DataFrame:
             continue
         try:
             year = int(parts[0])
-            # parts[1:13] naturally yields fewer elements for partial-year rows —
-            # no minimum-token guard needed; sentinel months (-999.9) are skipped below.
-            for month_idx, val_str in enumerate(parts[1:13], start=1):
+            # Re-split tokens to handle concatenated values (e.g. "-2.4-999.9")
+            val_tokens = _split_soi_tokens(parts[1:13])
+            for month_idx, val_str in enumerate(val_tokens[:12], start=1):
                 val = float(val_str)
                 if val <= -999:
                     continue
@@ -488,14 +519,18 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     latest_nino = nino_df.iloc[-1]
     data_sources["nino34"] = nino_source
 
-    # --- SOI (ERDDAP primary, CPC fallback) ---
+    # --- SOI (CPC primary, ERDDAP fallback) ---
+    # CPC standardised SOI is primary: erdlasNoix uses a different
+    # standardisation base period, producing values that diverge >0.5 from
+    # CPC in ~54% of months.  Since thresholds in advice.js are calibrated
+    # for the CPC scale, CPC must be canonical.
     soi_df, soi_source = _fetch_with_fallback(
-        primary_url=ERDDAP_SOI_URL,
-        primary_label="ERDDAP SOI",
-        primary_parser=parse_erddap_soi,
-        fallback_url=NOAA_SOI_URL,
-        fallback_label="CPC SOI",
-        fallback_parser=parse_soi,
+        primary_url=NOAA_SOI_URL,
+        primary_label="CPC SOI",
+        primary_parser=parse_soi,
+        fallback_url=ERDDAP_SOI_URL,
+        fallback_label="ERDDAP SOI",
+        fallback_parser=parse_erddap_soi,
     )
     latest_soi = soi_df.iloc[-1]
     data_sources["soi"] = soi_source

@@ -528,6 +528,7 @@
           </tbody>
         </table>
         <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI (base 1991–2020) y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral, umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 regiones de Argentina (1981–2025). Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
+        <p style="margin-top:8px;"><strong>Limitación CHIRPS en precipitación nival:</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación de la fuente, no por ausencia física del fenómeno. En Cuyo, la correlación invernal (JJA) es significativa (r&nbsp;≈&nbsp;+0.25, p&nbsp;&lt;&nbsp;0.01) pero se diluye en la agregación anual.</p>
         <p style="margin-top:8px;"><strong>Detección de episodios:</strong> Criterio NOAA CPC — ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
         <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py) → JSON → HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
       </div>
@@ -910,15 +911,30 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
     });
   });
 
-  /* Current episode — find the most recent episode of matching type */
-  const phaseType = compareType === 'nino' ? 'El Niño' : 'La Niña';
-  const recentEps = episodes.filter(e => e.type === phaseType);
+  /* Current trajectory — scan backwards from end of ONI series to find
+     the last ascending cross of the threshold, independent of confirmed episodes.
+     This ensures we show the in-progress trajectory even if the formal
+     5-season episode criterion hasn't been met yet. */
+  const threshold = compareType === 'nino' ? 0.5 : -0.5;
+  const meetsThreshold = compareType === 'nino'
+    ? v => v >= threshold
+    : v => v <= threshold;
+
+  let crossIdx = -1;
+  for (let i = oniSeries.length - 1; i > 0; i--) {
+    if (!meetsThreshold(oniSeries[i].oni)) {
+      /* Found the point where ONI drops below threshold — the trajectory
+         starts at the next point (i+1) */
+      crossIdx = i + 1;
+      break;
+    }
+  }
+
   let currentStart = null;
   let currentLabel = 'Actual';
-  if (recentEps.length > 0) {
-    const lastEp = recentEps[recentEps.length - 1];
-    const dStart = new Date(lastEp.start + 'T12:00:00Z');
-    const dEnd = new Date(lastEp.end + 'T12:00:00Z');
+  if (crossIdx >= 0 && crossIdx < oniSeries.length) {
+    const dStart = new Date(oniSeries[crossIdx].date + 'T12:00:00Z');
+    const dEnd = new Date(oniSeries[oniSeries.length - 1].date + 'T12:00:00Z');
     currentStart = { year: dStart.getUTCFullYear(), month: dStart.getUTCMonth() + 1 };
     const endYear = dEnd.getUTCFullYear();
     currentLabel = dStart.getUTCFullYear() === endYear
@@ -926,7 +942,7 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
       : `Actual (${dStart.getUTCFullYear()}–${String(endYear).slice(-2)})`;
   }
 
-  /* Fallback: use last 18 months if no matching episode */
+  /* Fallback: use last 18 months if threshold never crossed */
   if (!currentStart) {
     const lastPt = oniSeries[oniSeries.length - 1];
     const d = new Date(lastPt.date + 'T12:00:00Z');
@@ -1479,7 +1495,7 @@ function regionDetailText(region, best, isSig) {
   const ninaEffect = r > 0 ? 'déficit hídrico' : 'exceso hídrico';
   return `Correlación ${direction} y ${strength} (r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}, lag ${best.lag}m). ` +
     `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
-    `El ONI explica ~${Math.round(r * r * 100)}% de la varianza de precipitación regional (r²). Señal estadística — no certeza operacional.`;
+    `El ONI explica ~${(r * r * 100).toFixed(1)}% de la varianza de precipitación regional (r²). Señal estadística — no certeza operacional.`;
 }
 
 /* ── Risk summary paragraph ── */
@@ -1536,6 +1552,18 @@ async function main() {
   }
   statusLabel.style.color = pColor;
 
+  /* Trajectory: compare Niño 3.4 (more recent) against ONI (~2 month lag) */
+  const sstDelta = cur.nino34_value - cur.oni_value;
+  let trajectoryNote = '';
+  if (phase !== 'Neutral' && Math.abs(sstDelta) > 0.5) {
+    const strengthening = (phase === 'El Niño') ? (sstDelta > 0) : (sstDelta < 0);
+    if (strengthening) {
+      trajectoryNote = ` Niño 3.4 mensual (${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)} °C) sugiere rápido fortalecimiento — el ONI tiene ~2 meses de latencia.`;
+    } else {
+      trajectoryNote = ` Niño 3.4 mensual (${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)} °C) sugiere debilitamiento respecto al ONI (latencia ~2 meses).`;
+    }
+  }
+
   /* Hero phase label includes intensity when available */
   const heroPhaseText = conditionsIntensity && phase !== 'Neutral'
     ? `${phase} ${conditionsIntensity}`
@@ -1554,7 +1582,7 @@ async function main() {
     const impactNote = phase === 'El Niño'
       ? 'Condición cálida — mayor probabilidad histórica de precipitación sobre lo normal en NEA y Pampa Húmeda.'
       : 'Condición fría — mayor probabilidad histórica de déficit hídrico en NEA y Pampa Húmeda.';
-    descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}`;
+    descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}${trajectoryNote}`;
   }
 
   /* Scale bar marker */
@@ -1809,9 +1837,10 @@ async function main() {
     const isSig = b && b.pearson_p < SIG_THRESHOLD;
     const absR = b ? Math.abs(b.pearson_r) : 0;
     let senal, senalColor;
-    if (!isSig) { senal = 'Sin señal'; senalColor = '#A7AEBB'; }
-    else if (absR >= 0.15) { senal = 'Alta'; senalColor = '#C2382A'; }
-    else { senal = 'Débil'; senalColor = '#79818E'; }
+    if (!isSig) { senal = 'No significativa'; senalColor = '#A7AEBB'; }
+    else if (absR >= 0.35) { senal = 'Sig. fuerte'; senalColor = '#C2382A'; }
+    else if (absR >= 0.20) { senal = 'Sig. moderada'; senalColor = '#C2382A'; }
+    else { senal = 'Sig. débil'; senalColor = '#79818E'; }
 
     const meta = (data.region_meta || {})[region] || {};
     const provinces = Array.isArray(meta.provinces) ? meta.provinces.join(', ') : (meta.provinces || '');
