@@ -73,6 +73,46 @@ def align_oni_monthly(oni_series: pd.DataFrame) -> pd.DataFrame:
     return df.drop_duplicates("date").sort_values("date").reset_index(drop=True)
 
 
+def compute_n_eff(x: np.ndarray, y: np.ndarray) -> int:
+    """Effective sample size accounting for autocorrelation (Bretherton et al. 1999).
+
+    Uses the formula: 1/n_eff = (1/n) * Σ_{j=-(n-1)}^{n-1} (1 - |j|/n) * ρ_X(j) * ρ_Y(j)
+
+    Returns:
+        Effective sample size (floored to int, minimum 3).
+    """
+    n = len(x)
+    if n < 10:
+        return n
+
+    # Compute autocorrelation via FFT (much faster than loop for large n)
+    def _acf(series: np.ndarray) -> np.ndarray:
+        s = series - series.mean()
+        var = np.sum(s ** 2)
+        if var == 0:
+            return np.ones(n)
+        result = np.correlate(s, s, mode='full')
+        result = result[n - 1:] / var  # normalise, keep lags 0..n-1
+        return result
+
+    acf_x = _acf(x)
+    acf_y = _acf(y)
+
+    # Bretherton sum: both positive and negative lags (symmetric)
+    inv_neff = 0.0
+    for j in range(n):
+        weight = (1.0 - j / n)
+        product = acf_x[j] * acf_y[j]
+        # j=0 counts once; j>0 counts twice (positive + negative lag)
+        inv_neff += weight * product * (1 if j == 0 else 2)
+    inv_neff /= n
+
+    if inv_neff <= 0:
+        return n
+    n_eff = max(3, int(1.0 / inv_neff))
+    return min(n_eff, n)
+
+
 def compute_correlations(
     chirps_df: pd.DataFrame,
     oni_df: pd.DataFrame,
@@ -126,8 +166,17 @@ def compute_correlations(
             x = paired["oni"].values
             y = paired[region].values
 
-            pearson_r, pearson_p = stats.pearsonr(x, y)
+            pearson_r, pearson_p_naive = stats.pearsonr(x, y)
             spearman_r, spearman_p = stats.spearmanr(x, y)
+
+            # Effective degrees of freedom (Bretherton et al. 1999)
+            n_eff = compute_n_eff(x, y)
+            # Recompute p-value using n_eff (t-test with n_eff-2 df)
+            if n_eff > 2 and abs(pearson_r) < 1.0:
+                t_stat = pearson_r * np.sqrt((n_eff - 2) / (1 - pearson_r ** 2))
+                pearson_p = float(2 * stats.t.sf(abs(t_stat), df=n_eff - 2))
+            else:
+                pearson_p = pearson_p_naive
 
             records.append(
                 {
@@ -138,12 +187,14 @@ def compute_correlations(
                     "spearman_r": round(float(spearman_r), 4),
                     "spearman_p": round(float(spearman_p), 4),
                     "n_obs": n,
+                    "n_eff": n_eff,
                 }
             )
             sig = "✓" if pearson_p < SIGNIFICANCE_THRESHOLD else " "
             logger.info(
-                "[%s] %s lag=%d  r=%.3f p=%.3f %s",
-                sig, region, lag, pearson_r, pearson_p, "(significativo)" if sig == "✓" else "",
+                "[%s] %s lag=%d  r=%.3f p=%.3f (n=%d, n_eff=%d) %s",
+                sig, region, lag, pearson_r, pearson_p, n, n_eff,
+                "(significativo)" if sig == "✓" else "",
             )
 
     return pd.DataFrame(records)

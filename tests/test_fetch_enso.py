@@ -365,6 +365,92 @@ class TestPhaseConsistency:
 
 
 # ---------------------------------------------------------------------------
+# Regression test — seasonal correlation lag shift (P1 bug)
+# ---------------------------------------------------------------------------
+
+
+class TestComputeNeff:
+    """Tests for effective degrees of freedom (Bretherton et al. 1999)."""
+
+    def test_white_noise_neff_equals_n(self):
+        """For uncorrelated series, n_eff should equal n."""
+        import numpy as np
+        from src.compute_correlations import compute_n_eff
+
+        rng = np.random.default_rng(42)
+        x = rng.standard_normal(200)
+        y = rng.standard_normal(200)
+        n_eff = compute_n_eff(x, y)
+        assert n_eff == 200, f"White noise: expected n_eff=200, got {n_eff}"
+
+    def test_autocorrelated_neff_less_than_n(self):
+        """For autocorrelated series (like ONI), n_eff < n."""
+        import numpy as np
+        from src.compute_correlations import compute_n_eff
+
+        rng = np.random.default_rng(42)
+        # Create autocorrelated series (AR(1) with rho=0.7)
+        n = 300
+        x = np.zeros(n)
+        y = np.zeros(n)
+        for i in range(1, n):
+            x[i] = 0.7 * x[i - 1] + rng.standard_normal()
+            y[i] = 0.7 * y[i - 1] + rng.standard_normal()
+        n_eff = compute_n_eff(x, y)
+        assert n_eff < n, f"AR(1) rho=0.7: expected n_eff<{n}, got {n_eff}"
+        assert n_eff >= 3, f"n_eff should be at least 3, got {n_eff}"
+
+    def test_minimum_neff_is_3(self):
+        """n_eff should never be less than 3."""
+        import numpy as np
+        from src.compute_correlations import compute_n_eff
+
+        # Highly autocorrelated
+        x = np.ones(50) + np.linspace(0, 0.01, 50)
+        y = np.ones(50) + np.linspace(0, 0.01, 50)
+        n_eff = compute_n_eff(x, y)
+        assert n_eff >= 3
+
+
+class TestSeasonalCorrelationLag:
+    """Verify seasonal correlations produce distinct values per lag.
+
+    Regression for a bug where build.py iterated CORRELATION_LAGS but never
+    shifted the ONI series, producing identical r for all lags.
+    """
+
+    def test_son_lags_are_distinct(self):
+        """SON r(lag=0) must differ from r(lag=2) by more than 1e-6."""
+        from scipy import stats as _stats
+        from pathlib import Path
+
+        pairs_path = Path("data/processed/oni_precip_pairs.parquet")
+        if not pairs_path.exists():
+            pytest.skip("pairs Parquet not available")
+
+        pairs_df = pd.read_parquet(pairs_path)
+        pairs_df["date"] = pd.to_datetime(pairs_df["date"])
+        pairs_df["month"] = pairs_df["date"].dt.month
+        pairs_df["ym"] = pairs_df["date"].dt.to_period("M")
+        oni_col = pairs_df[["ym", "oni"]].copy()
+        precip = pairs_df.drop(columns=["oni"]).copy()
+        son = precip[precip["month"].isin([9, 10, 11])]
+
+        results = {}
+        for lag in [0, 2]:
+            oni_shifted = oni_col.copy()
+            oni_shifted["ym"] = oni_shifted["ym"] + lag
+            merged = son.merge(oni_shifted, on="ym", how="inner")
+            paired = merged[["oni", "NEA"]].dropna()
+            r, _ = _stats.pearsonr(paired["oni"].values, paired["NEA"].values)
+            results[lag] = r
+
+        assert abs(results[0] - results[2]) > 1e-6, (
+            f"r(lag=0)={results[0]:.8f} == r(lag=2)={results[2]:.8f} — lag shift not applied"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Integration tests — URL availability (network, can be slow)
 # ---------------------------------------------------------------------------
 

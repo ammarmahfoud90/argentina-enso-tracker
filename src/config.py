@@ -124,10 +124,11 @@ REGIONS: dict[str, dict] = {
         "lat_max": -29.0,
         "lon_min": -65.0,
         "lon_max": -57.0,
-        # Covers: centre/south Buenos Aires province, south Santa Fe,
-        # south Córdoba — the productive core of Argentina's grain belt.
-        "description": "Pampa Húmeda (centro-sur Buenos Aires, sur Santa Fe, sur Córdoba)",
-        "provinces": ["Buenos Aires (centro-sur)", "Santa Fe (sur)", "Córdoba (sur)"],
+        # Covers: Buenos Aires (north/centre), all of Santa Fe, most of Córdoba,
+        # and portions of Entre Ríos and La Pampa.  This is a rectangular
+        # lat/lon box, not an administrative polygon.
+        "description": "Pampa Húmeda (Buenos Aires norte y centro, Santa Fe, Córdoba, porciones de Entre Ríos y La Pampa)",
+        "provinces": ["Buenos Aires (norte-centro)", "Santa Fe", "Córdoba", "Entre Ríos (parcial)", "La Pampa (este)"],
     },
     "NEA": {
         "lat_min": -29.0,
@@ -152,7 +153,8 @@ REGIONS: dict[str, dict] = {
         "lat_max": -28.0,
         "lon_min": -70.0,
         "lon_max": -65.0,
-        # Covers: Mendoza, San Juan, La Rioja, San Luis
+        # Covers: Mendoza, San Juan, La Rioja, San Luis.
+        # Rectangular box — minor overlap with NOA at lat -29 to -28.
         "description": "Cuyo (Mendoza, San Juan, La Rioja, San Luis)",
         "provinces": ["Mendoza", "San Juan", "La Rioja", "San Luis"],
     },
@@ -161,9 +163,10 @@ REGIONS: dict[str, dict] = {
         "lat_max": -37.0,
         "lon_min": -73.0,
         "lon_max": -62.0,
-        # Covers: Neuquén, Río Negro, Chubut, Santa Cruz, Tierra del Fuego
-        "description": "Patagonia (Neuquén, Río Negro, Chubut, Santa Cruz)",
-        "provinces": ["Neuquén", "Río Negro", "Chubut", "Santa Cruz"],
+        # Covers: Neuquén, Río Negro, Chubut, Santa Cruz, Tierra del Fuego.
+        # Rectangular box — minor overlap with Pampa Húmeda in eastern La Pampa area.
+        "description": "Patagonia (Neuquén, Río Negro, Chubut, Santa Cruz, Tierra del Fuego)",
+        "provinces": ["Neuquén", "Río Negro", "Chubut", "Santa Cruz", "Tierra del Fuego"],
     },
 }
 

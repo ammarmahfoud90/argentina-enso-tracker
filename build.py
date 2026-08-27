@@ -203,7 +203,7 @@ def build_payload() -> dict:
     # 5. Correlation records (region × lag)
     corr_records: list[dict] = []
     for _, row in corr_df.iterrows():
-        corr_records.append({
+        rec = {
             "region":         str(row["region"]),
             "lag":            int(row["lag"]),
             "pearson_r":      round(float(row["pearson_r"]), 4),
@@ -212,7 +212,10 @@ def build_payload() -> dict:
             "spearman_r":     round(float(row["spearman_r"]), 4),
             "spearman_p":     round(float(row["spearman_p"]), 4),
             "n_obs":          int(row["n_obs"]),
-        })
+        }
+        if "n_eff" in row:
+            rec["n_eff"] = int(row["n_eff"])
+        corr_records.append(rec)
 
     # 6. Region metadata with signal_strength label
     region_meta: dict[str, dict] = {}
@@ -282,7 +285,13 @@ def build_payload() -> dict:
     # 8b. Seasonal correlations (SON/DEF/MAM/JJA) from pairs Parquet
     seasonal_correlations: dict = {}
     if pairs_path.exists():
+        import numpy as _np
         from scipy import stats as _stats
+        from src.compute_correlations import compute_n_eff as _compute_n_eff
+
+        pairs_df["ym"] = pairs_df["date"].dt.to_period("M")
+        _oni_col = pairs_df[["ym", "oni"]].copy()
+        _precip_cols = pairs_df.drop(columns=["oni"]).copy()
 
         _season_months = {
             "SON": [9, 10, 11],
@@ -291,20 +300,30 @@ def build_payload() -> dict:
             "JJA": [6, 7, 8],
         }
         for season_name, months_list in _season_months.items():
-            season_df = pairs_df[pairs_df["month"].isin(months_list)]
+            season_precip = _precip_cols[_precip_cols["month"].isin(months_list)]
             season_records = []
             for lag in CORRELATION_LAGS:
+                # Shift ONI forward by lag months (ONI leads precipitation)
+                oni_shifted = _oni_col.copy()
+                oni_shifted["ym"] = oni_shifted["ym"] + lag
+                season_merged = season_precip.merge(oni_shifted, on="ym", how="inner")
                 for region in REGION_ORDER:
-                    if region not in season_df.columns or "oni" not in season_df.columns:
+                    if region not in season_merged.columns:
                         continue
-                    paired = season_df[["oni", region]].dropna()
+                    paired = season_merged[["oni", region]].dropna()
                     n = len(paired)
                     if n < 20:
                         continue
                     x = paired["oni"].values
                     y = paired[region].values
-                    pr, pp = _stats.pearsonr(x, y)
+                    pr, pp_naive = _stats.pearsonr(x, y)
                     sr, sp = _stats.spearmanr(x, y)
+                    n_eff = _compute_n_eff(x, y)
+                    if n_eff > 2 and abs(pr) < 1.0:
+                        t_stat = pr * _np.sqrt((n_eff - 2) / (1 - pr ** 2))
+                        pp = float(2 * _stats.t.sf(abs(t_stat), df=n_eff - 2))
+                    else:
+                        pp = pp_naive
                     season_records.append({
                         "region": region,
                         "lag": lag,
@@ -314,6 +333,7 @@ def build_payload() -> dict:
                         "spearman_r": round(float(sr), 4),
                         "spearman_p": round(float(sp), 4),
                         "n_obs": n,
+                        "n_eff": n_eff,
                     })
             seasonal_correlations[season_name] = season_records
         logger.info(

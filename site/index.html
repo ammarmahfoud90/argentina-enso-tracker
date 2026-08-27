@@ -285,7 +285,7 @@
       <div class="indicator-note" id="sst-note"></div>
     </div>
     <div class="indicator-cell">
-      <div class="indicator-label">SOI · Índice de Oscilación Sur (escala estandarizada CPC)</div>
+      <div class="indicator-label" id="soi-label">SOI · Índice de Oscilación Sur</div>
       <div class="indicator-value-row">
         <span class="indicator-value" id="soi-val" style="color:#14161A;">—</span>
         <span class="indicator-unit"></span>
@@ -497,13 +497,13 @@
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
               <td style="padding:8px 12px;font-weight:600;">Niño 3.4 SST</td>
-              <td style="padding:8px 12px;">ERDDAP ncepNinoSSTwk (composites semanales)</td>
-              <td style="padding:8px 12px;">Semanal</td>
+              <td style="padding:8px 12px;">ERDDAP ncepNinoSSTwk (OISST v2, composites semanales promediados a mensual). Difiere del Niño 3.4 mensual de ERSSTv5 que usan NOAA CPC e IRI.</td>
+              <td style="padding:8px 12px;">Semanal → mensual</td>
               <td style="padding:8px 12px;">~1 semana</td>
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
-              <td style="padding:8px 12px;font-weight:600;">SOI (escala estandarizada CPC)</td>
-              <td style="padding:8px 12px;">NOAA / BOM (ERDDAP erdlasNoix). Escala estandarizada (rango ≈ −3 a +3); para convertir a escala Troup (BOM) multiplicar ×10.</td>
+              <td style="padding:8px 12px;font-weight:600;">SOI</td>
+              <td style="padding:8px 12px;">Primario: CPC estandarizado (NOAA). Fallback: ERDDAP erdlasNoix (estandarización distinta; diverge &gt;0.5 del CPC en ~54% de meses). El rótulo del indicador refleja la fuente efectiva de cada build. Escala estandarizada (rango ≈ −3 a +3); ×10 ≈ escala Troup (BOM).</td>
               <td style="padding:8px 12px;">Mensual</td>
               <td style="padding:8px 12px;">~1 mes</td>
             </tr>
@@ -527,8 +527,10 @@
             </tr>
           </tbody>
         </table>
-        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI (base 1991–2020) y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral, umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 regiones de Argentina (1981–2025). Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
+        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~lat −40 a −37, lon −65 a −62) y entre NOA y Cuyo (~lat −29 a −28, lon −69 a −65). Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
+        <p style="margin-top:8px;"><strong>Base del ONI:</strong> El ONI se calcula como media móvil de 3 meses de la anomalía SST en la región Niño 3.4, usando ERSSTv5 con períodos base de 30 años centrados y actualizados cada 5 años (NOAA CPC). Para los valores recientes, la base vigente es 1991–2020. Otros proveedores (IRI) pueden usar bases distintas o productos diferentes (e.g., ERSSTv5 mensual vs. OISST semanal), lo que produce valores ligeramente distintos para la misma temporada.</p>
         <p style="margin-top:8px;"><strong>Limitación CHIRPS en precipitación nival:</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación de la fuente, no por ausencia física del fenómeno. En Cuyo, la correlación invernal (JJA) es significativa (r&nbsp;≈&nbsp;+0.25, p&nbsp;&lt;&nbsp;0.01) pero se diluye en la agregación anual.</p>
+        <p style="margin-top:8px;"><strong>Grados de libertad efectivos:</strong> El ONI (media móvil de 3 meses) está fuertemente autocorrelacionado. Los p-values se calculan usando n<sub>eff</sub> (Bretherton et al. 1999) en lugar de n bruto, para evitar sobreestimar la significancia. Se reportan ambos valores (n y n<sub>eff</sub>) en el detalle de cada correlación.</p>
         <p style="margin-top:8px;"><strong>Detección de episodios:</strong> Criterio NOAA CPC — ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
         <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py) → JSON → HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
       </div>
@@ -540,7 +542,7 @@
     <div style="width:100%;margin-bottom:12px;line-height:1.6;">
       <p style="margin-bottom:6px;">Fuentes: NOAA CPC · IRI Columbia · CHIRPS v2.0 (UCSB) · TAO/TRITON (NOAA PMEL)</p>
       <p style="margin-bottom:6px;">El ENSO explica solo una parte de la variabilidad de precipitación en Argentina. El SAM (Modo Anular del Sur), la variabilidad interna atmosférica y factores regionales también influyen significativamente.</p>
-      <p style="margin-bottom:6px;">Latencia de datos: ONI ~2 meses (publicación CPC); Niño 3.4 SST ~1 semana (ERDDAP, composites semanales); SOI ~1 mes (ERDDAP); temperatura subsuperficial ~1 mes (TAO/TRITON). Estas latencias son estándar para monitoreo climático operacional.</p>
+      <p style="margin-bottom:6px;">Latencia de datos: ONI ~2 meses (publicación CPC); Niño 3.4 SST ~1 semana (ERDDAP/OISST, composites semanales); SOI ~1 mes (CPC / ERDDAP fallback); temperatura subsuperficial ~1 mes (TAO/TRITON). Estas latencias son estándar para monitoreo climático operacional.</p>
     </div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span>Índices automáticos — no constituyen declaración oficial</span>
@@ -1493,9 +1495,10 @@ function regionDetailText(region, best, isSig) {
   const strength = absR >= 0.20 ? 'robusta' : 'débil';
   const signal = r > 0 ? 'más lluviosos' : 'más secos';
   const ninaEffect = r > 0 ? 'déficit hídrico' : 'exceso hídrico';
-  return `Correlación ${direction} y ${strength} (r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}, lag ${best.lag}m). ` +
+  const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
+  return `Correlación ${direction} y ${strength} (r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m). ` +
     `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
-    `El ONI explica ~${(r * r * 100).toFixed(1)}% de la varianza de precipitación regional (r²). Señal estadística — no certeza operacional.`;
+    `La asociación lineal corresponde a un R² de ${(r * r * 100).toFixed(1)}% (proporción de varianza compartida). Señal estadística — no certeza operacional.`;
 }
 
 /* ── Risk summary paragraph ── */
@@ -1503,8 +1506,8 @@ function riskSummaryText(phase, episodeConfirmed) {
   const caveat = (phase !== 'Neutral' && !episodeConfirmed)
     ? ' Nota: condiciones presentes pero episodio formal CPC aún no confirmado.'
     : '';
-  if (phase === 'El Niño') return 'Con condiciones El Niño, la señal húmeda es favorable en NEA y Pampa Húmeda. Sin señal aprovechable en NOA, Cuyo ni Patagonia.' + caveat;
-  if (phase === 'La Niña') return 'Con condiciones La Niña, se espera déficit hídrico en NEA y Pampa Húmeda. Sin señal significativa en NOA, Cuyo ni Patagonia.' + caveat;
+  if (phase === 'El Niño') return 'Con condiciones El Niño, la señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal significativa en NOA, Cuyo ni Patagonia.' + caveat;
+  if (phase === 'La Niña') return 'Con condiciones La Niña, la señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal significativa en NOA, Cuyo ni Patagonia.' + caveat;
   return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
 }
 
@@ -1640,12 +1643,20 @@ async function main() {
   const soiEl = document.getElementById('soi-val');
   countUp(soiEl, cur.soi_value, v => (v >= 0 ? '+' : '') + v.toFixed(1));
 
-  document.getElementById('oni-note').textContent = `Media móvil 3 meses, Niño 3.4 (base 1991–2020). Fecha: ${cur.oni_date}.`;
-  document.getElementById('sst-note').textContent = `Valor mensual — puede divergir del ONI. Fecha: ${cur.nino34_date}.`;
-  /* SOI note — compute trend direction from derivative of 3-month moving average */
+  document.getElementById('oni-note').textContent = `Media móvil 3 meses, Niño 3.4 (ERSSTv5, bases centradas 30 años). Fecha: ${cur.oni_date}.`;
+  document.getElementById('sst-note').textContent = `OISST semanal, promedio mensual. Difiere del Niño 3.4 mensual de ERSSTv5 usado por NOAA/IRI. Fecha: ${cur.nino34_date}.`;
+
+  /* SOI label and note — dynamic per source used in this build */
   {
+    const soiSrc = (data.data_sources || {}).soi || 'CPC';
+    document.getElementById('soi-label').textContent = soiSrc === 'CPC'
+      ? 'SOI · Índice de Oscilación Sur (escala estandarizada CPC)'
+      : 'SOI · Índice de Oscilación Sur (escala estandarizada ERDDAP)';
     const soi24m = data.soi_series_24m || [];
-    let soiNoteText = `SOI (escala estandarizada CPC; ×10 ≈ escala Troup del BOM). Fecha: ${cur.soi_date}.`;
+    const soiScaleLabel = soiSrc === 'CPC'
+      ? 'escala estandarizada CPC'
+      : 'escala estandarizada ERDDAP erdlasNoix (difiere ligeramente de CPC)';
+    let soiNoteText = `SOI (${soiScaleLabel}; ×10 ≈ escala Troup del BOM). Fecha: ${cur.soi_date}.`;
     if (soi24m.length >= 6) {
       const vals = soi24m.map(d => d.soi);
       /* Compare last 3-month avg to preceding 3-month avg */

@@ -107,6 +107,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const p     = bestCorr.pearson_p;
   const lag   = bestCorr.lag;
   const n     = bestCorr.n_obs;
+  const nEff  = bestCorr.n_eff || n;
   const stars = bestCorr.pearson_stars;
   const isSig = p < SIG_THRESHOLD;
   const absR  = Math.abs(r);
@@ -124,7 +125,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
       `<strong>${regionName}</strong>: la correlación ONI–precipitación no es ` +
       `estadísticamente significativa ` +
       `(mejor r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}, p&nbsp;=&nbsp;${p.toFixed(3)}, ` +
-      `n&nbsp;=&nbsp;${n}). No se emite señal direccional.${_chirpsCaveat}`;
+      `n&nbsp;=&nbsp;${n}, n<sub>eff</sub>&nbsp;=&nbsp;${nEff}). No se emite señal direccional.${_chirpsCaveat}`;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
     return { signal: 'none', text };
@@ -169,9 +170,9 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
     (oni != null ? ` (ONI ${oni >= 0 ? '+' : ''}${oni.toFixed(2)})` : '') + `. ` +
     `Correlación ${rSign} ${intensity} ` +
     `(r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, ` +
-    `n&nbsp;=&nbsp;${n}, ${_lagStr(lag)}). ` +
+    `n&nbsp;=&nbsp;${n}, n<sub>eff</sub>&nbsp;=&nbsp;${nEff}, ${_lagStr(lag)}). ` +
     `Históricamente: ${dirText} → <strong>${implication}</strong>. ` +
-    `R² = ${r2pct}% de la varianza explicada.`;
+    `Asociación lineal: R² = ${r2pct}%.`;
 
   /* Append SOI context */
   const soi = _soiContext(ext.soi_trend, ext.soi_value);
