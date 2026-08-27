@@ -300,7 +300,7 @@
       <h2>Serie histórica ONI</h2>
       <div class="section-meta" id="chart-range-label"></div>
     </div>
-    <p class="section-desc">Oceanic Niño Index — media móvil de 3 meses de la anomalía SST en Niño 3.4 (base 1991–2020). Fuente: NOAA CPC.</p>
+    <p class="section-desc">Oceanic Niño Index — media móvil de 3 meses de la anomalía SST en Niño 3.4 (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020). Fuente: NOAA CPC.</p>
     <div class="range-switcher">
       <button class="range-btn active" data-desde="1970">1970–hoy</button>
       <button class="range-btn" data-desde="2000">2000–hoy</button>
@@ -429,7 +429,7 @@
   <!-- 6. Correlation heatmap -->
   <section class="section" id="corr-section" style="animation:omFadeUp .55s ease .36s backwards;">
     <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
-    <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (base 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal puede ser más fuerte en primavera-verano (SON-DEF) que en otoño-invierno.</p>
+    <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal es más fuerte en primavera-verano: NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***, Cuyo JJA r=+0.25**.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;">Estación:</label>
       <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -451,7 +451,7 @@
       <div class="heatmap-legend-bar"></div>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 → +0.25</span>
     </div>
-    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;">Lectura: el NEA y la Pampa Húmeda muestran la señal ENSO más fuerte — años El Niño tienden a ser más lluviosos, con el ONI liderando 0–2 meses. En NOA, Cuyo y Patagonia la señal es débil o nula.</p>
+    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;">Lectura: el NEA y la Pampa Húmeda muestran la señal ENSO más fuerte — años El Niño tienden a ser más lluviosos, con el ONI liderando 0–2 meses. En el agregado anual, la señal es débil o nula en NOA, Cuyo y Patagonia. Estacionalmente, Cuyo muestra señal significativa en invierno (JJA, r=+0.25**) y Patagonia en primavera (SON, r=+0.18*).</p>
     <p style="margin:10px 0 0;font-size:12px;color:#79818E;max-width:76ch;line-height:1.55;font-family:'IBM Plex Mono',monospace;background:#F0F4FF;padding:8px 12px;border-radius:3px;border-left:3px solid #1E3FAE;">Use el selector "Estación" para comparar la señal ENSO por trimestre. La teleconexión suele ser más fuerte en primavera-verano (SON-DEF). En otoño-invierno, otros forzantes (ej. SAM — Southern Annular Mode) dominan la variabilidad.</p>
   </section>
 
@@ -503,7 +503,7 @@
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
               <td style="padding:8px 12px;font-weight:600;">SOI</td>
-              <td style="padding:8px 12px;">Primario: CPC estandarizado (NOAA). Fallback: ERDDAP erdlasNoix (estandarización distinta; diverge &gt;0.5 del CPC en ~54% de meses). El rótulo del indicador refleja la fuente efectiva de cada build. Escala estandarizada (rango ≈ −3 a +3); ×10 ≈ escala Troup (BOM).</td>
+              <td style="padding:8px 12px;">Primario: CPC estandarizado (NOAA). Fallback: ERDDAP erdlasNoix (estandarización distinta; diverge &gt;0.5 del CPC en ~54% de meses). El rótulo del indicador refleja la fuente efectiva de cada build. Escala estandarizada (rango ≈ −3 a +3); ×10 ≈ escala Troup (BOM). Los umbrales ±0.5 y ±1.0 son adimensionales y aplican a ambas series estandarizadas.</td>
               <td style="padding:8px 12px;">Mensual</td>
               <td style="padding:8px 12px;">~1 mes</td>
             </tr>
@@ -527,7 +527,7 @@
             </tr>
           </tbody>
         </table>
-        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~lat −40 a −37, lon −65 a −62) y entre NOA y Cuyo (~lat −29 a −28, lon −69 a −65). Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
+        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~lat −40 a −37, lon −65 a −62, ~10% de celdas) y entre NOA y Cuyo (~lat −29 a −28, lon −69 a −65, ~9%). NEA y Pampa Húmeda no comparten dominio espacial; sus correlaciones son independientes en ese sentido. Al ser regiones limítrofes, la autocorrelación espacial de la precipitación implica que tampoco son estrictamente independientes. Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
         <p style="margin-top:8px;"><strong>Base del ONI:</strong> El ONI se calcula como media móvil de 3 meses de la anomalía SST en la región Niño 3.4, usando ERSSTv5 con períodos base de 30 años centrados y actualizados cada 5 años (NOAA CPC). Para los valores recientes, la base vigente es 1991–2020. Otros proveedores (IRI) pueden usar bases distintas o productos diferentes (e.g., ERSSTv5 mensual vs. OISST semanal), lo que produce valores ligeramente distintos para la misma temporada.</p>
         <p style="margin-top:8px;"><strong>Limitación CHIRPS en precipitación nival:</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación de la fuente, no por ausencia física del fenómeno. En Cuyo, la correlación invernal (JJA) es significativa (r&nbsp;≈&nbsp;+0.25, p&nbsp;&lt;&nbsp;0.01) pero se diluye en la agregación anual.</p>
         <p style="margin-top:8px;"><strong>Grados de libertad efectivos:</strong> El ONI (media móvil de 3 meses) está fuertemente autocorrelacionado. Los p-values se calculan usando n<sub>eff</sub> (Bretherton et al. 1999) en lugar de n bruto, para evitar sobreestimar la significancia. Se reportan ambos valores (n y n<sub>eff</sub>) en el detalle de cada correlación.</p>
@@ -1509,8 +1509,8 @@ function riskSummaryText(phase, episodeConfirmed) {
   const caveat = (phase !== 'Neutral' && !episodeConfirmed)
     ? ' Nota: condiciones presentes pero episodio formal CPC aún no confirmado.'
     : '';
-  if (phase === 'El Niño') return 'Con condiciones El Niño, la señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal significativa en NOA, Cuyo ni Patagonia.' + caveat;
-  if (phase === 'La Niña') return 'Con condiciones La Niña, la señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal significativa en NOA, Cuyo ni Patagonia.' + caveat;
+  if (phase === 'El Niño') return 'Con condiciones El Niño, la señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).' + caveat;
+  if (phase === 'La Niña') return 'Con condiciones La Niña, la señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).' + caveat;
   return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
 }
 
@@ -1646,7 +1646,7 @@ async function main() {
   const soiEl = document.getElementById('soi-val');
   countUp(soiEl, cur.soi_value, v => (v >= 0 ? '+' : '') + v.toFixed(1));
 
-  document.getElementById('oni-note').textContent = `Media móvil 3 meses, Niño 3.4 (ERSSTv5, bases centradas 30 años). Fecha: ${cur.oni_date}.`;
+  document.getElementById('oni-note').textContent = `Media móvil 3 meses, Niño 3.4 (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020). Fecha: ${cur.oni_date}.`;
   document.getElementById('sst-note').textContent = `OISST semanal, promedio mensual. Difiere del Niño 3.4 mensual de ERSSTv5 usado por NOAA/IRI. Fecha: ${cur.nino34_date}.`;
 
   /* SOI label and note — dynamic per source used in this build */
@@ -1719,8 +1719,9 @@ async function main() {
 
     const firstDate = new Date(soi24m[0].date + 'T12:00:00Z');
     const lastDate = new Date(soi24m[soi24m.length - 1].date + 'T12:00:00Z');
+    const soiSrcLabel = ((data.data_sources || {}).soi || 'CPC') === 'CPC' ? 'NOAA CPC' : 'ERDDAP';
     document.getElementById('soi-range-label').textContent =
-      `${MONTHS_ES[firstDate.getUTCMonth()]} ${firstDate.getUTCFullYear()} – ${MONTHS_ES[lastDate.getUTCMonth()]} ${lastDate.getUTCFullYear()} · mensual · NOAA`;
+      `${MONTHS_ES[firstDate.getUTCMonth()]} ${firstDate.getUTCFullYear()} – ${MONTHS_ES[lastDate.getUTCMonth()]} ${lastDate.getUTCFullYear()} · mensual · ${soiSrcLabel}`;
 
     if (plotlyReady) buildSoiPlotly('soi-plotly', soi24m);
   }
@@ -1910,6 +1911,29 @@ async function main() {
     detailPara.className = 'acc-detail';
     detailPara.innerHTML = regionDetailText(region, b, isSig);
     detail.appendChild(detailPara);
+
+    /* If annual is n.s., check seasonal correlations for a significant signal */
+    if (!isSig && seasonalCorr) {
+      const seasonLabels = { SON: 'primavera (SON)', DEF: 'verano (DEF)', MAM: 'otoño (MAM)', JJA: 'invierno (JJA)' };
+      const seasonalHits = [];
+      for (const [sn, recs] of Object.entries(seasonalCorr)) {
+        const regRecs = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+        if (regRecs.length > 0) {
+          const best_s = regRecs.reduce((a, b) => Math.abs(a.pearson_r) > Math.abs(b.pearson_r) ? a : b);
+          seasonalHits.push({ season: sn, label: seasonLabels[sn] || sn, r: best_s.pearson_r, stars: best_s.pearson_stars, lag: best_s.lag });
+        }
+      }
+      if (seasonalHits.length > 0) {
+        const hitText = seasonalHits.map(h =>
+          `${h.label}: r=${h.r >= 0 ? '+' : ''}${h.r.toFixed(3)}${h.stars} (lag ${h.lag}m)`
+        ).join('; ');
+        const seasonNote = document.createElement('p');
+        seasonNote.className = 'acc-detail';
+        seasonNote.style.cssText = 'margin-top:6px;color:#1E3FAE;font-size:13px;';
+        seasonNote.innerHTML = `<strong>Señal estacional detectada:</strong> ${hitText}. Use el selector "Estación" en la sección de correlaciones.`;
+        detail.appendChild(seasonNote);
+      }
+    }
 
     accordionEl.appendChild(detail);
   }

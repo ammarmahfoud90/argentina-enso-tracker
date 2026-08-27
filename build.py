@@ -201,20 +201,59 @@ def build_payload() -> dict:
     logger.info("SOI series: %d total, %d last 24m", len(soi_records), len(soi_24m))
 
     # 5. Correlation records (region × lag)
+    #    If the Parquet lacks n_eff (pre-Bretherton cache), compute on-the-fly
+    #    from the pairs Parquet.
+    _pairs_for_neff: pd.DataFrame | None = None
+    _need_neff = "n_eff" not in corr_df.columns
+    if _need_neff:
+        import numpy as _np_neff
+        from scipy import stats as _stats_neff
+        from src.compute_correlations import compute_n_eff as _compute_n_eff_annual
+
+        _pp = Path(PAIRS_CACHE_PATH)
+        if _pp.exists():
+            _pairs_for_neff = pd.read_parquet(_pp)
+            _pairs_for_neff["date"] = pd.to_datetime(_pairs_for_neff["date"])
+            _pairs_for_neff["ym"] = _pairs_for_neff["date"].dt.to_period("M")
+            logger.info("Computing n_eff on-the-fly for annual correlations (Parquet lacks column)")
+
     corr_records: list[dict] = []
     for _, row in corr_df.iterrows():
+        region = str(row["region"])
+        lag = int(row["lag"])
+        n_obs = int(row["n_obs"])
+        pr = float(row["pearson_r"])
+        pp_cached = float(row["pearson_p"])
+
+        # Compute n_eff and corrected p-value if not in cache
+        n_eff = None
+        pp_corrected = pp_cached
+        if "n_eff" in row.index:
+            n_eff = int(row["n_eff"])
+        elif _pairs_for_neff is not None and region in _pairs_for_neff.columns:
+            oni_col = _pairs_for_neff[["ym", "oni"]].copy()
+            oni_col["ym"] = oni_col["ym"] + lag
+            merged = _pairs_for_neff[["ym", region]].merge(oni_col, on="ym", how="inner").dropna()
+            if len(merged) >= 30:
+                x = merged["oni"].values
+                y = merged[region].values
+                n_eff = _compute_n_eff_annual(x, y)
+                if n_eff > 2 and abs(pr) < 1.0:
+                    t_stat = pr * _np_neff.sqrt((n_eff - 2) / (1 - pr ** 2))
+                    pp_corrected = float(2 * _stats_neff.t.sf(abs(t_stat), df=n_eff - 2))
+
         rec = {
-            "region":         str(row["region"]),
-            "lag":            int(row["lag"]),
-            "pearson_r":      round(float(row["pearson_r"]), 4),
-            "pearson_p":      round(float(row["pearson_p"]), 4),
-            "pearson_stars":  _sig_stars(float(row["pearson_p"])),
+            "region":         region,
+            "lag":            lag,
+            "pearson_r":      round(pr, 4),
+            "pearson_p":      round(pp_corrected, 4),
+            "pearson_stars":  _sig_stars(pp_corrected),
             "spearman_r":     round(float(row["spearman_r"]), 4),
             "spearman_p":     round(float(row["spearman_p"]), 4),
-            "n_obs":          int(row["n_obs"]),
+            "n_obs":          n_obs,
         }
-        if "n_eff" in row:
-            rec["n_eff"] = int(row["n_eff"])
+        if n_eff is not None:
+            rec["n_eff"] = n_eff
         corr_records.append(rec)
 
     # 6. Region metadata with signal_strength label
