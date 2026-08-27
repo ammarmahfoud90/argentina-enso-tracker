@@ -57,7 +57,10 @@ class ENSOSnapshot:
         nino34_date: Date of the latest Niño 3.4 reading.
         soi_value: Latest SOI value (standardised).
         soi_date: Date of the latest SOI reading.
-        phase: Classified ENSO phase: "El Niño", "La Niña", or "Neutral".
+        conditions: Current ENSO conditions from latest ONI: "El Niño", "La Niña", or "Neutral".
+        conditions_intensity: ONI intensity: "débil", "moderado", "fuerte", "muy fuerte", or None.
+        episode_confirmed: Whether a formal CPC episode (5 consecutive seasons) is active.
+        phase: Classified ENSO phase (episode-based): "El Niño", "La Niña", or "Neutral".
         phase_source: Always "ONI (NOAA CPC)" — for UI provenance label.
         oni_series: Full ONI time series as a DataFrame (columns: date, season, oni).
         soi_series: Full SOI time series as a DataFrame (columns: date, soi).
@@ -71,6 +74,9 @@ class ENSOSnapshot:
     nino34_date: date
     soi_value: float
     soi_date: date
+    conditions: str
+    conditions_intensity: Optional[str]
+    episode_confirmed: bool
     phase: str
     phase_source: str
     oni_series: pd.DataFrame
@@ -355,8 +361,37 @@ def parse_erddap_soi(csv_text: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 
 
+def classify_enso_conditions(oni_value: float) -> tuple[str, Optional[str]]:
+    """Classify current ENSO conditions from the latest ONI value alone.
+
+    This is the simple threshold check: is the current ONI above/below
+    the El Niño/La Niña threshold?  Unlike episode detection, this does
+    NOT require 5 consecutive seasons.
+
+    Returns:
+        (conditions, intensity) — e.g. ("El Niño", "fuerte") or ("Neutral", None).
+    """
+    a = abs(oni_value)
+    if oni_value >= ENSO_EL_NINO_THRESHOLD:
+        cond = "El Niño"
+    elif oni_value <= ENSO_LA_NINA_THRESHOLD:
+        cond = "La Niña"
+    else:
+        return "Neutral", None
+
+    if a >= 2.0:
+        intensity = "muy fuerte"
+    elif a >= 1.5:
+        intensity = "fuerte"
+    elif a >= 1.0:
+        intensity = "moderado"
+    else:
+        intensity = "débil"
+    return cond, intensity
+
+
 def classify_enso_phase(oni_series: pd.DataFrame) -> str:
-    """Classify current ENSO phase from ONI time series.
+    """Classify current ENSO phase (episode) from ONI time series.
 
     Phase is declared when ONI exceeds threshold for at least
     ``ENSO_CONSECUTIVE_MONTHS`` consecutive months (NOAA CPC criterion).
@@ -467,6 +502,8 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
 
     # --- Phase classification ---
     phase = classify_enso_phase(oni_df)
+    conditions, conditions_intensity = classify_enso_conditions(float(latest_oni["oni"]))
+    episode_confirmed = phase != "Neutral"
 
     snapshot = ENSOSnapshot(
         oni_value=float(latest_oni["oni"]),
@@ -476,6 +513,9 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         nino34_date=latest_nino["date"].date(),
         soi_value=float(latest_soi["soi"]),
         soi_date=latest_soi["date"].date(),
+        conditions=conditions,
+        conditions_intensity=conditions_intensity,
+        episode_confirmed=episode_confirmed,
         phase=phase,
         phase_source="ONI (NOAA CPC)",
         oni_series=oni_df,

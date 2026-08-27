@@ -77,7 +77,7 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 |---|---|---|---|
 | ONI (Oceanic Nino Index) | NOAA CPC | — | Monthly |
 | Nino 3.4 SST anomaly | ERDDAP (ncepNinoSSTwk) | NOAA CPC ERSSTv5 | Weekly -> monthly |
-| SOI | ERDDAP (erdlasNoix) | NOAA CPC | Monthly |
+| SOI (standardised CPC scale; ×10 ≈ Troup/BOM) | ERDDAP (erdlasNoix) | NOAA CPC | Monthly |
 | Subsurface temperature | ERDDAP (pmelTaoMonT) | — | Monthly |
 | SST anomaly map | OISST v2.1 (ERDDAP ncdcOisst21Agg) | — | Daily (~2d latency) |
 | Precipitation (historical) | CHIRPS v2.0 (UCSB) | — | Annual |
@@ -111,7 +111,7 @@ Boundaries derived from IGN Argentina vector data, adjusted +0.1 for full CHIRPS
 
 | Region | Best Pearson r | Lag | p-value |
 |---|---|---|---|
-| NEA | +0.223 | 0m | \*\*\* |
+| NEA | +0.225 | 0m | \*\*\* |
 | Pampa Humeda | +0.186 | 0m | \*\*\* |
 | NOA | - | - | n.s. |
 | Cuyo | - | - | n.s. |
@@ -165,7 +165,7 @@ pytest                        # includes NOAA live integration tests
    - **Publish directory:** `site`
    - **Build command:** *(empty — JSON is committed by GitHub Action)*
 4. GitHub Action (`.github/workflows/daily-build.yml`) runs `build.py` daily
-   at 07:00 UTC and commits `site/data/enso.json` if changed.
+   at 08:00 UTC and commits `site/data/enso.json` if changed.
    Render detects the new commit and redeploys automatically.
 
 ---

@@ -14,6 +14,7 @@ import pytest
 import pandas as pd
 
 from src.fetch_enso import (
+    classify_enso_conditions,
     classify_enso_phase,
     parse_nino34,
     parse_oni,
@@ -220,39 +221,113 @@ class TestClassifyENSOPhase:
 # ---------------------------------------------------------------------------
 
 
+class TestClassifyENSOConditions:
+    """Tests for the simple ONI threshold classifier (conditions, not episode)."""
+
+    def test_el_nino_strong(self):
+        cond, intensity = classify_enso_conditions(1.39)
+        assert cond == "El Niño"
+        assert intensity == "moderado"
+
+    def test_el_nino_weak(self):
+        cond, intensity = classify_enso_conditions(0.6)
+        assert cond == "El Niño"
+        assert intensity == "débil"
+
+    def test_la_nina_strong(self):
+        cond, intensity = classify_enso_conditions(-1.8)
+        assert cond == "La Niña"
+        assert intensity == "fuerte"
+
+    def test_neutral(self):
+        cond, intensity = classify_enso_conditions(0.3)
+        assert cond == "Neutral"
+        assert intensity is None
+
+    def test_very_strong(self):
+        cond, intensity = classify_enso_conditions(2.5)
+        assert cond == "El Niño"
+        assert intensity == "muy fuerte"
+
+    def test_exact_threshold_el_nino(self):
+        cond, intensity = classify_enso_conditions(0.5)
+        assert cond == "El Niño"
+
+    def test_exact_threshold_la_nina(self):
+        cond, intensity = classify_enso_conditions(-0.5)
+        assert cond == "La Niña"
+
+
+class TestConditionsVsEpisode:
+    """The core P1 test: ONI=+1.39 without confirmed episode.
+
+    When ONI=+1.39 but the last 5 seasons don't all exceed +0.5,
+    conditions must say El Niño (not Neutral) even though the
+    episode is not confirmed.
+    """
+
+    def test_oni_139_no_episode_conditions_not_neutral(self):
+        """ONI=+1.39 without 5 consecutive → conditions='El Niño', episode=Neutral."""
+        oni_value = 1.39
+        # Episode not confirmed: only 3 of 5 last seasons above threshold
+        df = _make_oni_df([0.2, 0.3, 0.8, 1.0, 1.39])
+        episode_phase = classify_enso_phase(df)
+        conditions, intensity = classify_enso_conditions(oni_value)
+
+        # Episode classifier says Neutral (not 5 consecutive)
+        assert episode_phase == "Neutral"
+
+        # Conditions classifier says El Niño
+        assert conditions == "El Niño"
+        assert "Neutral" not in conditions
+        assert intensity == "moderado"
+
+    def test_oni_139_no_episode_label_not_neutral(self):
+        """The display label (conditions) must NOT contain 'Neutral'."""
+        conditions, _ = classify_enso_conditions(1.39)
+        assert "Neutral" not in conditions
+
+    def test_oni_139_no_episode_advice_not_climatology(self):
+        """With conditions=El Niño, advice must NOT say 'planificar con climatología estacional'."""
+        # The advice.js neutral text says 'sin fase activa' — when conditions=El Niño
+        # the frontend passes 'El Niño' to advice.js, not 'Neutral'.
+        # This test verifies the Python-side contract.
+        conditions, _ = classify_enso_conditions(1.39)
+        assert conditions != "Neutral"  # JS would only show climatology text for Neutral
+
+    def test_confirmed_episode_both_agree(self):
+        """When episode IS confirmed, both classifiers agree."""
+        df = _make_oni_df([0.6, 0.7, 0.8, 0.9, 1.39])
+        episode_phase = classify_enso_phase(df)
+        conditions, _ = classify_enso_conditions(1.39)
+        assert episode_phase == "El Niño"
+        assert conditions == "El Niño"
+
+
 class TestPhaseConsistency:
-    """Verify classify_enso_phase() is the authoritative source and can disagree
-    with a naive single-value threshold check — the fix makes the banner use
-    classify_enso_phase, so these cases drive the correctness guarantee."""
+    """Verify classify_enso_phase() and classify_enso_conditions() interact correctly."""
 
     def test_four_months_el_nino_single_value_disagrees(self):
-        """4 consecutive El Niño months: single-value says 'El Niño', official says 'Neutral'."""
-        # Only 4 of 5 required months above threshold → official Neutral
+        """4 consecutive El Niño months: conditions says El Niño, episode says Neutral."""
         df = _make_oni_df([0.2, 0.3, 0.6, 0.7, 0.8, 0.9, 0.3])
         phase = classify_enso_phase(df)
-        latest_oni = df["oni"].iloc[-1]
-        # Single-value check: 0.3 is below 0.5 → also Neutral here, but the
-        # important case is when the tail is all above threshold except not 5 in a row.
         assert phase == "Neutral"
 
     def test_five_months_el_nino_both_agree(self):
-        """When 5 consecutive months are ≥0.5, classify and single-value both give El Niño."""
+        """When 5 consecutive months are ≥0.5, both agree El Niño."""
         df = _make_oni_df([0.6, 0.7, 0.8, 0.9, 1.0])
         phase = classify_enso_phase(df)
+        cond, _ = classify_enso_conditions(1.0)
         assert phase == "El Niño"
-        # Single-value check on latest also agrees
-        assert df["oni"].iloc[-1] >= 0.5
+        assert cond == "El Niño"
 
-    def test_borderline_phase_official_is_neutral_single_value_says_el_nino(self):
-        """Official phase Neutral when last 5 months are NOT all above threshold,
-        even though the very latest ONI reading is above +0.5."""
-        # 4 above, 1 below in the last 5 → Neutral (official), but latest = +0.8
+    def test_borderline_episode_neutral_conditions_el_nino(self):
+        """Episode Neutral when last 5 not all above threshold, but conditions=El Niño."""
         df = _make_oni_df([0.8, 0.9, 1.0, 0.3, 0.8])
         phase = classify_enso_phase(df)
-        latest_oni = df["oni"].iloc[-1]
-        assert phase == "Neutral"          # multi-month check: not 5 consecutive
-        assert latest_oni >= 0.5           # single-value check would say El Niño
-        # After the BUG 2 fix the banner uses phase (Neutral) not latest_oni check (El Niño)
+        cond, _ = classify_enso_conditions(0.8)
+        assert phase == "Neutral"
+        assert cond == "El Niño"
 
 
 # ---------------------------------------------------------------------------
