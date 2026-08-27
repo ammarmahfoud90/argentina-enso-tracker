@@ -458,7 +458,7 @@
   <!-- 7. Regional risk -->
   <section class="section" id="risk-section" style="border-top:1px solid #E4E7EC;margin-top:36px;animation:omFadeUp .55s ease .42s backwards;">
     <h2 style="margin-bottom:6px;">Implicaciones de riesgo por región</h2>
-    <p class="section-desc section-desc-wide">Señal forward-looking = pronóstico ENSO × correlación histórica regional. Las correlaciones son promedios regionales sobre lo observado 1981–2025 — no usar para decisiones a escala provincial sin validación local.</p>
+    <p class="section-desc section-desc-wide">Señal forward-looking = pronóstico ENSO × correlación histórica regional. Las correlaciones son promedios regionales sobre lo observado 1981–2025 — no usar para decisiones a escala provincial sin validación local. Nota: Pampa Húmeda y Patagonia comparten ~10% de su dominio espacial; sus correlaciones no son independientes entre sí.</p>
     <div class="risk-grid">
       <div>
         <div class="risk-list-label">Señal por región · ordenada por fuerza</div>
@@ -1486,8 +1486,11 @@ function buildPrecipBars(anomalyArr) {
 
 /* ── Risk region detail text ── */
 function regionDetailText(region, best, isSig) {
+  const chirpsCaveat = (region === 'Cuyo' || region === 'Patagonia')
+    ? ' CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO cordillerana puede estar subestimada por limitación de la fuente, no por ausencia del fenómeno.'
+    : '';
   if (!best || !isSig) {
-    return `Sin correlación estadísticamente significativa en ningún lag. La variabilidad local domina sobre la señal ENSO para esta región.`;
+    return `Sin correlación estadísticamente significativa en ningún lag. La variabilidad local domina sobre la señal ENSO para esta región.${chirpsCaveat}`;
   }
   const r = best.pearson_r;
   const absR = Math.abs(r);
@@ -1498,7 +1501,7 @@ function regionDetailText(region, best, isSig) {
   const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
   return `Correlación ${direction} y ${strength} (r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m). ` +
     `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
-    `La asociación lineal corresponde a un R² de ${(r * r * 100).toFixed(1)}% (proporción de varianza compartida). Señal estadística — no certeza operacional.`;
+    `La asociación lineal corresponde a un R² de ${(r * r * 100).toFixed(1)}% (proporción de varianza compartida). Señal estadística — no certeza operacional.${chirpsCaveat}`;
 }
 
 /* ── Risk summary paragraph ── */
@@ -1825,8 +1828,9 @@ async function main() {
       noteEl.textContent = 'Todos los meses (1981–2025)';
     } else {
       const n = corrs.length > 0 ? corrs[0].n_obs : 0;
+      const nEff = corrs.length > 0 && corrs[0].n_eff ? corrs[0].n_eff : n;
       const labels = { SON: 'Sep–Nov (primavera)', DEF: 'Dic–Feb (verano)', MAM: 'Mar–May (otoño)', JJA: 'Jun–Ago (invierno)' };
-      noteEl.textContent = (labels[season] || season) + (n ? ` · n=${n}` : '');
+      noteEl.textContent = (labels[season] || season) + (n ? ` · n=${n}, n_eff=${nEff}` : '');
     }
   }
   document.getElementById('season-select').addEventListener('change', (e) => updateCorrelationView(e.target.value));
