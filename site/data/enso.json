@@ -9609,7 +9609,8 @@
         "pearson_stars": "",
         "spearman_r": 0.1718,
         "spearman_p": 0.0463,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
@@ -9619,7 +9620,8 @@
         "pearson_stars": "***",
         "spearman_r": 0.2616,
         "spearman_p": 0.0022,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
@@ -9629,7 +9631,8 @@
         "pearson_stars": "",
         "spearman_r": 0.0548,
         "spearman_p": 0.5282,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
@@ -9639,167 +9642,184 @@
         "pearson_stars": "",
         "spearman_r": -0.0466,
         "spearman_p": 0.5915,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 0,
         "pearson_r": 0.1844,
-        "pearson_p": 0.0322,
+        "pearson_p": 0.042,
         "pearson_stars": "*",
         "spearman_r": 0.1981,
         "spearman_p": 0.0212,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 122
       },
       {
         "region": "Pampa Húmeda",
         "lag": 1,
-        "pearson_r": 0.1602,
-        "pearson_p": 0.0635,
+        "pearson_r": 0.1614,
+        "pearson_p": 0.0615,
         "pearson_stars": "",
-        "spearman_r": 0.1718,
-        "spearman_p": 0.0463,
-        "n_obs": 135
+        "spearman_r": 0.1818,
+        "spearman_p": 0.0348,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 1,
-        "pearson_r": 0.318,
-        "pearson_p": 0.0002,
+        "pearson_r": 0.323,
+        "pearson_p": 0.0001,
         "pearson_stars": "***",
-        "spearman_r": 0.2616,
-        "spearman_p": 0.0022,
-        "n_obs": 135
+        "spearman_r": 0.2706,
+        "spearman_p": 0.0015,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 1,
-        "pearson_r": 0.0736,
-        "pearson_p": 0.3961,
+        "pearson_r": 0.0651,
+        "pearson_p": 0.4531,
         "pearson_stars": "",
-        "spearman_r": 0.0548,
-        "spearman_p": 0.5282,
-        "n_obs": 135
+        "spearman_r": 0.0452,
+        "spearman_p": 0.6024,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 1,
-        "pearson_r": -0.0268,
-        "pearson_p": 0.7578,
+        "pearson_r": -0.0343,
+        "pearson_p": 0.6925,
         "pearson_stars": "",
-        "spearman_r": -0.0466,
-        "spearman_p": 0.5915,
-        "n_obs": 135
+        "spearman_r": -0.0558,
+        "spearman_p": 0.5203,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 1,
-        "pearson_r": 0.1844,
-        "pearson_p": 0.0322,
-        "pearson_stars": "*",
-        "spearman_r": 0.1981,
-        "spearman_p": 0.0212,
-        "n_obs": 135
+        "pearson_r": 0.1776,
+        "pearson_p": 0.0513,
+        "pearson_stars": "",
+        "spearman_r": 0.2155,
+        "spearman_p": 0.0121,
+        "n_obs": 135,
+        "n_eff": 121
       },
       {
         "region": "Pampa Húmeda",
         "lag": 2,
-        "pearson_r": 0.1602,
-        "pearson_p": 0.0635,
+        "pearson_r": 0.153,
+        "pearson_p": 0.0765,
         "pearson_stars": "",
-        "spearman_r": 0.1718,
-        "spearman_p": 0.0463,
-        "n_obs": 135
+        "spearman_r": 0.1739,
+        "spearman_p": 0.0437,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 2,
-        "pearson_r": 0.318,
-        "pearson_p": 0.0002,
+        "pearson_r": 0.3224,
+        "pearson_p": 0.0001,
         "pearson_stars": "***",
-        "spearman_r": 0.2616,
-        "spearman_p": 0.0022,
-        "n_obs": 135
+        "spearman_r": 0.2815,
+        "spearman_p": 0.0009,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 2,
-        "pearson_r": 0.0736,
-        "pearson_p": 0.3961,
+        "pearson_r": 0.0586,
+        "pearson_p": 0.4996,
         "pearson_stars": "",
-        "spearman_r": 0.0548,
-        "spearman_p": 0.5282,
-        "n_obs": 135
+        "spearman_r": 0.0494,
+        "spearman_p": 0.5697,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 2,
-        "pearson_r": -0.0268,
-        "pearson_p": 0.7578,
+        "pearson_r": -0.0392,
+        "pearson_p": 0.6516,
         "pearson_stars": "",
-        "spearman_r": -0.0466,
-        "spearman_p": 0.5915,
-        "n_obs": 135
+        "spearman_r": -0.0618,
+        "spearman_p": 0.4766,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 2,
-        "pearson_r": 0.1844,
-        "pearson_p": 0.0322,
-        "pearson_stars": "*",
-        "spearman_r": 0.1981,
-        "spearman_p": 0.0212,
-        "n_obs": 135
+        "pearson_r": 0.1655,
+        "pearson_p": 0.0697,
+        "pearson_stars": "",
+        "spearman_r": 0.2067,
+        "spearman_p": 0.0161,
+        "n_obs": 135,
+        "n_eff": 121
       },
       {
         "region": "Pampa Húmeda",
         "lag": 3,
-        "pearson_r": 0.1602,
-        "pearson_p": 0.0635,
+        "pearson_r": 0.142,
+        "pearson_p": 0.1005,
         "pearson_stars": "",
-        "spearman_r": 0.1718,
-        "spearman_p": 0.0463,
-        "n_obs": 135
+        "spearman_r": 0.1434,
+        "spearman_p": 0.097,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 3,
-        "pearson_r": 0.318,
+        "pearson_r": 0.3133,
         "pearson_p": 0.0002,
         "pearson_stars": "***",
-        "spearman_r": 0.2616,
-        "spearman_p": 0.0022,
-        "n_obs": 135
+        "spearman_r": 0.2683,
+        "spearman_p": 0.0017,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 3,
-        "pearson_r": 0.0736,
-        "pearson_p": 0.3961,
+        "pearson_r": 0.0602,
+        "pearson_p": 0.4879,
         "pearson_stars": "",
-        "spearman_r": 0.0548,
-        "spearman_p": 0.5282,
-        "n_obs": 135
+        "spearman_r": 0.0261,
+        "spearman_p": 0.7636,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 3,
-        "pearson_r": -0.0268,
-        "pearson_p": 0.7578,
+        "pearson_r": -0.0313,
+        "pearson_p": 0.7184,
         "pearson_stars": "",
-        "spearman_r": -0.0466,
-        "spearman_p": 0.5915,
-        "n_obs": 135
+        "spearman_r": -0.0794,
+        "spearman_p": 0.3599,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 3,
-        "pearson_r": 0.1844,
-        "pearson_p": 0.0322,
-        "pearson_stars": "*",
-        "spearman_r": 0.1981,
-        "spearman_p": 0.0212,
-        "n_obs": 135
+        "pearson_r": 0.147,
+        "pearson_p": 0.1091,
+        "pearson_stars": "",
+        "spearman_r": 0.1807,
+        "spearman_p": 0.036,
+        "n_obs": 135,
+        "n_eff": 120
       }
     ],
     "DEF": [
@@ -9811,17 +9831,19 @@
         "pearson_stars": "***",
         "spearman_r": 0.3843,
         "spearman_p": 0.0,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 133
       },
       {
         "region": "NEA",
         "lag": 0,
         "pearson_r": 0.3043,
-        "pearson_p": 0.0003,
+        "pearson_p": 0.0005,
         "pearson_stars": "***",
         "spearman_r": 0.2682,
         "spearman_p": 0.0017,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 126
       },
       {
         "region": "NOA",
@@ -9831,7 +9853,8 @@
         "pearson_stars": "",
         "spearman_r": 0.0816,
         "spearman_p": 0.3468,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
@@ -9841,167 +9864,184 @@
         "pearson_stars": "",
         "spearman_r": 0.0511,
         "spearman_p": 0.556,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 0,
         "pearson_r": -0.028,
-        "pearson_p": 0.7469,
+        "pearson_p": 0.7662,
         "pearson_stars": "",
         "spearman_r": -0.0648,
         "spearman_p": 0.4554,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 115
       },
       {
         "region": "Pampa Húmeda",
         "lag": 1,
-        "pearson_r": 0.3867,
+        "pearson_r": 0.3781,
         "pearson_p": 0.0,
         "pearson_stars": "***",
-        "spearman_r": 0.3843,
+        "spearman_r": 0.3651,
         "spearman_p": 0.0,
-        "n_obs": 135
+        "n_obs": 134,
+        "n_eff": 132
       },
       {
         "region": "NEA",
         "lag": 1,
-        "pearson_r": 0.3043,
-        "pearson_p": 0.0003,
+        "pearson_r": 0.2926,
+        "pearson_p": 0.0009,
         "pearson_stars": "***",
-        "spearman_r": 0.2682,
-        "spearman_p": 0.0017,
-        "n_obs": 135
+        "spearman_r": 0.2543,
+        "spearman_p": 0.003,
+        "n_obs": 134,
+        "n_eff": 125
       },
       {
         "region": "NOA",
         "lag": 1,
-        "pearson_r": 0.0497,
-        "pearson_p": 0.5669,
+        "pearson_r": 0.0446,
+        "pearson_p": 0.609,
         "pearson_stars": "",
-        "spearman_r": 0.0816,
-        "spearman_p": 0.3468,
-        "n_obs": 135
+        "spearman_r": 0.0678,
+        "spearman_p": 0.4363,
+        "n_obs": 134,
+        "n_eff": 134
       },
       {
         "region": "Cuyo",
         "lag": 1,
-        "pearson_r": 0.1141,
-        "pearson_p": 0.1878,
+        "pearson_r": 0.1172,
+        "pearson_p": 0.1776,
         "pearson_stars": "",
-        "spearman_r": 0.0511,
-        "spearman_p": 0.556,
-        "n_obs": 135
+        "spearman_r": 0.0554,
+        "spearman_p": 0.5246,
+        "n_obs": 134,
+        "n_eff": 134
       },
       {
         "region": "Patagonia",
         "lag": 1,
-        "pearson_r": -0.028,
-        "pearson_p": 0.7469,
+        "pearson_r": -0.0431,
+        "pearson_p": 0.6535,
         "pearson_stars": "",
-        "spearman_r": -0.0648,
-        "spearman_p": 0.4554,
-        "n_obs": 135
+        "spearman_r": -0.0717,
+        "spearman_p": 0.4101,
+        "n_obs": 134,
+        "n_eff": 111
       },
       {
         "region": "Pampa Húmeda",
         "lag": 2,
-        "pearson_r": 0.3867,
+        "pearson_r": 0.3539,
         "pearson_p": 0.0,
         "pearson_stars": "***",
-        "spearman_r": 0.3843,
-        "spearman_p": 0.0,
-        "n_obs": 135
+        "spearman_r": 0.3278,
+        "spearman_p": 0.0001,
+        "n_obs": 133,
+        "n_eff": 131
       },
       {
         "region": "NEA",
         "lag": 2,
-        "pearson_r": 0.3043,
-        "pearson_p": 0.0003,
-        "pearson_stars": "***",
-        "spearman_r": 0.2682,
-        "spearman_p": 0.0017,
-        "n_obs": 135
+        "pearson_r": 0.2755,
+        "pearson_p": 0.002,
+        "pearson_stars": "**",
+        "spearman_r": 0.2352,
+        "spearman_p": 0.0064,
+        "n_obs": 133,
+        "n_eff": 124
       },
       {
         "region": "NOA",
         "lag": 2,
-        "pearson_r": 0.0497,
-        "pearson_p": 0.5669,
+        "pearson_r": 0.0332,
+        "pearson_p": 0.7043,
         "pearson_stars": "",
-        "spearman_r": 0.0816,
-        "spearman_p": 0.3468,
-        "n_obs": 135
+        "spearman_r": 0.0479,
+        "spearman_p": 0.5843,
+        "n_obs": 133,
+        "n_eff": 133
       },
       {
         "region": "Cuyo",
         "lag": 2,
-        "pearson_r": 0.1141,
-        "pearson_p": 0.1878,
+        "pearson_r": 0.113,
+        "pearson_p": 0.1952,
         "pearson_stars": "",
-        "spearman_r": 0.0511,
-        "spearman_p": 0.556,
-        "n_obs": 135
+        "spearman_r": 0.0396,
+        "spearman_p": 0.6509,
+        "n_obs": 133,
+        "n_eff": 133
       },
       {
         "region": "Patagonia",
         "lag": 2,
-        "pearson_r": -0.028,
-        "pearson_p": 0.7469,
+        "pearson_r": -0.0593,
+        "pearson_p": 0.5401,
         "pearson_stars": "",
-        "spearman_r": -0.0648,
-        "spearman_p": 0.4554,
-        "n_obs": 135
+        "spearman_r": -0.086,
+        "spearman_p": 0.3248,
+        "n_obs": 133,
+        "n_eff": 109
       },
       {
         "region": "Pampa Húmeda",
         "lag": 3,
-        "pearson_r": 0.3867,
-        "pearson_p": 0.0,
+        "pearson_r": 0.3327,
+        "pearson_p": 0.0001,
         "pearson_stars": "***",
-        "spearman_r": 0.3843,
-        "spearman_p": 0.0,
-        "n_obs": 135
+        "spearman_r": 0.3051,
+        "spearman_p": 0.0004,
+        "n_obs": 133,
+        "n_eff": 132
       },
       {
         "region": "NEA",
         "lag": 3,
-        "pearson_r": 0.3043,
-        "pearson_p": 0.0003,
-        "pearson_stars": "***",
-        "spearman_r": 0.2682,
-        "spearman_p": 0.0017,
-        "n_obs": 135
+        "pearson_r": 0.2563,
+        "pearson_p": 0.0041,
+        "pearson_stars": "**",
+        "spearman_r": 0.2148,
+        "spearman_p": 0.013,
+        "n_obs": 133,
+        "n_eff": 124
       },
       {
         "region": "NOA",
         "lag": 3,
-        "pearson_r": 0.0497,
-        "pearson_p": 0.5669,
+        "pearson_r": 0.0192,
+        "pearson_p": 0.8259,
         "pearson_stars": "",
-        "spearman_r": 0.0816,
-        "spearman_p": 0.3468,
-        "n_obs": 135
+        "spearman_r": 0.0356,
+        "spearman_p": 0.6844,
+        "n_obs": 133,
+        "n_eff": 133
       },
       {
         "region": "Cuyo",
         "lag": 3,
-        "pearson_r": 0.1141,
-        "pearson_p": 0.1878,
+        "pearson_r": 0.1117,
+        "pearson_p": 0.2006,
         "pearson_stars": "",
-        "spearman_r": 0.0511,
-        "spearman_p": 0.556,
-        "n_obs": 135
+        "spearman_r": 0.0429,
+        "spearman_p": 0.6239,
+        "n_obs": 133,
+        "n_eff": 133
       },
       {
         "region": "Patagonia",
         "lag": 3,
-        "pearson_r": -0.028,
-        "pearson_p": 0.7469,
+        "pearson_r": -0.058,
+        "pearson_p": 0.547,
         "pearson_stars": "",
-        "spearman_r": -0.0648,
-        "spearman_p": 0.4554,
-        "n_obs": 135
+        "spearman_r": -0.0818,
+        "spearman_p": 0.3495,
+        "n_obs": 133,
+        "n_eff": 110
       }
     ],
     "MAM": [
@@ -10013,17 +10053,19 @@
         "pearson_stars": "",
         "spearman_r": 0.1306,
         "spearman_p": 0.131,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 0,
         "pearson_r": 0.2724,
-        "pearson_p": 0.0014,
+        "pearson_p": 0.0034,
         "pearson_stars": "**",
         "spearman_r": 0.2173,
         "spearman_p": 0.0114,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 114
       },
       {
         "region": "NOA",
@@ -10033,7 +10075,8 @@
         "pearson_stars": "",
         "spearman_r": 0.008,
         "spearman_p": 0.9262,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
@@ -10043,7 +10086,8 @@
         "pearson_stars": "",
         "spearman_r": 0.1078,
         "spearman_p": 0.2132,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
@@ -10053,157 +10097,173 @@
         "pearson_stars": "",
         "spearman_r": 0.127,
         "spearman_p": 0.1422,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 1,
-        "pearson_r": 0.1444,
-        "pearson_p": 0.0947,
+        "pearson_r": 0.1482,
+        "pearson_p": 0.0862,
         "pearson_stars": "",
-        "spearman_r": 0.1306,
-        "spearman_p": 0.131,
-        "n_obs": 135
+        "spearman_r": 0.1141,
+        "spearman_p": 0.1877,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 1,
-        "pearson_r": 0.2724,
-        "pearson_p": 0.0014,
+        "pearson_r": 0.2718,
+        "pearson_p": 0.0039,
         "pearson_stars": "**",
-        "spearman_r": 0.2173,
-        "spearman_p": 0.0114,
-        "n_obs": 135
+        "spearman_r": 0.2079,
+        "spearman_p": 0.0156,
+        "n_obs": 135,
+        "n_eff": 111
       },
       {
         "region": "NOA",
         "lag": 1,
-        "pearson_r": -0.0219,
-        "pearson_p": 0.8013,
+        "pearson_r": -0.0309,
+        "pearson_p": 0.7223,
         "pearson_stars": "",
-        "spearman_r": 0.008,
-        "spearman_p": 0.9262,
-        "n_obs": 135
+        "spearman_r": -0.002,
+        "spearman_p": 0.9817,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 1,
-        "pearson_r": 0.0666,
-        "pearson_p": 0.4427,
+        "pearson_r": 0.0569,
+        "pearson_p": 0.5123,
         "pearson_stars": "",
-        "spearman_r": 0.1078,
-        "spearman_p": 0.2132,
-        "n_obs": 135
+        "spearman_r": 0.0812,
+        "spearman_p": 0.349,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 1,
-        "pearson_r": 0.0543,
-        "pearson_p": 0.5315,
+        "pearson_r": 0.0077,
+        "pearson_p": 0.9294,
         "pearson_stars": "",
-        "spearman_r": 0.127,
-        "spearman_p": 0.1422,
-        "n_obs": 135
+        "spearman_r": 0.0763,
+        "spearman_p": 0.3791,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 2,
-        "pearson_r": 0.1444,
-        "pearson_p": 0.0947,
+        "pearson_r": 0.1336,
+        "pearson_p": 0.1225,
         "pearson_stars": "",
-        "spearman_r": 0.1306,
-        "spearman_p": 0.131,
-        "n_obs": 135
+        "spearman_r": 0.0971,
+        "spearman_p": 0.2625,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 2,
-        "pearson_r": 0.2724,
-        "pearson_p": 0.0014,
+        "pearson_r": 0.2592,
+        "pearson_p": 0.0073,
         "pearson_stars": "**",
-        "spearman_r": 0.2173,
-        "spearman_p": 0.0114,
-        "n_obs": 135
+        "spearman_r": 0.195,
+        "spearman_p": 0.0235,
+        "n_obs": 135,
+        "n_eff": 106
       },
       {
         "region": "NOA",
         "lag": 2,
-        "pearson_r": -0.0219,
-        "pearson_p": 0.8013,
+        "pearson_r": -0.0309,
+        "pearson_p": 0.7217,
         "pearson_stars": "",
-        "spearman_r": 0.008,
-        "spearman_p": 0.9262,
-        "n_obs": 135
+        "spearman_r": 0.0034,
+        "spearman_p": 0.9687,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 2,
-        "pearson_r": 0.0666,
-        "pearson_p": 0.4427,
+        "pearson_r": 0.0538,
+        "pearson_p": 0.5356,
         "pearson_stars": "",
-        "spearman_r": 0.1078,
-        "spearman_p": 0.2132,
-        "n_obs": 135
+        "spearman_r": 0.078,
+        "spearman_p": 0.3683,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Patagonia",
         "lag": 2,
-        "pearson_r": 0.0543,
-        "pearson_p": 0.5315,
+        "pearson_r": -0.0315,
+        "pearson_p": 0.7166,
         "pearson_stars": "",
-        "spearman_r": 0.127,
-        "spearman_p": 0.1422,
-        "n_obs": 135
+        "spearman_r": 0.0321,
+        "spearman_p": 0.712,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 3,
-        "pearson_r": 0.1444,
-        "pearson_p": 0.0947,
+        "pearson_r": 0.1259,
+        "pearson_p": 0.1471,
         "pearson_stars": "",
-        "spearman_r": 0.1306,
-        "spearman_p": 0.131,
-        "n_obs": 135
+        "spearman_r": 0.0944,
+        "spearman_p": 0.2777,
+        "n_obs": 134,
+        "n_eff": 134
       },
       {
         "region": "NEA",
         "lag": 3,
-        "pearson_r": 0.2724,
-        "pearson_p": 0.0014,
-        "pearson_stars": "**",
-        "spearman_r": 0.2173,
-        "spearman_p": 0.0114,
-        "n_obs": 135
+        "pearson_r": 0.2477,
+        "pearson_p": 0.0117,
+        "pearson_stars": "*",
+        "spearman_r": 0.1882,
+        "spearman_p": 0.0295,
+        "n_obs": 134,
+        "n_eff": 103
       },
       {
         "region": "NOA",
         "lag": 3,
-        "pearson_r": -0.0219,
-        "pearson_p": 0.8013,
+        "pearson_r": -0.0285,
+        "pearson_p": 0.7435,
         "pearson_stars": "",
-        "spearman_r": 0.008,
-        "spearman_p": 0.9262,
-        "n_obs": 135
+        "spearman_r": 0.0096,
+        "spearman_p": 0.9121,
+        "n_obs": 134,
+        "n_eff": 134
       },
       {
         "region": "Cuyo",
         "lag": 3,
-        "pearson_r": 0.0666,
-        "pearson_p": 0.4427,
+        "pearson_r": 0.0551,
+        "pearson_p": 0.527,
         "pearson_stars": "",
-        "spearman_r": 0.1078,
-        "spearman_p": 0.2132,
-        "n_obs": 135
+        "spearman_r": 0.0848,
+        "spearman_p": 0.3298,
+        "n_obs": 134,
+        "n_eff": 134
       },
       {
         "region": "Patagonia",
         "lag": 3,
-        "pearson_r": 0.0543,
-        "pearson_p": 0.5315,
+        "pearson_r": -0.0556,
+        "pearson_p": 0.5237,
         "pearson_stars": "",
-        "spearman_r": 0.127,
-        "spearman_p": 0.1422,
-        "n_obs": 135
+        "spearman_r": -0.0036,
+        "spearman_p": 0.9668,
+        "n_obs": 134,
+        "n_eff": 134
       }
     ],
     "JJA": [
@@ -10215,7 +10275,8 @@
         "pearson_stars": "**",
         "spearman_r": 0.2292,
         "spearman_p": 0.0075,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
@@ -10225,7 +10286,8 @@
         "pearson_stars": "*",
         "spearman_r": 0.1827,
         "spearman_p": 0.0339,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
@@ -10235,17 +10297,19 @@
         "pearson_stars": "",
         "spearman_r": 0.0549,
         "spearman_p": 0.527,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 0,
         "pearson_r": 0.246,
-        "pearson_p": 0.004,
+        "pearson_p": 0.0059,
         "pearson_stars": "**",
         "spearman_r": 0.2959,
         "spearman_p": 0.0005,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 124
       },
       {
         "region": "Patagonia",
@@ -10255,168 +10319,186 @@
         "pearson_stars": "",
         "spearman_r": 0.1322,
         "spearman_p": 0.1265,
-        "n_obs": 135
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 1,
-        "pearson_r": 0.2579,
-        "pearson_p": 0.0025,
+        "pearson_r": 0.2554,
+        "pearson_p": 0.0029,
         "pearson_stars": "**",
-        "spearman_r": 0.2292,
-        "spearman_p": 0.0075,
-        "n_obs": 135
+        "spearman_r": 0.232,
+        "spearman_p": 0.0068,
+        "n_obs": 135,
+        "n_eff": 134
       },
       {
         "region": "NEA",
         "lag": 1,
-        "pearson_r": 0.1862,
-        "pearson_p": 0.0306,
+        "pearson_r": 0.1799,
+        "pearson_p": 0.0369,
         "pearson_stars": "*",
-        "spearman_r": 0.1827,
-        "spearman_p": 0.0339,
-        "n_obs": 135
+        "spearman_r": 0.147,
+        "spearman_p": 0.0888,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 1,
-        "pearson_r": 0.0212,
-        "pearson_p": 0.807,
+        "pearson_r": 0.0517,
+        "pearson_p": 0.5516,
         "pearson_stars": "",
-        "spearman_r": 0.0549,
-        "spearman_p": 0.527,
-        "n_obs": 135
+        "spearman_r": 0.087,
+        "spearman_p": 0.3156,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 1,
-        "pearson_r": 0.246,
-        "pearson_p": 0.004,
-        "pearson_stars": "**",
-        "spearman_r": 0.2959,
-        "spearman_p": 0.0005,
-        "n_obs": 135
+        "pearson_r": 0.2211,
+        "pearson_p": 0.0166,
+        "pearson_stars": "*",
+        "spearman_r": 0.2728,
+        "spearman_p": 0.0014,
+        "n_obs": 135,
+        "n_eff": 117
       },
       {
         "region": "Patagonia",
         "lag": 1,
-        "pearson_r": 0.157,
-        "pearson_p": 0.069,
+        "pearson_r": 0.1171,
+        "pearson_p": 0.1761,
         "pearson_stars": "",
-        "spearman_r": 0.1322,
-        "spearman_p": 0.1265,
-        "n_obs": 135
+        "spearman_r": 0.1195,
+        "spearman_p": 0.1675,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 2,
-        "pearson_r": 0.2579,
-        "pearson_p": 0.0025,
-        "pearson_stars": "**",
-        "spearman_r": 0.2292,
-        "spearman_p": 0.0075,
-        "n_obs": 135
+        "pearson_r": 0.1911,
+        "pearson_p": 0.0264,
+        "pearson_stars": "*",
+        "spearman_r": 0.1886,
+        "spearman_p": 0.0285,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 2,
-        "pearson_r": 0.1862,
-        "pearson_p": 0.0306,
-        "pearson_stars": "*",
-        "spearman_r": 0.1827,
-        "spearman_p": 0.0339,
-        "n_obs": 135
+        "pearson_r": 0.1378,
+        "pearson_p": 0.111,
+        "pearson_stars": "",
+        "spearman_r": 0.1051,
+        "spearman_p": 0.225,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 2,
-        "pearson_r": 0.0212,
-        "pearson_p": 0.807,
+        "pearson_r": 0.0812,
+        "pearson_p": 0.3489,
         "pearson_stars": "",
-        "spearman_r": 0.0549,
-        "spearman_p": 0.527,
-        "n_obs": 135
+        "spearman_r": 0.0894,
+        "spearman_p": 0.3022,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 2,
-        "pearson_r": 0.246,
-        "pearson_p": 0.004,
-        "pearson_stars": "**",
-        "spearman_r": 0.2959,
-        "spearman_p": 0.0005,
-        "n_obs": 135
+        "pearson_r": 0.1606,
+        "pearson_p": 0.0907,
+        "pearson_stars": "",
+        "spearman_r": 0.1934,
+        "spearman_p": 0.0246,
+        "n_obs": 135,
+        "n_eff": 112
       },
       {
         "region": "Patagonia",
         "lag": 2,
-        "pearson_r": 0.157,
-        "pearson_p": 0.069,
+        "pearson_r": 0.0524,
+        "pearson_p": 0.5463,
         "pearson_stars": "",
-        "spearman_r": 0.1322,
-        "spearman_p": 0.1265,
-        "n_obs": 135
+        "spearman_r": 0.0939,
+        "spearman_p": 0.2787,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Pampa Húmeda",
         "lag": 3,
-        "pearson_r": 0.2579,
-        "pearson_p": 0.0025,
-        "pearson_stars": "**",
-        "spearman_r": 0.2292,
-        "spearman_p": 0.0075,
-        "n_obs": 135
+        "pearson_r": 0.1036,
+        "pearson_p": 0.2317,
+        "pearson_stars": "",
+        "spearman_r": 0.0983,
+        "spearman_p": 0.2566,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NEA",
         "lag": 3,
-        "pearson_r": 0.1862,
-        "pearson_p": 0.0306,
-        "pearson_stars": "*",
-        "spearman_r": 0.1827,
-        "spearman_p": 0.0339,
-        "n_obs": 135
+        "pearson_r": 0.0548,
+        "pearson_p": 0.5281,
+        "pearson_stars": "",
+        "spearman_r": 0.0413,
+        "spearman_p": 0.6346,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "NOA",
         "lag": 3,
-        "pearson_r": 0.0212,
-        "pearson_p": 0.807,
+        "pearson_r": 0.0971,
+        "pearson_p": 0.2626,
         "pearson_stars": "",
-        "spearman_r": 0.0549,
-        "spearman_p": 0.527,
-        "n_obs": 135
+        "spearman_r": 0.0872,
+        "spearman_p": 0.3147,
+        "n_obs": 135,
+        "n_eff": 135
       },
       {
         "region": "Cuyo",
         "lag": 3,
-        "pearson_r": 0.246,
-        "pearson_p": 0.004,
-        "pearson_stars": "**",
-        "spearman_r": 0.2959,
-        "spearman_p": 0.0005,
-        "n_obs": 135
+        "pearson_r": 0.0901,
+        "pearson_p": 0.3361,
+        "pearson_stars": "",
+        "spearman_r": 0.1083,
+        "spearman_p": 0.2114,
+        "n_obs": 135,
+        "n_eff": 116
       },
       {
         "region": "Patagonia",
         "lag": 3,
-        "pearson_r": 0.157,
-        "pearson_p": 0.069,
+        "pearson_r": -0.0206,
+        "pearson_p": 0.8129,
         "pearson_stars": "",
-        "spearman_r": 0.1322,
-        "spearman_p": 0.1265,
-        "n_obs": 135
+        "spearman_r": 0.0497,
+        "spearman_p": 0.5668,
+        "n_obs": 135,
+        "n_eff": 135
       }
     ]
   },
   "region_meta": {
     "Pampa Húmeda": {
       "provinces": [
-        "Buenos Aires (centro-sur)",
-        "Santa Fe (sur)",
-        "Córdoba (sur)"
+        "Buenos Aires (norte-centro)",
+        "Santa Fe",
+        "Córdoba",
+        "Entre Ríos (parcial)",
+        "La Pampa (este)"
       ],
-      "description": "Pampa Húmeda (centro-sur Buenos Aires, sur Santa Fe, sur Córdoba)",
+      "description": "Pampa Húmeda (Buenos Aires norte y centro, Santa Fe, Córdoba, porciones de Entre Ríos y La Pampa)",
       "signal_strength": "débil",
       "center_lat": -34.5,
       "center_lon": -61.0
@@ -10463,9 +10545,10 @@
         "Neuquén",
         "Río Negro",
         "Chubut",
-        "Santa Cruz"
+        "Santa Cruz",
+        "Tierra del Fuego"
       ],
-      "description": "Patagonia (Neuquén, Río Negro, Chubut, Santa Cruz)",
+      "description": "Patagonia (Neuquén, Río Negro, Chubut, Santa Cruz, Tierra del Fuego)",
       "signal_strength": "no significativa",
       "center_lat": -46.0,
       "center_lon": -67.5
@@ -11215,6 +11298,6 @@
     "nino34": "ERDDAP",
     "soi": "ERDDAP"
   },
-  "last_updated": "2026-08-27T18:44:13Z",
+  "last_updated": "2026-08-27T22:49:05Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
