@@ -7,6 +7,9 @@
     "nino34_date": "2026-08-15",
     "soi_value": -3.8,
     "soi_date": "2026-07-30",
+    "conditions": "El Niño",
+    "conditions_intensity": "moderado",
+    "episode_confirmed": false,
     "phase": "Neutral",
     "phase_source": "ONI (NOAA CPC)"
   },
@@ -11260,6 +11263,6 @@
     "nino34": "ERDDAP",
     "soi": "ERDDAP"
   },
-  "last_updated": "2026-08-26T23:39:33Z",
+  "last_updated": "2026-08-27T16:17:52Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
