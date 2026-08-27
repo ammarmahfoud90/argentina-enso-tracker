@@ -127,6 +127,23 @@ function col(r, sig) {
     .attr('fill', '#14161A')
     .text(d => d.n);
 
+  /* Build best seasonal signal per region (for n.s. annual labels) */
+  const seasonalCorr = data.seasonal_correlations || {};
+  const bestSeasonal = {};
+  const seasonLabels = { SON: 'SON', DEF: 'DEF', MAM: 'MAM', JJA: 'JJA' };
+  for (const region of regionOrder) {
+    let topHit = null;
+    for (const [sn, recs] of Object.entries(seasonalCorr)) {
+      const sig = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+      if (sig.length) {
+        const best = sig.reduce((a, b) => Math.abs(a.pearson_r) > Math.abs(b.pearson_r) ? a : b);
+        if (!topHit || Math.abs(best.pearson_r) > Math.abs(topHit.r))
+          topHit = { season: sn, r: best.pearson_r, stars: best.pearson_stars };
+      }
+    }
+    bestSeasonal[region] = topHit;
+  }
+
   g.append('text')
     .attr('x', d => d.best ? rad(d.best.pearson_r) + 8 : rad(0.03) + 8)
     .attr('y', 14)
@@ -138,8 +155,16 @@ function col(r, sig) {
       const r = d.best.pearson_r;
       const sign = r >= 0 ? '+' : '−';
       const stars = d.best.pearson_stars || '';
-      const ns = (d.best.pearson_p >= SIG_THRESHOLD) ? ' n.s.' : '';
-      return sign + Math.abs(r).toFixed(3) + stars + ns;
+      const isSig = d.best.pearson_p < SIG_THRESHOLD;
+      if (isSig) return sign + Math.abs(r).toFixed(3) + stars;
+      /* Annual n.s. — append best seasonal if available */
+      let label = sign + Math.abs(r).toFixed(3) + ' n.s.';
+      const ss = bestSeasonal[d.n];
+      if (ss) {
+        const ssSign = ss.r >= 0 ? '+' : '−';
+        label += ' · ' + ss.season + ' ' + ssSign + Math.abs(ss.r).toFixed(2) + ss.stars;
+      }
+      return label;
     });
 
   /* Legend */
