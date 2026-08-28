@@ -464,20 +464,24 @@ def _fetch_with_fallback(
     Returns:
         (DataFrame, source_label) — the parsed data and which source was used.
     """
-    # Try primary (ERDDAP)
+    # Derive source tag from label (first word: "ERDDAP" or "CPC")
+    primary_source = primary_label.split()[0]
+    fallback_source = fallback_label.split()[0]
+
+    # Try primary
     try:
         raw = fetch_text(primary_url, label=primary_label, timeout=45)
         df = primary_parser(raw)
         if len(df) > 0:
-            return df, "ERDDAP"
+            return df, primary_source
     except Exception as exc:
         logger.warning("Primary source %s failed: %s — trying fallback", primary_label, exc)
 
-    # Fallback (CPC text)
+    # Fallback
     try:
         raw = fetch_text(fallback_url, label=fallback_label)
         df = fallback_parser(raw)
-        return df, "CPC"
+        return df, fallback_source
     except Exception as exc:
         raise RuntimeError(
             f"Both primary ({primary_label}) and fallback ({fallback_label}) failed. "
@@ -534,6 +538,19 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     )
     latest_soi = soi_df.iloc[-1]
     data_sources["soi"] = soi_source
+
+    # --- Niño 3.4 date validation ---
+    # Niño 3.4 must be more recent than ONI to add value (ONI has ~2-month
+    # latency; ERDDAP weekly composites are near-real-time).  If dates match,
+    # the ERDDAP fetch likely failed and the CPC fallback was used silently.
+    oni_date = latest_oni["date"].date() if hasattr(latest_oni["date"], "date") else latest_oni["date"]
+    nino34_date = latest_nino["date"].date() if hasattr(latest_nino["date"], "date") else latest_nino["date"]
+    if nino34_date <= oni_date:
+        logger.warning(
+            "Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
+            "source=%s. ERDDAP may have failed; CPC fallback has same latency as ONI.",
+            nino34_date, oni_date, nino_source,
+        )
 
     # --- Phase classification ---
     phase = classify_enso_phase(oni_df)

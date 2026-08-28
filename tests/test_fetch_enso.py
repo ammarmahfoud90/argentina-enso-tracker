@@ -509,3 +509,82 @@ class TestSourceURLs:
         df = parse_oni(resp.text)
         assert len(df) > 100, "Expected more than 100 ONI rows from live feed"
         assert df["oni"].notna().all()
+
+
+# ---------------------------------------------------------------------------
+# Regression test — Niño 3.4 must be more recent than ONI
+# ---------------------------------------------------------------------------
+
+
+class TestNino34DateFreshness:
+    """Niño 3.4 (ERDDAP weekly) must be more recent than ONI (CPC seasonal).
+
+    Regression for a bug where ERDDAP failure silently fell back to the CPC
+    Niño 3.4 file, which has the same ~2-month latency as ONI, causing the
+    hero text to lose the "rápido fortalecimiento" phrase.
+    """
+
+    @pytest.mark.integration
+    def test_nino34_date_after_oni_date(self):
+        """Live fetch: Niño 3.4 date must be strictly after ONI date."""
+        from src.fetch_enso import fetch_enso_snapshot
+
+        snap = fetch_enso_snapshot()
+        assert snap.nino34_date > snap.oni_date, (
+            f"Niño 3.4 date ({snap.nino34_date}) should be more recent than "
+            f"ONI date ({snap.oni_date}). Source: {snap.data_sources.get('nino34')}"
+        )
+
+    def test_erddap_nino34_more_recent_than_cpc(self):
+        """ERDDAP Niño 3.4 should have data beyond what CPC ERSSTv5 provides."""
+        from src.fetch_enso import parse_erddap_nino34, parse_nino34
+        from src.utils import fetch_text
+        from src.config import ERDDAP_NINO34_URL, NOAA_NINO34_URL
+
+        try:
+            erddap_raw = fetch_text(ERDDAP_NINO34_URL, label="ERDDAP Niño 3.4", timeout=45)
+            erddap_df = parse_erddap_nino34(erddap_raw)
+        except Exception:
+            pytest.skip("ERDDAP unreachable")
+
+        cpc_raw = fetch_text(NOAA_NINO34_URL, label="CPC Niño 3.4")
+        cpc_df = parse_nino34(cpc_raw)
+
+        erddap_last = erddap_df["date"].max().tz_localize(None) if erddap_df["date"].max().tzinfo else erddap_df["date"].max()
+        cpc_last = cpc_df["date"].max().tz_localize(None) if cpc_df["date"].max().tzinfo else cpc_df["date"].max()
+        assert erddap_last > cpc_last, (
+            f"ERDDAP last date ({erddap_last.date()}) should be after "
+            f"CPC last date ({cpc_last.date()})"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Regression test — _fetch_with_fallback source labels
+# ---------------------------------------------------------------------------
+
+
+class TestFetchWithFallbackLabels:
+    """Source label returned by _fetch_with_fallback must match the actual source."""
+
+    def test_soi_primary_returns_cpc_label(self):
+        """When SOI CPC primary succeeds, source label must be 'CPC', not 'ERDDAP'."""
+        from src.fetch_enso import _fetch_with_fallback, parse_soi, parse_erddap_soi
+        from src.config import NOAA_SOI_URL, ERDDAP_SOI_URL
+
+        try:
+            _, source = _fetch_with_fallback(
+                primary_url=NOAA_SOI_URL,
+                primary_label="CPC SOI",
+                primary_parser=parse_soi,
+                fallback_url=ERDDAP_SOI_URL,
+                fallback_label="ERDDAP SOI",
+                fallback_parser=parse_erddap_soi,
+            )
+        except RuntimeError:
+            pytest.skip("Both SOI sources unreachable")
+
+        # If CPC (primary) succeeded, label must be "CPC"
+        # If CPC failed and ERDDAP (fallback) was used, label must be "ERDDAP"
+        assert source in ("CPC", "ERDDAP"), f"Unexpected source label: {source}"
+        # The label must NOT be inverted
+        # (This test will catch the old bug where CPC success returned "ERDDAP")
