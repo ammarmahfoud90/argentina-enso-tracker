@@ -412,6 +412,31 @@ class TestComputeNeff:
         assert n_eff >= 3
 
 
+class TestNeffCodePathConsistency:
+    """Verify annual and seasonal branches use the same n_eff function."""
+
+    def test_annual_and_seasonal_use_same_function(self):
+        """Both build.py branches must import compute_n_eff from the same module."""
+        import ast
+        from pathlib import Path
+
+        source = Path("build.py").read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        # Find all imports of compute_n_eff
+        imports = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom):
+                for alias in node.names:
+                    if alias.name == "compute_n_eff":
+                        imports.append(node.module)
+        assert len(imports) >= 2, (
+            f"Expected >=2 imports of compute_n_eff in build.py, found {len(imports)}"
+        )
+        assert len(set(imports)) == 1, (
+            f"Annual and seasonal branches import compute_n_eff from different modules: {imports}"
+        )
+
+
 class TestSeasonalCorrelationLag:
     """Verify seasonal correlations produce distinct values per lag.
 

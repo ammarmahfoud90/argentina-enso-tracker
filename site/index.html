@@ -8,6 +8,7 @@
   <meta property="og:title" content="Argentina ENSO Impact Tracker">
   <meta property="og:description" content="Estado ENSO en tiempo real y correlación histórica con precipitación en 5 regiones argentinas.">
   <meta property="og:type" content="website">
+  <meta property="og:url" content="https://argentina-enso-tracker.onrender.com/">
   <meta property="og:image" content="https://argentina-enso-tracker.onrender.com/data/og-image.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="627">
@@ -418,7 +419,7 @@
       <h2>Comparación histórica</h2>
       <div class="section-meta">Eventos seleccionados vs episodio actual</div>
     </div>
-    <p class="section-desc section-desc-wide">Superposición del ONI actual sobre trayectorias de episodios ENSO históricos notables. Cada curva se alinea al mes de inicio del episodio. Permite evaluar si la evolución actual sigue un patrón similar a eventos pasados.</p>
+    <p class="section-desc section-desc-wide">Superposición del ONI actual sobre trayectorias de episodios ENSO históricos notables. Cada curva se alinea al mes de inicio del episodio. El episodio actual se ancla al primer mes que cruza el umbral ONI ±0.5; los históricos usan meses de inicio seleccionados editorialmente (la mayoría coinciden con el cruce, pero el desfase puede ser de 1–2 meses).</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <button class="range-btn active" data-compare="nino" id="compare-btn-nino">El Niño históricos</button>
       <button class="range-btn" data-compare="nina" id="compare-btn-nina">La Niña históricos</button>
@@ -429,7 +430,7 @@
   <!-- 6. Correlation heatmap -->
   <section class="section" id="corr-section" style="animation:omFadeUp .55s ease .36s backwards;">
     <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
-    <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal es más fuerte en primavera-verano: NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***, Cuyo JJA r=+0.25**.</p>
+    <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal es más fuerte en primavera-verano en el centro y noreste (NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***). En los Andes centrales la señal es invernal (Cuyo JJA r=+0.25**), asociada a la precipitación nival.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;">Estación:</label>
       <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -953,14 +954,31 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
   }
 
   const current = extractEpisode(currentStart.year, currentStart.month, 24);
+  const currentColor = compareType === 'nino' ? '#C2382A' : '#2A55D0';
   if (current.months.length > 0) {
     traces.push({
       x: current.months, y: current.values,
       type: 'scatter', mode: 'lines+markers',
-      line: { color: compareType === 'nino' ? '#C2382A' : '#2A55D0', width: 2.5 },
-      marker: { size: 4 },
+      line: { color: currentColor, width: 3.5 },
+      marker: { size: 7, color: currentColor, line: { color: '#FFFFFF', width: 1.5 } },
       name: currentLabel,
       hovertemplate: `<b>${currentLabel}</b><br>Mes %{x}: ONI %{y:+.2f}<extra></extra>`,
+    });
+  }
+
+  /* Annotation on last point of current trajectory */
+  const annotations = [];
+  if (current.months.length > 0) {
+    const lastIdx = current.months.length - 1;
+    const lastOni = current.values[lastIdx];
+    const lastMonth = current.months[lastIdx];
+    annotations.push({
+      x: lastMonth, y: lastOni,
+      text: `${lastOni >= 0 ? '+' : ''}${lastOni.toFixed(2)}`,
+      showarrow: true, arrowhead: 0, arrowcolor: currentColor,
+      ax: 35, ay: -25,
+      font: { family: 'IBM Plex Mono', size: 12, color: currentColor, weight: 700 },
+      bgcolor: '#FFFFFF', bordercolor: currentColor, borderwidth: 1, borderpad: 3,
     });
   }
 
@@ -982,6 +1000,7 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -0.5, y1: -0.5,
         line: { color: '#2A55D0', width: 1, dash: 'dot' } },
     ],
+    annotations,
     legend: { font: { family: 'IBM Plex Mono', size: 11, color: '#555C68' }, x: 0, y: 1 },
     paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
     hovermode: 'closest',
@@ -996,6 +1015,43 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
   };
 
   Plotly.newPlot(divId, traces, layout, config);
+
+  /* Dynamic comparison note below chart */
+  const noteId = divId + '-note';
+  let noteEl = document.getElementById(noteId);
+  if (!noteEl) {
+    noteEl = document.createElement('p');
+    noteEl.id = noteId;
+    noteEl.style.cssText = 'margin:10px 0 0;font-size:12px;color:#555C68;font-family:IBM Plex Mono,monospace;line-height:1.55;max-width:76ch;';
+    document.getElementById(divId).parentNode.insertBefore(noteEl, document.getElementById(divId).nextSibling);
+  }
+
+  if (current.months.length >= 2) {
+    const N = current.months.length;
+    const lastOni = current.values[N - 1];
+    let noteText = `El episodio actual lleva ${N} meses desde el cruce de ${threshold >= 0 ? '+' : ''}${threshold.toFixed(1)}. La comparación gana valor a medida que avanza.`;
+
+    /* Compare to historical events at same offset */
+    const surpassed = [];
+    for (const ev of events) {
+      const ep = extractEpisode(ev.startYear, ev.startMonth, 24);
+      const lastOffset = current.months[N - 1];
+      const matchIdx = ep.months.indexOf(lastOffset);
+      if (matchIdx >= 0 && ((compareType === 'nino' && lastOni > ep.values[matchIdx]) ||
+                            (compareType !== 'nino' && lastOni < ep.values[matchIdx]))) {
+        surpassed.push({ label: ev.label, val: ep.values[matchIdx] });
+      }
+    }
+    if (surpassed.length > 0) {
+      const names = surpassed.map(s => s.label).join(', ');
+      noteText += ` A los ${N} meses del inicio, el ONI actual (${lastOni >= 0 ? '+' : ''}${lastOni.toFixed(2)}) supera al de ${names} en el mismo punto de su trayectoria.`;
+    }
+    noteEl.textContent = noteText;
+  } else if (current.months.length === 1) {
+    noteEl.textContent = `Episodio incipiente (1 mes). Demasiado temprano para comparaciones significativas.`;
+  } else {
+    noteEl.textContent = '';
+  }
 }
 
 /* ── Subsurface temperature heatmap (Plotly) ── */
