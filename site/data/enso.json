@@ -3,7 +3,7 @@
     "oni_value": 1.39,
     "oni_season": "MJJ",
     "oni_date": "2026-06-15",
-    "nino34_value": 2.63,
+    "nino34_value": 2.6,
     "nino34_date": "2026-08-15",
     "soi_value": -2.4,
     "soi_date": "2026-07-15",
@@ -11307,9 +11307,9 @@
         "el_nino": 79
       }
     ],
-    "probs_svg": "https://ensoforecast2.iri.columbia.edu/figure3_plot/2026/8",
-    "plume_svg": "https://ensoforecast2.iri.columbia.edu/figure4_plot/2026/8",
-    "month": 8,
+    "probs_svg": "https://ensoforecast2.iri.columbia.edu/figure3_plot/2026/9",
+    "plume_svg": "https://ensoforecast2.iri.columbia.edu/figure4_plot/2026/9",
+    "month": 9,
     "year": 2026,
     "source": "IRI/CCSR (Columbia University)"
   },
@@ -11318,6 +11318,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-08-31T15:45:29Z",
+  "last_updated": "2026-09-01T12:58:06Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
