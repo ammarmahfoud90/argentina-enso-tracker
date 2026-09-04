@@ -77,13 +77,13 @@ IRI_ENSO_FORECAST_URL = (
 Probabilities scraped from JSON embedded in page when available."""
 
 IRI_FORECAST_PROBS_SVG = (
-    "https://ensoforecast2.iri.columbia.edu/figure3_plot/{year}/{month}"
+    "https://ensoforecast.iri.columbia.edu/figure3_plot/{year}/{month}"
 )
 """IRI/CCSR model-based ENSO probability forecast — stacked bar chart (SVG).
 Shows El Nino / Neutral / La Nina probabilities per trimester."""
 
 IRI_FORECAST_PLUME_SVG = (
-    "https://ensoforecast2.iri.columbia.edu/figure4_plot/{year}/{month}"
+    "https://ensoforecast.iri.columbia.edu/figure4_plot/{year}/{month}"
 )
 """IRI ENSO model predictions plume — individual model Nino 3.4 forecasts (SVG)."""
 

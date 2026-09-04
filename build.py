@@ -71,6 +71,34 @@ def _sig_stars(p: float) -> str:
     return ""
 
 
+IRI_STALE_LIMIT_DAYS = 45
+"""Maximum age (in days) for a cached IRI forecast before the build fails."""
+
+
+def _load_cached_iri_forecast() -> dict | None:
+    """Load the last valid IRI forecast from the existing enso.json on disk.
+
+    If found, stamps ``stale_since`` with the current UTC timestamp so the
+    frontend can display an appropriate warning.  Returns None if the file
+    doesn't exist or has no valid forecast.
+    """
+    if not OUT_PATH.exists():
+        return None
+    try:
+        with open(OUT_PATH, encoding="utf-8") as fh:
+            old = json.load(fh)
+        cached = old.get("iri_forecast")
+        if cached is None:
+            return None
+        # Preserve the original fetch date but mark when it went stale
+        if "stale_since" not in cached:
+            cached["stale_since"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return cached
+    except Exception as exc:
+        logger.warning("Could not load cached IRI forecast: %s", exc)
+        return None
+
+
 def _signal_strength_label(abs_r: float, is_significant: bool) -> str:
     """Human-readable correlation strength label for region metadata."""
     if not is_significant:
@@ -391,6 +419,8 @@ def build_payload() -> dict:
         logger.warning("Subsurface data unavailable — section will be hidden in frontend")
 
     # 10. IRI forecast (parsed probabilities + SVG URLs)
+    #     Graceful degradation: if fetch fails, reuse last valid forecast from
+    #     the existing enso.json and tag it with stale_since.
     logger.info("Fetching IRI forecast…")
     iri_forecast = fetch_iri_forecast()
     if iri_forecast:
@@ -400,7 +430,16 @@ def build_payload() -> dict:
             iri_forecast["year"], iri_forecast["month"],
         )
     else:
-        logger.warning("IRI forecast unavailable — section will show fallback")
+        logger.warning("IRI forecast fetch failed — attempting to reuse cached forecast")
+        iri_forecast = _load_cached_iri_forecast()
+        if iri_forecast:
+            logger.info(
+                "Reusing cached IRI forecast from %d/%d (stale_since: %s)",
+                iri_forecast["year"], iri_forecast["month"],
+                iri_forecast.get("stale_since", "unknown"),
+            )
+        else:
+            logger.warning("No cached IRI forecast available either")
 
     # 11. Assemble final payload
     payload = {

@@ -48,14 +48,19 @@ jobs:
         run: |
           python - <<'EOF'
           import json, sys
+          from datetime import datetime, timezone
+
           with open('site/data/enso.json') as f:
               d = json.load(f)
+
           required = ['current', 'oni_series', 'correlations', 'episodes',
                       'seasonal_correlations', 'iri_forecast', 'last_updated']
           missing = [k for k in required if k not in d]
           if missing:
               print(f'FAIL: missing keys: {missing}', file=sys.stderr)
               sys.exit(1)
+
+          # --- Core indicators: hard fail if any is wrong ---
           c = d['current']
           assert isinstance(c['oni_value'], float), 'oni_value must be float'
           assert c['phase'] in ('El Niño', 'La Niña', 'Neutral'), 'invalid phase'
@@ -63,14 +68,31 @@ jobs:
           assert len(d['correlations']) > 0, 'no correlation rows'
           sc = d['seasonal_correlations']
           assert all(k in sc for k in ['SON','DEF','MAM','JJA']), 'missing seasonal keys'
+
+          # --- IRI forecast: warn but allow stale cache up to 45 days ---
           iri = d['iri_forecast']
-          assert iri is not None, 'iri_forecast is None'
+          iri_status = 'missing'
+          if iri is not None:
+              stale_since = iri.get('stale_since')
+              if stale_since:
+                  age_days = (datetime.now(timezone.utc) - datetime.fromisoformat(stale_since)).days
+                  if age_days > 45:
+                      print(f'FAIL: cached IRI forecast is {age_days} days stale (limit: 45)', file=sys.stderr)
+                      sys.exit(1)
+                  iri_status = f'stale ({age_days}d, from {iri["year"]}/{iri["month"]})'
+                  print(f'::warning::IRI forecast is stale ({age_days}d). Using cached data from {iri["year"]}/{iri["month"]}.')
+              else:
+                  iri_status = 'fresh' if iri.get('probabilities') else 'urls-only'
+          else:
+              print('FAIL: iri_forecast is None and no cached version available', file=sys.stderr)
+              sys.exit(1)
+
           print(f"OK: phase={c['phase']}, ONI={c['oni_value']}, "
                 f"{len(d['oni_series'])} ONI points, "
                 f"{len(d['correlations'])} correlation rows, "
                 f"{len(d['episodes'])} episodes, "
                 f"seasonal={list(sc.keys())}, "
-                f"IRI={'probs' if iri.get('probabilities') else 'urls-only'}")
+                f"IRI={iri_status}")
           EOF
 
       # ── Commit and push if changed ────────────────────────────────────────

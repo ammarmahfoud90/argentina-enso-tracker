@@ -1,14 +1,14 @@
 {
   "current": {
-    "oni_value": 1.39,
-    "oni_season": "MJJ",
-    "oni_date": "2026-06-15",
+    "oni_value": 1.8,
+    "oni_season": "JJA",
+    "oni_date": "2026-07-15",
     "nino34_value": 2.6,
     "nino34_date": "2026-08-15",
-    "soi_value": -2.4,
-    "soi_date": "2026-07-15",
+    "soi_value": -1.1,
+    "soi_date": "2026-08-15",
     "conditions": "El Niño",
-    "conditions_intensity": "moderado",
+    "conditions_intensity": "fuerte",
     "episode_confirmed": false,
     "phase": "Neutral",
     "phase_source": "ONI (NOAA CPC)"
@@ -5521,15 +5521,15 @@
       "season": "MJJ",
       "year": 2026,
       "oni": 1.39
+    },
+    {
+      "date": "2026-07-15",
+      "season": "JJA",
+      "year": 2026,
+      "oni": 1.8
     }
   ],
   "oni_series_24m": [
-    {
-      "date": "2024-07-15",
-      "season": "JJA",
-      "year": 2024,
-      "oni": 0.06
-    },
     {
       "date": "2024-08-15",
       "season": "JAS",
@@ -5667,6 +5667,12 @@
       "season": "MJJ",
       "year": 2026,
       "oni": 1.39
+    },
+    {
+      "date": "2026-07-15",
+      "season": "JJA",
+      "year": 2026,
+      "oni": 1.8
     }
   ],
   "soi_series": [
@@ -9297,13 +9303,13 @@
     {
       "date": "2026-07-15",
       "soi": -2.4
+    },
+    {
+      "date": "2026-08-15",
+      "soi": -1.1
     }
   ],
   "soi_series_24m": [
-    {
-      "date": "2024-08-15",
-      "soi": 0.9
-    },
     {
       "date": "2024-09-15",
       "soi": -0.1
@@ -9395,6 +9401,10 @@
     {
       "date": "2026-07-15",
       "soi": -2.4
+    },
+    {
+      "date": "2026-08-15",
+      "soi": -1.1
     }
   ],
   "correlations": [
@@ -11146,108 +11156,108 @@
     ],
     "temperatures": [
       [
-        30.01,
-        30.52,
-        30.49,
-        29.41,
-        28.57,
-        28.01,
-        27.58,
-        26.72
-      ],
-      [
-        29.96,
-        30.46,
-        30.36,
-        29.15,
-        28.46,
-        27.93,
-        27.46,
-        26.6
-      ],
-      [
-        29.98,
-        30.41,
-        30.23,
-        28.93,
-        28.3,
-        27.75,
-        26.84,
-        25.79
-      ],
-      [
+        29.71,
+        30.0,
+        30.2,
         29.91,
-        29.89,
+        28.97,
+        28.23,
+        27.47,
+        26.9
+      ],
+      [
+        29.62,
+        29.85,
+        30.04,
+        29.79,
+        28.9,
+        28.18,
+        27.39,
+        26.73
+      ],
+      [
+        29.62,
+        29.78,
+        29.94,
+        29.71,
+        28.81,
+        28.08,
+        26.96,
+        25.72
+      ],
+      [
+        29.42,
+        29.53,
         29.76,
+        29.45,
+        28.48,
+        27.4,
+        25.05,
+        23.0
+      ],
+      [
         28.27,
-        27.77,
-        26.82,
-        24.01,
-        22.66
+        29.17,
+        29.45,
+        29.21,
+        27.99,
+        26.07,
+        22.29,
+        19.78
       ],
       [
-        29.4,
-        29.31,
-        29.19,
-        27.94,
-        27.15,
-        25.03,
-        20.62,
-        19.19
+        25.22,
+        26.37,
+        27.85,
+        27.49,
+        25.72,
+        21.99,
+        18.48,
+        16.88
       ],
       [
-        25.73,
-        27.8,
-        27.98,
-        26.3,
-        23.9,
-        20.46,
-        16.62,
-        16.4
+        22.57,
+        21.68,
+        22.04,
+        21.69,
+        20.84,
+        17.2,
+        15.87,
+        15.38
       ],
       [
-        23.32,
-        21.59,
-        20.93,
-        19.93,
-        18.15,
-        15.75,
-        14.88,
-        15.23
-      ],
-      [
-        17.82,
-        16.72,
-        15.85,
-        14.51,
-        14.18,
-        13.5,
-        13.4,
+        16.91,
+        16.82,
+        16.8,
+        15.32,
+        14.89,
+        13.99,
+        13.7,
         null
       ],
       [
-        13.53,
-        13.73,
-        13.19,
-        12.87,
-        12.85,
-        12.84,
-        12.87,
-        13.34
+        13.43,
+        13.75,
+        13.5,
+        13.08,
+        13.1,
+        12.95,
+        12.99,
+        13.56
       ],
       [
-        12.27,
-        12.09,
-        12.15,
-        12.32,
-        12.29,
-        12.22,
-        12.56,
-        13.19
+        12.44,
+        12.18,
+        12.14,
+        12.37,
+        12.52,
+        12.45,
+        12.6,
+        13.08
       ]
     ],
     "period_start": "2026-06-16",
-    "period_end": "2026-06-16",
+    "period_end": "2026-08-16",
     "source": "TAO/TRITON ERDDAP (pmelTaoMonT)"
   },
   "iri_forecast": {
@@ -11303,12 +11313,12 @@
       {
         "trimester": "AMJ",
         "la_nina": 0,
-        "neutral": 21,
-        "el_nino": 79
+        "neutral": 22,
+        "el_nino": 78
       }
     ],
-    "probs_svg": "https://ensoforecast2.iri.columbia.edu/figure3_plot/2026/9",
-    "plume_svg": "https://ensoforecast2.iri.columbia.edu/figure4_plot/2026/9",
+    "probs_svg": "https://ensoforecast.iri.columbia.edu/figure3_plot/2026/9",
+    "plume_svg": "https://ensoforecast.iri.columbia.edu/figure4_plot/2026/9",
     "month": 9,
     "year": 2026,
     "source": "IRI/CCSR (Columbia University)"
@@ -11318,6 +11328,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-02T12:28:05Z",
+  "last_updated": "2026-09-04T20:04:57Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }

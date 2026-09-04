@@ -545,6 +545,7 @@
       <p style="margin-bottom:6px;">El ENSO explica solo una parte de la variabilidad de precipitación en Argentina. El SAM (Modo Anular del Sur), la variabilidad interna atmosférica y factores regionales también influyen significativamente.</p>
       <p style="margin-bottom:6px;">Latencia de datos: ONI ~2 meses (publicación CPC); Niño 3.4 SST ~1 semana (ERDDAP/OISST, composites semanales); SOI ~1 mes (CPC / ERDDAP fallback); temperatura subsuperficial ~1 mes (TAO/TRITON). Estas latencias son estándar para monitoreo climático operacional.</p>
     </div>
+    <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span>Índices automáticos — no constituyen declaración oficial</span>
       <span>Correlaciones anuales y estacionales (1981–2025) · CHIRPS v2.0</span>
@@ -1443,6 +1444,21 @@ function updateFreshnessIndicator(lastUpdated) {
   }
 }
 
+function updateFooterTimestamp(lastUpdated) {
+  const el = document.getElementById('data-generated-stamp');
+  if (!el) return;
+  const d = new Date(lastUpdated);
+  const fmt = d.toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit', timeZone:'America/Argentina/Buenos_Aires' });
+  const hoursOld = (Date.now() - d.getTime()) / 3.6e6;
+  if (hoursOld > 48) {
+    el.style.color = '#991B1B';
+    el.style.fontWeight = '700';
+    el.textContent = `Datos generados el ${fmt} (hace ${Math.round(hoursOld / 24)} dias — revise el pipeline).`;
+  } else {
+    el.textContent = `Datos generados el ${fmt}.`;
+  }
+}
+
 /* ── Heatmap ── */
 function renderHeatmap(correlations, regionOrder) {
   const container = document.getElementById('heatmap-grid');
@@ -1758,6 +1774,7 @@ async function main() {
 
   /* ── Data freshness indicator ── */
   updateFreshnessIndicator(data.last_updated);
+  updateFooterTimestamp(data.last_updated);
 
   /* ── SOI Tracker ── */
   const soi24m = data.soi_series_24m || [];
@@ -1820,8 +1837,16 @@ async function main() {
     document.getElementById('forecast-btn-probs').addEventListener('click', () => setForecastView('probs'));
     document.getElementById('forecast-btn-plume').addEventListener('click', () => setForecastView('plume'));
 
-    document.getElementById('forecast-meta').textContent =
-      `${MONTHS_ES[(iriForecast.month || 1) - 1]} ${iriForecast.year} · IRI/CCSR`;
+    let metaText = `${MONTHS_ES[(iriForecast.month || 1) - 1]} ${iriForecast.year} · IRI/CCSR`;
+    if (iriForecast.stale_since) {
+      const staleDate = new Date(iriForecast.stale_since);
+      const staleFmt = staleDate.toLocaleDateString('es-AR', { year:'numeric', month:'long', day:'numeric' });
+      metaText = `Pronostico IRI de ${MONTHS_ES[(iriForecast.month || 1) - 1]} ${iriForecast.year}. La actualizacion automatica fallo el ${staleFmt}.`;
+      const metaEl = document.getElementById('forecast-meta');
+      metaEl.style.color = '#B45309';
+      metaEl.style.fontWeight = '600';
+    }
+    document.getElementById('forecast-meta').textContent = metaText;
   }
 
   /* ── Subsurface temperature heatmap ── */
