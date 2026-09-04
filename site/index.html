@@ -53,7 +53,9 @@
     .command-center.phase-nina{background:var(--gradient-nina);}
     .command-center.phase-neutral{background:var(--gradient-neutral);}
     .command-center::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:50px;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%23f8f9fc'/%3E%3C/svg%3E") no-repeat bottom center;background-size:cover;z-index:1;}
-    .command-center *{color:rgba(255,255,255,0.92);}
+    .command-center,.command-center *{color:rgba(255,255,255,0.92);}
+    .command-center .scale-badge{color:#14161A;}
+    .command-center .region-pill.active{color:#14161A;}
 
     /* Masthead */
     .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;padding:36px 0 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
@@ -213,6 +215,9 @@
     html.dark .range-btn.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
     html.dark .forecast-link-row{color:#e0e0e8;border-top-color:rgba(100,120,200,0.15);}
     html.dark .forecast-link-row:hover{background:rgba(20,24,50,0.5);border-left-color:#6d9fff;}
+    html.dark .forecast-cta{color:#6d9fff;}
+    html.dark .acc-name{color:#e0e0e8;}
+    html.dark .acc-r{color:#aab;}
     html.dark #inset-svg{background:rgba(20,24,50,0.5);border-color:rgba(100,120,200,0.15);}
     html.dark details.region-accordion{border-top-color:rgba(100,120,200,0.15);}
     html.dark .footer{background:var(--dark-card-bg);border-color:var(--dark-glass-border);box-shadow:0 4px 20px rgba(0,0,0,0.3);color:#666;}
@@ -222,7 +227,15 @@
     html.dark #loading{background:var(--dark-bg);}
     html.dark #dark-mode-toggle{background:rgba(20,24,50,0.6);border-color:rgba(100,120,200,0.25);color:#e0e0e8;}
     html.dark .risk-map-iframe{border-color:rgba(100,120,200,0.15);}
-    html.dark #season-select{background:rgba(20,24,50,0.6);color:#e0e0e8;border-color:rgba(100,120,200,0.25);}
+    html.dark #season-select{background:rgba(20,24,50,0.6) !important;color:#e0e0e8 !important;border-color:rgba(100,120,200,0.25) !important;}
+    html.dark .section p[id$="-note"]{color:#aab !important;}
+    html.dark .section [style*="color:#14161A"]{color:#e0e0e8 !important;}
+    html.dark .section [style*="color:#555C68"]{color:#aab !important;}
+    html.dark .section [style*="color:#79818E"]{color:#888 !important;}
+    html.dark .footer button{color:#aab !important;border-color:rgba(100,120,200,0.25) !important;}
+    html.dark .modebar-btn path{fill:#888 !important;}
+    html.dark .modebar-btn:hover path{fill:#e0e0e8 !important;}
+    html.dark #iri-plume-img{border-radius:8px;filter:invert(0.88) hue-rotate(180deg);}
   </style>
 </head>
 <body>
@@ -1383,7 +1396,7 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
     x: regions, y: rValues, type: 'bar',
     marker: { color: colors, line: { color: '#14161A', width: 0.5 } },
     text: texts, textposition: 'outside',
-    textfont: { family: 'IBM Plex Mono', size: 11, color: '#14161A' },
+    textfont: { family: 'IBM Plex Mono', size: 11, color: chartColors().tick },
     hovertemplate: '<b>%{x}</b><br>Pearson r: %{y:+.3f}<br>R²: %{customdata:.1f}%<extra></extra>',
     customdata: rValues.map(r => r * r * 100),
   };
