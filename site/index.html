@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
   <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8" defer></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -41,14 +42,13 @@
     @keyframes omIn{from{opacity:0}}
     @keyframes omMarker{from{left:50%;transform:translateX(-50%)}}
     @keyframes omPulse{0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 currentColor}50%{transform:scale(1.4);opacity:.75;box-shadow:0 0 10px 3px currentColor}}
-    @keyframes slideDown{to{transform:translateY(0);}}
     @keyframes omWave{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
     .page{max-width:1180px;margin:0 auto;padding:0 32px 80px;}
 
     /* Command center (masthead + hero + indicators) */
-    .command-center{background:var(--gradient-neutral);margin:0 -32px;padding:0 32px 60px;position:relative;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);animation:omFadeUp .55s ease backwards;}
+    .command-center{background:var(--gradient-neutral);margin:0 -32px;padding:0 32px 60px;position:relative;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);animation:omFadeUp .55s ease;}
     .command-center.phase-nino{background:var(--gradient-nino);}
     .command-center.phase-nina{background:var(--gradient-nina);}
     .command-center.phase-neutral{background:var(--gradient-neutral);}
@@ -82,11 +82,15 @@
     .advice-panel{margin-top:12px;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:12px 16px;max-width:54ch;}
 
     /* Scale bar */
-    .scale-wrap{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
+    .scale-wrap{position:relative;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;height:1.2em;}
+    .scale-wrap span{position:absolute;transform:translateX(-50%);}
     .scale-bar{position:relative;height:22px;border-radius:6px;background:linear-gradient(to right,#60a5fa 0%,#93c5fd 25%,rgba(255,255,255,0.4) 42%,rgba(255,255,255,0.4) 58%,#fca5a1 75%,#ef4444 100%);box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);}
     .scale-marker{position:absolute;top:-7px;bottom:-7px;width:3px;background:#FFFFFF;border-radius:2px;transform:translateX(-50%);animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;box-shadow:0 0 8px rgba(255,255,255,0.6);}
     .scale-badge{position:absolute;top:-36px;transform:translateX(-50%);background:rgba(255,255,255,0.95);color:#14161A;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
-    .scale-axis{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;}
+    .scale-axis{position:relative;font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;height:1.2em;}
+    .scale-axis span{position:absolute;transform:translateX(-50%);}
+    .scale-axis span:first-child{left:0;transform:none;}
+    .scale-axis span:last-child{left:100%;transform:translateX(-100%);}
 
     /* Indicators */
     .indicators{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;background:transparent;border-bottom:none;padding:8px 0 0;position:relative;z-index:2;}
@@ -192,6 +196,14 @@
       .risk-grid{grid-template-columns:1fr;gap:24px;}
       .risk-map-iframe{aspect-ratio:1/1;border-radius:var(--radius-card);}
     }
+    /* Print */
+    @media print{
+      .sticky-nav,#dark-mode-toggle,#enso-alert,#enso-alert-banner{display:none!important;}
+      .command-center{animation:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      .reveal{opacity:1;transform:none;}
+      body{background:#fff;background-image:none;}
+      .section{box-shadow:none;break-inside:avoid;}
+    }
     /* Dark mode — premium */
     html.dark{--nav-bg:#0a0e27;}
     html.dark body{background:var(--dark-bg);background-image:radial-gradient(circle at 1px 1px,rgba(100,120,200,0.05) 1px,transparent 0);background-size:24px 24px;color:#e0e0e8;}
@@ -236,6 +248,7 @@
     html.dark .modebar-btn path{fill:#888 !important;}
     html.dark .modebar-btn:hover path{fill:#e0e0e8 !important;}
     html.dark #iri-plume-img{border-radius:8px;filter:invert(0.88) hue-rotate(180deg);}
+    html.dark #sst-month-label{color:#e0e0e8;}
   </style>
 </head>
 <body>
@@ -295,16 +308,16 @@
     </div>
     <div>
       <div class="scale-wrap">
-        <span style="font-weight:600;opacity:0.9;">La Niña</span>
-        <span style="opacity:0.7;">Neutral</span>
-        <span style="font-weight:600;opacity:0.9;">El Niño</span>
+        <span style="left:20%;font-weight:600;opacity:0.9;">La Niña</span>
+        <span style="left:50%;opacity:0.7;">Neutral</span>
+        <span style="left:80%;font-weight:600;opacity:0.9;">El Niño</span>
       </div>
       <div class="scale-bar">
         <div class="scale-marker" id="scale-marker"></div>
         <div class="scale-badge" id="scale-badge"></div>
       </div>
       <div class="scale-axis">
-        <span>−2.5</span><span>−0.5</span><span style="padding-left:14px;">0</span><span>+0.5</span><span>+2.5</span>
+        <span style="left:0;">−2.5</span><span style="left:40%;">−0.5</span><span style="left:50%;">0</span><span style="left:60%;">+0.5</span><span style="left:100%;">+2.5</span>
       </div>
     </div>
   </section>
@@ -339,7 +352,7 @@
 
   </div><!-- /command-center -->
 
-  <noscript><style>.reveal{opacity:1;transform:none;}</style></noscript>
+  <noscript><style>.reveal{opacity:1;transform:none;}.command-center{animation:none;}</style></noscript>
 
   <!-- 4. ONI historical chart -->
   <section class="section reveal" id="oni-section">
@@ -399,7 +412,11 @@
       <h2>Mapa de anomalía TSM — Pacífico Ecuatorial</h2>
       <div class="section-meta" id="sst-map-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide">Anomalía de Temperatura Superficial del Mar (TSM) — Pacífico Ecuatorial (Base 1991–2020). Fuente: NOAA OISST v2.1 (resolución ~2°). Los recuadros indican las regiones Niño de monitoreo. Use el deslizador para ver la evolución mensual y la propagación de la señal.</p>
+    <p class="section-desc section-desc-wide">Anomalía de Temperatura Superficial del Mar (TSM) — Pacífico Ecuatorial (Base 1991–2020). Fuente: NOAA OISST v2.1 (resolución ~2°). Los recuadros indican las regiones Niño de monitoreo.</p>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:12px;">
+      <button class="range-btn" id="sst-play-btn" aria-label="Reproducir animación del mapa">▶ Reproducir</button>
+      <div id="sst-month-label" style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;letter-spacing:-0.01em;"></div>
+    </div>
     <div id="sst-map-plotly" style="width:100%;height:480px;" role="img" aria-label="Mapa interactivo de anomalía de temperatura superficial del mar en el Pacífico ecuatorial"></div>
     <div id="sst-map-fallback" style="display:none;background:#F4F6F9;border-radius:4px;padding:24px;text-align:center;">
       <p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;">No se pudo cargar el mapa satelital de TSM. Mostrando datos de ONI en su lugar.</p>
@@ -1257,10 +1274,13 @@ function buildSSTMap(divId, sstData) {
     font: { family: 'IBM Plex Mono', size: 10, color: '#14161A' },
   }));
 
+  /* External month label */
+  const monthLabel = document.getElementById('sst-month-label');
+  if (monthLabel) monthLabel.textContent = dateLabels[lastIdx];
+
   const cc = chartColors();
   const layout = {
-    margin: { t: 30, r: 80, b: 60, l: 60 },
-    title: { text: dateLabels[lastIdx], font: { family: 'IBM Plex Mono', size: 13, color: cc.text }, y: 0.98 },
+    margin: { t: 10, r: 80, b: 60, l: 60 },
     xaxis: {
       title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
       tickvals: lonTickVals, ticktext: lonTickText,
@@ -1275,11 +1295,11 @@ function buildSSTMap(divId, sstData) {
     annotations: annotations,
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
     hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
-    /* Time slider */
+    /* Time slider (secondary control) */
     sliders: [{
       active: lastIdx,
       pad: { t: 30 },
-      currentvalue: { prefix: '', font: { family: 'IBM Plex Mono', size: 12, color: '#14161A' } },
+      currentvalue: { prefix: '', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
       steps: times.map((t, i) => ({
         label: dateLabels[i],
         method: 'restyle',
@@ -1297,14 +1317,15 @@ function buildSSTMap(divId, sstData) {
 
   Plotly.newPlot(divId, [trace], layout, config);
 
-  /* Update title when slider changes */
+  /* Sync external label when slider changes */
   const plotDiv = document.getElementById(divId);
   plotDiv.on('plotly_sliderchange', function(e) {
     const idx = e.slider.active;
-    Plotly.relayout(divId, { 'title.text': dateLabels[idx] });
+    if (monthLabel) monthLabel.textContent = dateLabels[idx];
   });
 
-  return true;
+  /* Return animation data for play/pause controller */
+  return { grids, dateLabels, nTimes };
 }
 
 /* ── IRI probability stacked bar chart ── */
@@ -1647,12 +1668,9 @@ function regionDetailText(region, best, isSig) {
 }
 
 /* ── Risk summary paragraph ── */
-function riskSummaryText(phase, episodeConfirmed) {
-  const caveat = (phase !== 'Neutral' && !episodeConfirmed)
-    ? ' Nota: condiciones presentes pero episodio formal CPC aún no confirmado.'
-    : '';
-  if (phase === 'El Niño') return 'Con condiciones El Niño, la señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).' + caveat;
-  if (phase === 'La Niña') return 'Con condiciones La Niña, la señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).' + caveat;
+function riskSummaryText(phase) {
+  if (phase === 'El Niño') return 'La señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).';
+  if (phase === 'La Niña') return 'La señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).';
   return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
 }
 
@@ -1670,6 +1688,8 @@ async function main() {
 
   document.getElementById('loading').style.display = 'none';
   document.getElementById('main').style.display = '';
+
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const cur = data.current;
   /* conditions = simple ONI threshold (El Niño/La Niña/Neutral)
@@ -1702,15 +1722,37 @@ async function main() {
   }
   /* statusLabel inherits white from command-center */
 
-  /* Trajectory: compare Niño 3.4 (more recent) against ONI (~2 month lag) */
-  const sstDelta = cur.nino34_value - cur.oni_value;
+  /* Trajectory: ONI trend from last 3 values + gap vs Niño 3.4 */
   let trajectoryNote = '';
-  if (phase !== 'Neutral' && Math.abs(sstDelta) > 0.5) {
-    const strengthening = (phase === 'El Niño') ? (sstDelta > 0) : (sstDelta < 0);
-    if (strengthening) {
-      trajectoryNote = ` Niño 3.4 mensual (${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)} °C) sugiere rápido fortalecimiento — el ONI tiene ~2 meses de latencia.`;
+  if (phase !== 'Neutral' && data.oni_series.length >= 3) {
+    const last3 = data.oni_series.slice(-3);
+    const oniSlope = (last3[2].oni - last3[0].oni) / 2; /* avg change per month */
+    const oniDecel = (last3[2].oni - last3[1].oni) - (last3[1].oni - last3[0].oni);
+    const gap = cur.nino34_value - cur.oni_value; /* positive = SST ahead, negative = ONI ahead */
+    const nino34Str = `${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)}`;
+
+    if (phase === 'El Niño') {
+      if (gap < -0.15) {
+        /* ONI has overtaken Niño 3.4 — surface cooling, average still rising from inertia */
+        trajectoryNote = ` El ONI (${oniSign}${cur.oni_value.toFixed(2)}) ha superado al Niño 3.4 semanal (${nino34Str} °C): la señal de superficie está enfriándose mientras el promedio trimestral sigue subiendo por inercia.`;
+      } else if (gap > 0.5 && oniSlope > 0.15) {
+        trajectoryNote = ` Niño 3.4 semanal (${nino34Str} °C) por encima del ONI — fortalecimiento en curso.`;
+      } else if (Math.abs(gap) <= 0.15 && oniSlope > 0.1) {
+        trajectoryNote = ` El ONI está alcanzando a la señal de superficie (Niño 3.4 ${nino34Str} °C). La brecha se ha cerrado.`;
+      } else if (oniDecel < -0.15) {
+        trajectoryNote = ` El ONI sigue positivo pero la tasa de aumento se está desacelerando.`;
+      }
     } else {
-      trajectoryNote = ` Niño 3.4 mensual (${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)} °C) sugiere debilitamiento respecto al ONI (latencia ~2 meses).`;
+      /* La Niña: mirror logic */
+      if (gap > 0.15) {
+        trajectoryNote = ` El ONI (${oniSign}${cur.oni_value.toFixed(2)}) ha superado al Niño 3.4 semanal (${nino34Str} °C): la señal de superficie está calentándose mientras el promedio trimestral sigue bajando por inercia.`;
+      } else if (gap < -0.5 && oniSlope < -0.15) {
+        trajectoryNote = ` Niño 3.4 semanal (${nino34Str} °C) por debajo del ONI — fortalecimiento en curso.`;
+      } else if (Math.abs(gap) <= 0.15 && oniSlope < -0.1) {
+        trajectoryNote = ` El ONI está alcanzando a la señal de superficie (Niño 3.4 ${nino34Str} °C). La brecha se ha cerrado.`;
+      } else if (oniDecel > 0.15) {
+        trajectoryNote = ` El ONI sigue negativo pero la tasa de descenso se está desacelerando.`;
+      }
     }
   }
 
@@ -1720,19 +1762,35 @@ async function main() {
     : phase;
   document.getElementById('hero-phase').textContent = heroPhaseText;
 
+  /* ── Compute onset month (first crossing of ±0.5 in current run) ── */
+  const oniThreshold = phase === 'El Niño' ? 0.5 : -0.5;
+  const oniCrossTest = phase === 'El Niño' ? v => v >= 0.5 : v => v <= -0.5;
+  let onsetMonth = '';
+  if (phase !== 'Neutral') {
+    /* Walk backwards to find start of current run above/below threshold */
+    let onsetIdx = data.oni_series.length - 1;
+    while (onsetIdx > 0 && oniCrossTest(data.oni_series[onsetIdx - 1].oni)) {
+      onsetIdx--;
+    }
+    const onsetDate = new Date(data.oni_series[onsetIdx].date + 'T12:00:00Z');
+    const MESES_LARGO = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    onsetMonth = `${MESES_LARGO[onsetDate.getUTCMonth()]} ${onsetDate.getUTCFullYear()}`;
+  }
+
   const descEl = document.getElementById('hero-desc');
   const oniSign = cur.oni_value >= 0 ? '+' : '';
   if (phase === 'Neutral') {
     descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ` +
       'Condición neutra — sin señal de fase ENSO activa. Planificar con climatología estacional.';
   } else {
+    const intensityStr = conditionsIntensity ? ` ${conditionsIntensity}` : '';
     const episodeNote = episodeConfirmed
-      ? 'Episodio confirmado (criterio CPC: 5 trimestres consecutivos).'
-      : 'Condiciones presentes; aún no cumple el criterio formal de episodio del CPC (5 trimestres consecutivos).';
+      ? 'Episodio formal confirmado por el CPC.'
+      : 'El CPC lo declarará episodio formal cuando complete cinco trimestres consecutivos sobre el umbral.';
     const impactNote = phase === 'El Niño'
-      ? 'Condición cálida — mayor probabilidad histórica de precipitación sobre lo normal en NEA y Pampa Húmeda.'
-      : 'Condición fría — mayor probabilidad histórica de déficit hídrico en NEA y Pampa Húmeda.';
-    descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}${trajectoryNote}`;
+      ? 'Mayor probabilidad histórica de precipitación sobre lo normal en NEA y Pampa Húmeda.'
+      : 'Mayor probabilidad histórica de déficit hídrico en NEA y Pampa Húmeda.';
+    descEl.textContent = `${phase}${intensityStr}, en curso desde ${onsetMonth}. ONI ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}${trajectoryNote}`;
   }
 
   /* Scale bar marker */
@@ -1947,13 +2005,64 @@ async function main() {
       .then(r => r.ok ? r.json() : null)
       .then(sstData => {
         if (sstData) {
-          const shown = buildSSTMap('sst-map-plotly', sstData);
-          if (shown) {
+          const animData = buildSSTMap('sst-map-plotly', sstData);
+          if (animData) {
             document.getElementById('sst-map-section').style.display = '';
             const lastTime = sstData.times[sstData.times.length - 1];
             const d = new Date(lastTime + 'T12:00:00Z');
             document.getElementById('sst-map-meta').textContent =
               `${MONTHS_ES[d.getUTCMonth()]} ${d.getUTCFullYear()} · OISST v2.1 · Base ${sstData.baseline}`;
+
+            /* ── SST map animation controller ── */
+            const playBtn = document.getElementById('sst-play-btn');
+            const monthLabel = document.getElementById('sst-month-label');
+            let sstPlaying = false, sstTimer = null, sstFrame = 0;
+            let sstAutoPlayed = false;
+
+            function sstStepTo(idx) {
+              sstFrame = idx;
+              Plotly.restyle('sst-map-plotly', { z: [animData.grids[idx]] }, [0]);
+              if (monthLabel) monthLabel.textContent = animData.dateLabels[idx];
+              /* Sync Plotly slider visual */
+              try { Plotly.relayout('sst-map-plotly', { 'sliders[0].active': idx }); } catch(e) {}
+            }
+
+            function sstPlay() {
+              if (sstPlaying) return;
+              sstPlaying = true;
+              playBtn.textContent = '⏸ Pausar';
+              sstFrame = 0;
+              sstStepTo(0);
+              sstTimer = setInterval(() => {
+                sstFrame++;
+                if (sstFrame >= animData.nTimes) { sstStop(); return; }
+                sstStepTo(sstFrame);
+              }, 700);
+            }
+
+            function sstStop() {
+              sstPlaying = false;
+              playBtn.textContent = '▶ Reproducir';
+              if (sstTimer) { clearInterval(sstTimer); sstTimer = null; }
+            }
+
+            playBtn.addEventListener('click', () => {
+              if (sstPlaying) sstStop(); else sstPlay();
+            });
+
+            /* Autoplay on viewport entry (one loop, then stop) */
+            if (!prefersReducedMotion) {
+              const sstObs = new IntersectionObserver((entries) => {
+                entries.forEach(e => {
+                  if (e.isIntersecting && !sstAutoPlayed) {
+                    sstAutoPlayed = true;
+                    sstPlay();
+                    sstObs.unobserve(e.target);
+                  }
+                });
+              }, { threshold: 0.3 });
+              sstObs.observe(document.getElementById('sst-map-section'));
+            }
           } else {
             document.getElementById('sst-map-section').style.display = '';
             document.getElementById('sst-map-plotly').style.display = 'none';
@@ -2034,7 +2143,7 @@ async function main() {
     riskList.appendChild(row);
   }
 
-  document.getElementById('risk-summary').textContent = riskSummaryText(phase, episodeConfirmed);
+  document.getElementById('risk-summary').textContent = riskSummaryText(phase);
 
   /* ── Accordions ── */
   const accordionEl = document.getElementById('accordions');
@@ -2120,21 +2229,6 @@ async function main() {
   }
   window.addEventListener('scroll', updateNav, { passive: true });
   updateNav();
-
-  /* ── ENSO alert banner ── */
-  const oniAbs = Math.abs(cur.oni_value);
-  if (oniAbs >= 1.0 && phase !== 'Neutral') {
-    const alertBanner = document.createElement('div');
-    alertBanner.id = 'enso-alert';
-    const intensityLabel = conditionsIntensity ? ` ${conditionsIntensity}` : '';
-    const alertType = `${phase}${intensityLabel}`;
-    const episodeStr = episodeConfirmed ? 'Episodio confirmado' : 'En desarrollo — episodio formal aún no confirmado';
-    const alertBg = phase === 'El Niño' ? '#FDF0EF' : '#EEF2FB';
-    const alertColor = phase === 'El Niño' ? '#C2382A' : '#2A55D0';
-    alertBanner.style.cssText = `background:${alertBg};color:${alertColor};padding:10px 20px;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;border-bottom:1px solid ${alertColor}20;`;
-    alertBanner.textContent = `${alertType} (ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)}). ${episodeStr}.`;
-    document.getElementById('main').insertBefore(alertBanner, document.getElementById('main').firstChild);
-  }
 
   /* ── CSV export button ── */
   const csvBtn = document.createElement('button');
@@ -2222,7 +2316,6 @@ async function main() {
   if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${phaseLabel}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
 
   /* ── Scroll reveal (IntersectionObserver) ── */
-  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!prefersReducedMotion) {
     const revealObs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
@@ -2232,16 +2325,6 @@ async function main() {
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
   }
 
-  /* ── ENSO alert banner ── */
-  if (phase !== 'Neutral') {
-    const alertBanner = document.createElement('div');
-    alertBanner.id = 'enso-alert-banner';
-    const isNino = phase === 'El Niño';
-    alertBanner.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font-body);font-size:14px;font-weight:600;color:#fff;background:${isNino ? 'linear-gradient(90deg,#7f1d1d,#b91c1c,#ea580c)' : 'linear-gradient(90deg,#0c1445,#1e3a8a,#2563eb)'};box-shadow:0 2px 12px rgba(0,0,0,0.2);transform:translateY(-100%);animation:slideDown .4s ease .8s forwards;`;
-    alertBanner.innerHTML = `<span>${isNino ? '\u{1F525}' : '\u{2744}\uFE0F'} ${heroPhaseText} activo \u2014 ONI ${oniSign}${cur.oni_value.toFixed(2)} \u00B0C</span><button onclick="this.parentElement.style.display='none';document.body.style.paddingTop='0'" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;opacity:0.8;">\u00D7</button>`;
-    document.body.prepend(alertBanner);
-    document.body.style.paddingTop = '40px';
-  }
 }
 
 /* Wait for DOM + deferred scripts (Plotly) before running */
