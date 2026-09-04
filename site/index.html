@@ -23,7 +23,7 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html{scroll-behavior:smooth;}
-    body{font-family:'Libre Franklin',sans-serif;color:#14161A;background:#FFFFFF;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.55;}
+    body{font-family:'Libre Franklin',sans-serif;color:#14161A;background:#f8f9fc;background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,0.03) 1px,transparent 0);background-size:24px 24px;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.55;}
     a{color:#1E3FAE;text-decoration:none;}
     a:hover{color:#C2382A;text-decoration:underline;}
     a:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
@@ -40,60 +40,83 @@
     @keyframes omDraw{to{stroke-dashoffset:0}}
     @keyframes omIn{from{opacity:0}}
     @keyframes omMarker{from{left:50%;transform:translateX(-50%)}}
+    @keyframes omPulse{0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 currentColor}50%{transform:scale(1.4);opacity:.75;box-shadow:0 0 10px 3px currentColor}}
+    @keyframes slideDown{to{transform:translateY(0);}}
+    @keyframes omWave{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
     @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
     .page{max-width:1180px;margin:0 auto;padding:0 32px 80px;}
 
+    /* Command center (masthead + hero + indicators) */
+    .command-center{background:var(--gradient-neutral);margin:0 -32px;padding:0 32px 60px;position:relative;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);animation:omFadeUp .55s ease backwards;}
+    .command-center.phase-nino{background:var(--gradient-nino);}
+    .command-center.phase-nina{background:var(--gradient-nina);}
+    .command-center.phase-neutral{background:var(--gradient-neutral);}
+    .command-center::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:50px;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%23f8f9fc'/%3E%3C/svg%3E") no-repeat bottom center;background-size:cover;z-index:1;}
+    .command-center *{color:rgba(255,255,255,0.92);}
+
     /* Masthead */
-    .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;padding:36px 0 20px;border-bottom:3px solid #14161A;animation:omFadeUp .55s ease backwards;}
-    .masthead-kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#79818E;margin-bottom:10px;}
-    .masthead h1{font-size:48px;font-weight:800;letter-spacing:-0.02em;line-height:1.02;}
+    .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;padding:36px 0 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
+    .masthead-kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:10px;}
+    .masthead h1{font-size:48px;font-weight:800;letter-spacing:-0.02em;line-height:1.02;color:#FFFFFF;}
     .masthead-meta{text-align:right;padding-bottom:4px;}
-    .masthead-meta .label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;}
-    .masthead-meta .date{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#14161A;}
-    .masthead-meta .desc{font-size:12px;color:#79818E;margin-top:6px;}
+    .masthead-meta .label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,0.6);}
+    .masthead-meta .date{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#FFFFFF;}
+    .masthead-meta .desc{font-size:12px;color:rgba(255,255,255,0.55);margin-top:6px;}
 
     /* Hero */
-    .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:48px;align-items:center;padding:40px 0 36px;border-bottom:1px solid #E4E7EC;animation:omFadeUp .55s ease .08s backwards;}
+    .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:48px;align-items:center;padding:40px 0 36px;border-bottom:none;}
     .hero-status{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-    .status-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
-    .hero-phase{font-size:40px;font-weight:800;letter-spacing:-0.015em;line-height:1.1;}
-    .hero-desc{margin:14px 0 0;font-size:15px;line-height:1.55;color:#555C68;max-width:44ch;}
-    .hero-threshold{font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:14px;}
-    .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;margin-top:22px;}
+    .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;animation:omPulse 2s ease-in-out infinite;box-shadow:0 0 6px currentColor;}
+    @media(prefers-reduced-motion:reduce){.status-dot{animation:none;}}
+    .hero-phase{font-size:40px;font-weight:800;letter-spacing:-0.015em;line-height:1.1;color:#FFFFFF;}
+    .hero-desc{margin:14px 0 0;font-size:15px;line-height:1.55;color:rgba(255,255,255,0.75);max-width:44ch;}
+    .hero-threshold{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);margin-top:14px;}
+    .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px;margin-top:22px;}
     .region-pills{display:flex;flex-wrap:wrap;gap:8px;}
-    .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .25s,color .25s,border-color .25s;}
-    .region-pill.active{background:#14161A;color:#FFFFFF;border-color:#14161A;}
-    .advice-panel{margin-top:12px;font-size:14px;line-height:1.55;color:#14161A;background:#F4F6F9;border-radius:4px;padding:12px 16px;max-width:54ch;}
+    .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);cursor:pointer;transition:all var(--ease-smooth);}
+    .region-pill:hover{background:rgba(255,255,255,0.2);transform:scale(1.02);}
+    .region-pill.active{background:rgba(255,255,255,0.92);color:#14161A;border-color:rgba(255,255,255,0.92);font-weight:600;}
+    .advice-panel{margin-top:12px;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:12px 16px;max-width:54ch;}
 
     /* Scale bar */
     .scale-wrap{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;}
-    .scale-bar{position:relative;height:22px;border-radius:4px;background:linear-gradient(to right,#2A55D0 0%,#8098E0 32%,#EDEFF3 42%,#EDEFF3 58%,#DC8E80 68%,#C2382A 100%);}
-    .scale-marker{position:absolute;top:-7px;bottom:-7px;width:3px;background:#14161A;transform:translateX(-50%);animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;}
-    .scale-badge{position:absolute;top:-36px;transform:translateX(-50%);background:#14161A;color:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:3px 8px;border-radius:4px;white-space:nowrap;animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;}
-    .scale-axis{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:8px;}
+    .scale-bar{position:relative;height:22px;border-radius:6px;background:linear-gradient(to right,#60a5fa 0%,#93c5fd 25%,rgba(255,255,255,0.4) 42%,rgba(255,255,255,0.4) 58%,#fca5a1 75%,#ef4444 100%);box-shadow:inset 0 1px 3px rgba(0,0,0,0.2);}
+    .scale-marker{position:absolute;top:-7px;bottom:-7px;width:3px;background:#FFFFFF;border-radius:2px;transform:translateX(-50%);animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;box-shadow:0 0 8px rgba(255,255,255,0.6);}
+    .scale-badge{position:absolute;top:-36px;transform:translateX(-50%);background:rgba(255,255,255,0.95);color:#14161A;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;padding:3px 8px;border-radius:6px;white-space:nowrap;animation:omMarker .9s cubic-bezier(.22,.7,.3,1) .3s backwards;box-shadow:0 2px 8px rgba(0,0,0,0.15);}
+    .scale-axis{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);margin-top:8px;}
 
     /* Indicators */
-    .indicators{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:#E4E7EC;border-bottom:1px solid #E4E7EC;animation:omFadeUp .55s ease .16s backwards;}
-    .indicator-cell{background:#FFFFFF;padding:26px 26px 22px 0;}
-    .indicator-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;}
+    .indicators{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;background:transparent;border-bottom:none;padding:8px 0 0;position:relative;z-index:2;}
+    .indicator-cell{background:var(--glass-bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);padding:22px 24px;border-radius:var(--radius-card);border:1px solid var(--glass-border);border-left:3px solid rgba(255,255,255,0.6);transition:transform var(--ease-smooth),box-shadow var(--ease-smooth);}
+    .indicator-cell:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,0.15);}
+    @supports not (backdrop-filter:blur(12px)){.indicator-cell{background:rgba(255,255,255,0.88);}}
+    .indicator-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);}
     .indicator-value-row{display:flex;align-items:baseline;gap:8px;margin-top:8px;}
-    .indicator-value{font-family:'IBM Plex Mono',monospace;font-size:50px;font-weight:600;letter-spacing:-0.03em;}
-    .indicator-unit{font-family:'IBM Plex Mono',monospace;font-size:15px;color:#79818E;}
-    .indicator-note{font-size:13px;color:#555C68;margin-top:6px;line-height:1.45;}
+    .indicator-value{font-family:'IBM Plex Mono',monospace;font-size:50px;font-weight:600;letter-spacing:-0.03em;color:#FFFFFF;}
+    .indicator-unit{font-family:'IBM Plex Mono',monospace;font-size:15px;color:rgba(255,255,255,0.6);}
+    .indicator-note{font-size:13px;color:rgba(255,255,255,0.7);margin-top:6px;line-height:1.45;}
 
     /* Sections */
-    .section{padding:44px 0 40px;border-bottom:1px solid #E4E7EC;}
+    .section{padding:32px;margin-bottom:24px;background:#FFFFFF;border-radius:var(--radius-card);box-shadow:var(--shadow-card-up);border:1px solid rgba(0,0,0,0.04);}
     .section-header{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:6px;}
-    .section h2{font-size:27px;font-weight:800;letter-spacing:-0.01em;}
+    .section h2{font-size:27px;font-weight:800;letter-spacing:-0.01em;position:relative;display:inline-block;}
+    .section h2::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:3px;background:var(--color-nino);border-radius:2px;transition:width 0.3s ease;}
+    .section h2:hover::after{width:100%;}
     .section-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;}
     .section-desc{margin:0 0 20px;font-size:14px;color:#555C68;}
     .section-desc-wide{max-width:76ch;}
 
+    /* Scroll reveal */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease;}
+    .reveal.visible{opacity:1;transform:translateY(0);}
+    @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+
     /* Range switcher */
     .range-switcher{display:flex;gap:6px;margin-bottom:16px;}
-    .range-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;min-height:36px;border-radius:3px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:background .2s,color .2s,border-color .2s;}
-    .range-btn.active{background:#14161A;color:#FFFFFF;border-color:#14161A;}
+    .range-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;min-height:36px;border-radius:6px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:all var(--ease-smooth);}
+    .range-btn:hover{transform:scale(1.02);box-shadow:0 2px 8px rgba(0,0,0,0.08);}
+    .range-btn.active{background:#14161A;color:#FFFFFF;border-color:#14161A;box-shadow:0 2px 12px rgba(20,22,26,0.2);}
 
     /* ONI chart layout */
     .chart-layout{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-end;}
@@ -104,8 +127,8 @@
 
     /* Forecast */
     .forecast-links{display:flex;flex-direction:column;}
-    .forecast-link-row{display:grid;grid-template-columns:180px 110px 1fr auto;gap:20px;align-items:center;padding:16px 0;border-top:1px solid #E4E7EC;color:#14161A;text-decoration:none;}
-    .forecast-link-row:hover{background:#F4F6F9;}
+    .forecast-link-row{display:grid;grid-template-columns:180px 110px 1fr auto;gap:20px;align-items:center;padding:16px 12px;border-top:1px solid #E4E7EC;color:#14161A;text-decoration:none;border-radius:8px;border-left:3px solid transparent;transition:all var(--ease-smooth);}
+    .forecast-link-row:hover{background:#F4F6F9;border-left-color:var(--color-nino);transform:translateX(4px);}
     .forecast-source-name{font-weight:700;font-size:15px;}
     .forecast-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid currentColor;border-radius:3px;padding:3px 7px;justify-self:start;}
     .forecast-desc{font-size:13px;color:#555C68;}
@@ -119,7 +142,7 @@
     .risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:40px;align-items:start;}
     .risk-list-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;padding-bottom:10px;}
     .risk-summary{margin:18px 0 0;font-size:13px;color:#555C68;line-height:1.55;}
-    .risk-map-iframe{width:100%;aspect-ratio:720/560;border:1px solid #E4E7EC;border-radius:4px;background:#FFFFFF;display:block;}
+    .risk-map-iframe{width:100%;aspect-ratio:720/560;border:1px solid var(--color-border);border-radius:var(--radius-card);background:#FFFFFF;display:block;box-shadow:var(--shadow-card-up);}
 
     /* Accordions */
     .accordions-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;margin-top:36px;}
@@ -134,27 +157,29 @@
     .acc-detail{margin:0 0 16px;padding:0 4px;font-size:13.5px;color:#555C68;line-height:1.6;max-width:80ch;}
 
     /* Footer */
-    .footer{margin-top:40px;padding-top:20px;border-top:3px solid #14161A;animation:omFadeUp .55s ease .5s backwards;display:flex;justify-content:space-between;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;flex-wrap:wrap;}
+    .footer{margin-top:24px;padding:28px 32px;background:#FFFFFF;border-radius:var(--radius-card);box-shadow:var(--shadow-card-up);border:1px solid rgba(0,0,0,0.04);display:flex;justify-content:space-between;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;flex-wrap:wrap;}
 
     /* Sticky nav */
-    .sticky-nav{position:sticky;top:0;z-index:50;background:var(--nav-bg,#FFFFFF);border-bottom:1px solid #E4E7EC;display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+    .sticky-nav{position:sticky;top:0;z-index:50;background:rgba(248,249,252,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.06);display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;}
     .sticky-nav-inner{display:flex;gap:0;max-width:1180px;margin:0 auto;padding:0 16px;}
-    .sticky-nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;color:#79818E;text-decoration:none;padding:10px 14px;white-space:nowrap;border-bottom:2px solid transparent;transition:color .2s,border-color .2s;}
+    .sticky-nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;color:#79818E;text-decoration:none;padding:10px 14px;white-space:nowrap;border-bottom:2px solid transparent;transition:all var(--ease-smooth);}
     .sticky-nav a:hover{color:#14161A;text-decoration:none;}
     .sticky-nav a.active{color:#14161A;border-bottom-color:#C2382A;font-weight:600;}
     @media(max-width:600px){.sticky-nav a{padding:10px 10px;font-size:10px;}}
 
     /* Loading state */
-    #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;z-index:100;}
+    #loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#f8f9fc;font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;z-index:100;}
 
     @media(max-width:600px){
       .page{padding:0 16px 60px;}
+      .command-center{margin:0 -16px;padding:0 16px 50px;}
       .masthead h1{font-size:32px;}
       .masthead{gap:12px;padding:24px 0 16px;}
       .hero-phase{font-size:28px;}
       .hero{gap:28px;padding:28px 0 24px;}
       .indicator-value{font-size:36px;}
       .indicators{grid-template-columns:1fr;}
+      .section{padding:20px;margin-bottom:16px;}
       .section h2{font-size:22px;}
       .chart-layout{flex-direction:column;gap:20px;}
       .chart-inset-wrap{flex:1 1 auto;min-width:0;}
@@ -163,40 +188,41 @@
       .forecast-tag{margin-top:4px;}
       .forecast-desc{display:none;}
       .risk-grid{grid-template-columns:1fr;gap:24px;}
-      .risk-map-iframe{aspect-ratio:1/1;}
+      .risk-map-iframe{aspect-ratio:1/1;border-radius:var(--radius-card);}
     }
-    /* Dark mode */
-    html.dark{--nav-bg:#1a1a2e;}
-    html.dark body{background:#0f0f1a;color:#e0e0e8;}
+    /* Dark mode — premium */
+    html.dark{--nav-bg:#0a0e27;}
+    html.dark body{background:var(--dark-bg);background-image:radial-gradient(circle at 1px 1px,rgba(100,120,200,0.05) 1px,transparent 0);background-size:24px 24px;color:#e0e0e8;}
     html.dark .page{color:#e0e0e8;}
     html.dark a{color:#6d9fff;}
     html.dark a:hover{color:#ff8a7a;}
-    html.dark .masthead{border-bottom-color:#333;}
-    html.dark .masthead-kicker,html.dark .indicator-label,html.dark .section-meta,html.dark .inset-label,html.dark .region-selector-label,html.dark .heatmap-legend span,html.dark .risk-list-label,html.dark .accordions-label,html.dark .acc-bar-note,html.dark .masthead-meta .label,html.dark .masthead-meta .desc{color:#888;}
-    html.dark .masthead-meta .date,html.dark .masthead h1{color:#e0e0e8;}
+    html.dark .command-center{border-color:transparent;}
+    html.dark .command-center.phase-nino{background:var(--dark-gradient-nino);}
+    html.dark .command-center.phase-nina{background:var(--dark-gradient-nina);}
+    html.dark .command-center.phase-neutral{background:var(--dark-gradient-neutral);}
+    html.dark .command-center::after{background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%230a0e27'/%3E%3C/svg%3E");}
+    html.dark .indicator-cell{background:var(--dark-glass-bg);border-color:var(--dark-glass-border);}
+    html.dark .indicator-value{color:#e0e0e8;text-shadow:0 0 20px currentColor;}
+    html.dark .section{background:var(--dark-card-bg);border-color:var(--dark-glass-border);box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+    html.dark .section h2{color:#e0e0e8;}
+    html.dark .section h2::after{background:#6d9fff;}
+    html.dark .section-meta,html.dark .inset-label,html.dark .heatmap-legend span,html.dark .risk-list-label,html.dark .accordions-label,html.dark .acc-bar-note{color:#888;}
     html.dark .hero-desc,html.dark .section-desc,html.dark .indicator-note,html.dark .acc-prov,html.dark .forecast-desc,html.dark .risk-summary,html.dark .acc-detail{color:#aab;}
-    html.dark .hero{border-bottom-color:#2a2a3a;}
-    html.dark .indicators{background:#2a2a3a;border-bottom-color:#2a2a3a;}
-    html.dark .indicator-cell{background:#0f0f1a;}
-    html.dark .section{border-bottom-color:#2a2a3a;}
-    html.dark .indicator-value{color:#e0e0e8;}
-    html.dark .region-pill{border-color:#444;color:#aab;}
-    html.dark .region-pill.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
-    html.dark .range-btn{border-color:#444;color:#aab;}
+    html.dark .range-btn{border-color:rgba(100,120,200,0.25);color:#aab;}
+    html.dark .range-btn:hover{box-shadow:0 2px 8px rgba(100,120,200,0.15);}
     html.dark .range-btn.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
-    html.dark .advice-panel{background:#1a1a2e;color:#e0e0e8;}
-    html.dark .forecast-link-row{color:#e0e0e8;border-top-color:#2a2a3a;}
-    html.dark .forecast-link-row:hover{background:#1a1a2e;}
-    html.dark #inset-svg{background:#1a1a2e;border-color:#2a2a3a;}
-    html.dark details.region-accordion{border-top-color:#2a2a3a;}
-    html.dark .footer{border-top-color:#333;color:#666;}
-    html.dark .sticky-nav{background:#1a1a2e;border-bottom-color:#2a2a3a;}
+    html.dark .forecast-link-row{color:#e0e0e8;border-top-color:rgba(100,120,200,0.15);}
+    html.dark .forecast-link-row:hover{background:rgba(20,24,50,0.5);border-left-color:#6d9fff;}
+    html.dark #inset-svg{background:rgba(20,24,50,0.5);border-color:rgba(100,120,200,0.15);}
+    html.dark details.region-accordion{border-top-color:rgba(100,120,200,0.15);}
+    html.dark .footer{background:var(--dark-card-bg);border-color:var(--dark-glass-border);box-shadow:0 4px 20px rgba(0,0,0,0.3);color:#666;}
+    html.dark .sticky-nav{background:rgba(10,14,39,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:rgba(100,120,200,0.15);}
     html.dark .sticky-nav a{color:#888;}
-    html.dark .sticky-nav a.active{color:#e0e0e8;}
-    html.dark #loading{background:#0f0f1a;}
-    html.dark #dark-mode-toggle{background:#1a1a2e;border-color:#444;color:#e0e0e8;}
-    html.dark .risk-map-iframe{border-color:#2a2a3a;}
-    html.dark #season-select{background:#1a1a2e;color:#e0e0e8;border-color:#444;}
+    html.dark .sticky-nav a.active{color:#e0e0e8;text-shadow:0 0 8px currentColor;}
+    html.dark #loading{background:var(--dark-bg);}
+    html.dark #dark-mode-toggle{background:rgba(20,24,50,0.6);border-color:rgba(100,120,200,0.25);color:#e0e0e8;}
+    html.dark .risk-map-iframe{border-color:rgba(100,120,200,0.15);}
+    html.dark #season-select{background:rgba(20,24,50,0.6);color:#e0e0e8;border-color:rgba(100,120,200,0.25);}
   </style>
 </head>
 <body>
@@ -222,6 +248,9 @@
 <div id="loading" role="status" aria-live="polite">Cargando datos…</div>
 
 <main class="page" id="main" style="display:none">
+
+  <!-- Command Center: Masthead + Hero + Indicators -->
+  <div class="command-center" id="command-center">
 
   <!-- 1. Masthead -->
   <header class="masthead">
@@ -253,9 +282,9 @@
     </div>
     <div>
       <div class="scale-wrap">
-        <span style="color:#2A55D0;font-weight:600;">La Niña</span>
-        <span style="color:#79818E;">Neutral</span>
-        <span style="color:#C2382A;font-weight:600;">El Niño</span>
+        <span style="font-weight:600;opacity:0.9;">La Niña</span>
+        <span style="opacity:0.7;">Neutral</span>
+        <span style="font-weight:600;opacity:0.9;">El Niño</span>
       </div>
       <div class="scale-bar">
         <div class="scale-marker" id="scale-marker"></div>
@@ -268,7 +297,7 @@
   </section>
 
   <!-- 3. Indicator strip -->
-  <section class="indicators" style="animation:omFadeUp .55s ease .16s backwards;">
+  <section class="indicators">
     <div class="indicator-cell">
       <div class="indicator-label">ONI · <span id="oni-season">—</span></div>
       <div class="indicator-value-row">
@@ -295,8 +324,12 @@
     </div>
   </section>
 
+  </div><!-- /command-center -->
+
+  <noscript><style>.reveal{opacity:1;transform:none;}</style></noscript>
+
   <!-- 4. ONI historical chart -->
-  <section class="section" id="oni-section" style="animation:omFadeUp .55s ease .24s backwards;">
+  <section class="section reveal" id="oni-section">
     <div class="section-header">
       <h2>Serie histórica ONI</h2>
       <div class="section-meta" id="chart-range-label"></div>
@@ -319,7 +352,7 @@
   </section>
 
   <!-- 4b. SOI Tracker — early warning indicator -->
-  <section class="section" id="soi-section" style="animation:omFadeUp .55s ease .27s backwards;">
+  <section class="section reveal" id="soi-section">
     <div class="section-header">
       <h2>SOI Tracker</h2>
       <div class="section-meta" id="soi-range-label"></div>
@@ -338,7 +371,7 @@
   </section>
 
   <!-- 4c. Subsurface temperature cross-section -->
-  <section class="section" id="subsurface-section" style="display:none;animation:omFadeUp .55s ease .29s backwards;">
+  <section class="section reveal" id="subsurface-section" style="display:none;">
     <div class="section-header">
       <h2>Temperatura subsuperficial ecuatorial</h2>
       <div class="section-meta" id="subsurface-meta"></div>
@@ -348,7 +381,7 @@
   </section>
 
   <!-- 4d. Interactive Pacific SST anomaly map -->
-  <section class="section" id="sst-map-section" style="display:none;animation:omFadeUp .55s ease .295s backwards;">
+  <section class="section reveal" id="sst-map-section" style="display:none;">
     <div class="section-header">
       <h2>Mapa de anomalía TSM — Pacífico Ecuatorial</h2>
       <div class="section-meta" id="sst-map-meta"></div>
@@ -362,7 +395,7 @@
   </section>
 
   <!-- 5. Forecast section — IRI plume + links -->
-  <section class="section" id="forecast-section" style="animation:omFadeUp .55s ease .3s backwards;">
+  <section class="section reveal" id="forecast-section">
     <div class="section-header">
       <h2>Pronóstico ENSO</h2>
       <div class="section-meta" id="forecast-meta"></div>
@@ -414,7 +447,7 @@
   </section>
 
   <!-- 5b. Historical ENSO event comparison -->
-  <section class="section" id="compare-section" style="animation:omFadeUp .55s ease .33s backwards;">
+  <section class="section reveal" id="compare-section">
     <div class="section-header">
       <h2>Comparación histórica</h2>
       <div class="section-meta">Eventos seleccionados vs episodio actual</div>
@@ -428,7 +461,7 @@
   </section>
 
   <!-- 6. Correlation heatmap -->
-  <section class="section" id="corr-section" style="animation:omFadeUp .55s ease .36s backwards;">
+  <section class="section reveal" id="corr-section">
     <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
     <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal es más fuerte en primavera-verano en el centro y noreste (NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***). En los Andes centrales la señal es invernal (Cuyo JJA r=+0.25**), asociada a la precipitación nival.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
@@ -457,7 +490,7 @@
   </section>
 
   <!-- 7. Regional risk -->
-  <section class="section" id="risk-section" style="border-top:1px solid #E4E7EC;margin-top:36px;animation:omFadeUp .55s ease .42s backwards;">
+  <section class="section reveal" id="risk-section" style="border-top:1px solid var(--color-border);margin-top:36px;">
     <h2 style="margin-bottom:6px;">Implicaciones de riesgo por región</h2>
     <p class="section-desc section-desc-wide">Señal forward-looking = pronóstico ENSO × correlación histórica regional. Las correlaciones son promedios regionales sobre lo observado 1981–2025 — no usar para decisiones a escala provincial sin validación local. Nota: Pampa Húmeda y Patagonia comparten ~10% de su dominio espacial; sus correlaciones no son independientes entre sí. NEA y Pampa Húmeda no comparten dominio espacial, pero la autocorrelación espacial de la precipitación implica que tampoco son estrictamente independientes.</p>
     <div class="risk-grid">
@@ -473,7 +506,7 @@
   </section>
 
   <!-- 8. Data sources panel -->
-  <section class="section" id="data-sources-section" style="animation:omFadeUp .55s ease .48s backwards;">
+  <section class="section reveal" id="data-sources-section">
     <details>
       <summary style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:20px;font-weight:800;letter-spacing:-0.01em;">
         <span>Fuentes de datos y metodología</span>
@@ -635,6 +668,23 @@ function countUp(el, target, fmt, duration = 1100) {
   requestAnimationFrame(tick);
 }
 
+/* ── Chart theme helper ── */
+function chartColors() {
+  const dark = document.documentElement.classList.contains('dark');
+  return {
+    paper: 'rgba(0,0,0,0)',
+    plot: 'rgba(0,0,0,0)',
+    grid: dark ? 'rgba(255,255,255,0.08)' : '#E4E7EC',
+    axis: dark ? 'rgba(255,255,255,0.15)' : '#C7CCD6',
+    tick: dark ? 'rgba(255,255,255,0.55)' : '#79818E',
+    text: dark ? 'rgba(255,255,255,0.7)' : '#555C68',
+    hover: dark ? 'rgba(30,30,60,0.95)' : '#14161A',
+    hoverFont: '#FFFFFF',
+    zero: dark ? 'rgba(255,255,255,0.2)' : '#C7CCD6',
+    annotBg: dark ? 'rgba(15,18,38,0.9)' : '#FFFFFF',
+  };
+}
+
 /* ── ONI Plotly chart ── */
 function buildOniPlotly(divId, series, episodes, desde) {
   const filtered = series.filter(pt => {
@@ -698,16 +748,17 @@ function buildOniPlotly(divId, series, episodes, desde) {
     });
   }
 
+  const cc = chartColors();
   const layout = {
     margin: { t:10, r:20, b:40, l:50 },
     xaxis: {
-      type:'date', gridcolor:'#E4E7EC', linecolor:'#C7CCD6',
-      tickfont: { family:'IBM Plex Mono', size:11, color:'#79818E' },
+      type:'date', gridcolor:cc.grid, linecolor:cc.axis,
+      tickfont: { family:'IBM Plex Mono', size:11, color:cc.tick },
     },
     yaxis: {
-      title: { text:'ONI (°C)', font:{ family:'IBM Plex Mono', size:11, color:'#79818E' } },
-      gridcolor:'#E4E7EC', linecolor:'#C7CCD6', zeroline:true, zerolinecolor:'#C7CCD6',
-      tickfont: { family:'IBM Plex Mono', size:11, color:'#79818E' },
+      title: { text:'ONI (°C)', font:{ family:'IBM Plex Mono', size:11, color:cc.tick } },
+      gridcolor:cc.grid, linecolor:cc.axis, zeroline:true, zerolinecolor:cc.zero,
+      tickfont: { family:'IBM Plex Mono', size:11, color:cc.tick },
     },
     shapes: [
       /* +0.5 threshold */
@@ -724,9 +775,9 @@ function buildOniPlotly(divId, series, episodes, desde) {
       { xref:'paper', yref:'y', x:1.02, y:-0.5, text:'−0.5', showarrow:false,
         font:{ family:'IBM Plex Mono', size:10, color:'#2A55D0' }, xanchor:'left' },
     ],
-    paper_bgcolor:'#FFFFFF', plot_bgcolor:'#FFFFFF',
+    paper_bgcolor:cc.paper, plot_bgcolor:cc.plot,
     hovermode:'x unified',
-    hoverlabel: { bgcolor:'#14161A', font:{ family:'IBM Plex Mono', size:12, color:'#FFFFFF' } },
+    hoverlabel: { bgcolor:cc.hover, font:{ family:'IBM Plex Mono', size:12, color:cc.hoverFont } },
   };
 
   const config = {
@@ -979,21 +1030,22 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
       showarrow: true, arrowhead: 0, arrowcolor: currentColor,
       ax: 35, ay: -25,
       font: { family: 'IBM Plex Mono', size: 12, color: currentColor, weight: 700 },
-      bgcolor: '#FFFFFF', bordercolor: currentColor, borderwidth: 1, borderpad: 3,
+      bgcolor: chartColors().annotBg, bordercolor: currentColor, borderwidth: 1, borderpad: 3,
     });
   }
 
+  const cc = chartColors();
   const layout = {
     margin: { t: 10, r: 20, b: 50, l: 50 },
     xaxis: {
-      title: { text: 'Meses desde inicio del episodio', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
-      gridcolor: '#E4E7EC',
+      title: { text: 'Meses desde inicio del episodio', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      gridcolor: cc.grid,
     },
     yaxis: {
-      title: { text: 'ONI (°C)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
-      gridcolor: '#E4E7EC', zeroline: true, zerolinecolor: '#C7CCD6',
+      title: { text: 'ONI (°C)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      gridcolor: cc.grid, zeroline: true, zerolinecolor: cc.zero,
     },
     shapes: [
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0.5, y1: 0.5,
@@ -1002,10 +1054,10 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
         line: { color: '#2A55D0', width: 1, dash: 'dot' } },
     ],
     annotations,
-    legend: { font: { family: 'IBM Plex Mono', size: 11, color: '#555C68' }, x: 0, y: 1 },
-    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    legend: { font: { family: 'IBM Plex Mono', size: 11, color: cc.text }, x: 0, y: 1 },
+    paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
     hovermode: 'closest',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
   };
 
   const config = {
@@ -1099,21 +1151,22 @@ function buildSubsurfaceHeatmap(divId, subsurface) {
     connectgaps: true,
   };
 
+  const cc = chartColors();
   const layout = {
     margin: { t: 10, r: 80, b: 50, l: 60 },
     xaxis: {
-      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
       side: 'bottom',
     },
     yaxis: {
-      title: { text: 'Profundidad (m)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: 'Profundidad (m)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
       autorange: 'reversed',
     },
-    paper_bgcolor: '#FFFFFF',
-    plot_bgcolor: '#FFFFFF',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    paper_bgcolor: cc.paper,
+    plot_bgcolor: cc.plot,
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
   };
 
   const config = {
@@ -1191,23 +1244,24 @@ function buildSSTMap(divId, sstData) {
     font: { family: 'IBM Plex Mono', size: 10, color: '#14161A' },
   }));
 
+  const cc = chartColors();
   const layout = {
     margin: { t: 30, r: 80, b: 60, l: 60 },
-    title: { text: dateLabels[lastIdx], font: { family: 'IBM Plex Mono', size: 13, color: '#555C68' }, y: 0.98 },
+    title: { text: dateLabels[lastIdx], font: { family: 'IBM Plex Mono', size: 13, color: cc.text }, y: 0.98 },
     xaxis: {
-      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
       tickvals: lonTickVals, ticktext: lonTickText,
-      tickfont: { family: 'IBM Plex Mono', size: 10, color: '#79818E' },
+      tickfont: { family: 'IBM Plex Mono', size: 10, color: cc.tick },
     },
     yaxis: {
-      title: { text: 'Latitud', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: 'Latitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
       ticksuffix: '°',
     },
     shapes: shapes,
     annotations: annotations,
-    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
     /* Time slider */
     sliders: [{
       active: lastIdx,
@@ -1267,25 +1321,26 @@ function buildIRIProbsChart(divId, probabilities) {
     },
   ];
 
+  const cc = chartColors();
   const layout = {
     barmode: 'stack',
     margin: { t: 30, r: 20, b: 50, l: 50 },
     yaxis: {
-      title: { text: 'Probabilidad (%)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
+      title: { text: 'Probabilidad (%)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
       range: [0, 105],
       ticksuffix: '%',
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
     },
     xaxis: {
-      title: { text: 'Trimestre', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: 'Trimestre', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
     },
     legend: {
       orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08,
-      font: { family: 'IBM Plex Mono', size: 11 },
+      font: { family: 'IBM Plex Mono', size: 11, color: cc.text },
     },
-    paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
     shapes: [{
       type: 'line', x0: -0.5, x1: trimesters.length - 0.5,
       y0: 33.3, y1: 33.3, yref: 'y',
@@ -1333,21 +1388,22 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
     customdata: rValues.map(r => r * r * 100),
   };
 
+  const cc = chartColors();
   const layout = {
     margin: { t: 20, r: 20, b: 50, l: 50 },
-    xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: '#14161A' } },
+    xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick } },
     yaxis: {
-      title: { text: 'Pearson r', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
-      zeroline: true, zerolinecolor: '#C7CCD6', gridcolor: '#E4E7EC',
+      title: { text: 'Pearson r', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      zeroline: true, zerolinecolor: cc.zero, gridcolor: cc.grid,
       range: [-0.1, 0.3],
     },
     shapes: [
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0, y1: 0,
-        line: { color: '#C7CCD6', width: 1 } },
+        line: { color: cc.zero, width: 1 } },
     ],
-    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
   };
 
   Plotly.newPlot(divId, [trace], layout, {
@@ -1374,22 +1430,23 @@ function buildSoiPlotly(divId, soiSeries) {
       hovertemplate: '<b>%{x|%b %Y}</b><br>SOI: %{y:+.1f}<extra></extra>',
     },
     { x: dates, y: ma3, type: 'scatter', mode: 'lines', name: 'Media móvil 3m',
-      line: { color: '#14161A', width: 2 },
+      line: { color: document.documentElement.classList.contains('dark') ? '#e2e8f0' : '#14161A', width: 2 },
       hovertemplate: '<b>%{x|%b %Y}</b><br>MA(3): %{y:+.1f}<extra></extra>',
       connectgaps: true,
     },
   ];
 
+  const cc = chartColors();
   const layout = {
     margin: { t: 10, r: 20, b: 40, l: 50 },
     xaxis: {
-      type: 'date', gridcolor: '#E4E7EC',
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      type: 'date', gridcolor: cc.grid,
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
     },
     yaxis: {
-      title: { text: 'SOI', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
-      gridcolor: '#E4E7EC', zeroline: true, zerolinecolor: '#C7CCD6',
+      title: { text: 'SOI', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      gridcolor: cc.grid, zeroline: true, zerolinecolor: cc.zero,
     },
     shapes: [
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -1, y1: -1,
@@ -1403,10 +1460,10 @@ function buildSoiPlotly(divId, soiSeries) {
       { xref: 'paper', yref: 'y', x: 1.02, y: 1, text: 'La Niña', showarrow: false,
         font: { family: 'IBM Plex Mono', size: 10, color: '#2A55D0' }, xanchor: 'left' },
     ],
-    legend: { font: { family: 'IBM Plex Mono', size: 11, color: '#555C68' }, x: 0, y: 1 },
-    paper_bgcolor: '#FFFFFF', plot_bgcolor: '#FFFFFF',
+    legend: { font: { family: 'IBM Plex Mono', size: 11, color: cc.text }, x: 0, y: 1 },
+    paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
     hovermode: 'x unified',
-    hoverlabel: { bgcolor: '#14161A', font: { family: 'IBM Plex Mono', size: 12, color: '#FFFFFF' } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
     bargap: 0.15,
   };
 
@@ -1620,7 +1677,9 @@ async function main() {
   document.getElementById('updated-date').textContent = `${dd} · ${mm} · ${yyyy}`;
 
   /* ── Hero ── */
-  document.getElementById('status-dot').style.background = pColor;
+  const dotEl = document.getElementById('status-dot');
+  dotEl.style.background = pColor;
+  dotEl.style.color = pColor;
   const statusLabel = document.getElementById('status-label');
   if (phase === 'Neutral') {
     statusLabel.textContent = 'Condiciones Neutrales · NOAA CPC';
@@ -1628,7 +1687,7 @@ async function main() {
     const episodeTag = episodeConfirmed ? '' : ' en desarrollo';
     statusLabel.textContent = (phase === 'El Niño' ? `El Niño${episodeTag}` : `La Niña${episodeTag}`) + ' · NOAA CPC';
   }
-  statusLabel.style.color = pColor;
+  /* statusLabel inherits white from command-center */
 
   /* Trajectory: compare Niño 3.4 (more recent) against ONI (~2 month lag) */
   const sstDelta = cur.nino34_value - cur.oni_value;
@@ -1668,6 +1727,15 @@ async function main() {
   document.getElementById('scale-marker').style.left = markerPct;
   document.getElementById('scale-badge').style.left = markerPct;
   document.getElementById('scale-badge').textContent = oniSign + cur.oni_value.toFixed(2);
+
+  /* ── Command center phase class ── */
+  const ccEl = document.getElementById('command-center');
+  if (ccEl) {
+    ccEl.classList.remove('phase-nino', 'phase-nina', 'phase-neutral');
+    if (phase === 'El Niño') ccEl.classList.add('phase-nino');
+    else if (phase === 'La Niña') ccEl.classList.add('phase-nina');
+    else ccEl.classList.add('phase-neutral');
+  }
 
   /* ── Region selector ── */
   const regionOrder = data.region_order || ['NEA', 'Pampa Húmeda', 'NOA', 'Cuyo', 'Patagonia'];
@@ -1709,11 +1777,9 @@ async function main() {
   document.getElementById('oni-season').textContent = cur.oni_season;
   const oniEl = document.getElementById('oni-val');
   countUp(oniEl, cur.oni_value, v => (v >= 0 ? '+' : '') + v.toFixed(2));
-  oniEl.style.color = pColor;
 
   const sstEl = document.getElementById('sst-val');
   countUp(sstEl, cur.nino34_value, v => (v >= 0 ? '+' : '') + v.toFixed(2));
-  sstEl.style.color = pColor;
 
   const soiEl = document.getElementById('soi-val');
   countUp(soiEl, cur.soi_value, v => (v >= 0 ? '+' : '') + v.toFixed(1));
@@ -2085,10 +2151,40 @@ async function main() {
   dmBtn.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:60;width:44px;height:44px;border-radius:50%;border:1px solid #C7CCD6;background:#FFFFFF;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);transition:background .2s,border-color .2s;";
   document.body.appendChild(dmBtn);
 
+  const plotlyDivs = ['oni-plotly','soi-plotly','subsurface-plotly','sst-map-plotly',
+    'iri-probs-plotly','compare-plotly','corr-bar-chart'];
+
   function applyDarkMode(dark) {
     document.documentElement.classList.toggle('dark', dark);
     dmBtn.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
+    dmBtn.style.background = dark ? '#1e1e2e' : '#FFFFFF';
+    dmBtn.style.borderColor = dark ? 'rgba(100,120,200,0.3)' : '#C7CCD6';
     localStorage.setItem('enso-dark-mode', dark ? '1' : '0');
+
+    /* Relayout all Plotly charts for dark/light */
+    const cc = chartColors();
+    const relayoutObj = {
+      paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
+      'xaxis.gridcolor': cc.grid, 'xaxis.linecolor': cc.axis,
+      'xaxis.tickfont.color': cc.tick, 'xaxis.title.font.color': cc.tick,
+      'yaxis.gridcolor': cc.grid, 'yaxis.linecolor': cc.axis,
+      'yaxis.tickfont.color': cc.tick, 'yaxis.title.font.color': cc.tick,
+      'yaxis.zerolinecolor': cc.zero,
+      'legend.font.color': cc.text,
+      'hoverlabel.bgcolor': cc.hover, 'hoverlabel.font.color': cc.hoverFont,
+    };
+    for (const id of plotlyDivs) {
+      const el = document.getElementById(id);
+      if (el && el.data) {
+        try { Plotly.relayout(el, relayoutObj); } catch(e) { /* chart not yet rendered */ }
+      }
+    }
+
+    /* Notify map iframe */
+    const mapIframe = document.querySelector('.risk-map-iframe');
+    if (mapIframe && mapIframe.contentWindow) {
+      try { mapIframe.contentWindow.postMessage({ dark }, '*'); } catch(e) {}
+    }
   }
   const prefersDark = localStorage.getItem('enso-dark-mode') === '1';
   applyDarkMode(prefersDark);
@@ -2111,6 +2207,28 @@ async function main() {
   if (twTitle) twTitle.content = document.title;
   const ogDesc = document.querySelector('meta[property="og:description"]');
   if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${phaseLabel}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
+
+  /* ── Scroll reveal (IntersectionObserver) ── */
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReducedMotion) {
+    const revealObs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
+    }, { threshold: 0.08 });
+    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
+  }
+
+  /* ── ENSO alert banner ── */
+  if (phase !== 'Neutral') {
+    const alertBanner = document.createElement('div');
+    alertBanner.id = 'enso-alert-banner';
+    const isNino = phase === 'El Niño';
+    alertBanner.style.cssText = `position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;font-family:var(--font-body);font-size:14px;font-weight:600;color:#fff;background:${isNino ? 'linear-gradient(90deg,#7f1d1d,#b91c1c,#ea580c)' : 'linear-gradient(90deg,#0c1445,#1e3a8a,#2563eb)'};box-shadow:0 2px 12px rgba(0,0,0,0.2);transform:translateY(-100%);animation:slideDown .4s ease .8s forwards;`;
+    alertBanner.innerHTML = `<span>${isNino ? '\u{1F525}' : '\u{2744}\uFE0F'} ${heroPhaseText} activo \u2014 ONI ${oniSign}${cur.oni_value.toFixed(2)} \u00B0C</span><button onclick="this.parentElement.style.display='none';document.body.style.paddingTop='0'" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;opacity:0.8;">\u00D7</button>`;
+    document.body.prepend(alertBanner);
+    document.body.style.paddingTop = '40px';
+  }
 }
 
 /* Wait for DOM + deferred scripts (Plotly) before running */

@@ -6,7 +6,8 @@
   <title>Mapa ENSO Argentina</title>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    html, body { margin: 0; background: #FFFFFF; overflow: hidden; }
+    html, body { margin: 0; background: #FFFFFF; overflow: hidden; transition: background .3s; }
+    html.dark, html.dark body { background: #0a0e27; }
   </style>
 </head>
 <body>
@@ -201,6 +202,13 @@ function col(r, sig) {
     .attr('fill', '#A7AEBB')
     .text('Geometría: Natural Earth');
 })();
+
+/* Dark mode via postMessage from parent */
+window.addEventListener('message', (e) => {
+  if (e.data && typeof e.data.dark === 'boolean') {
+    document.documentElement.classList.toggle('dark', e.data.dark);
+  }
+});
 </script>
 </body>
 </html>
