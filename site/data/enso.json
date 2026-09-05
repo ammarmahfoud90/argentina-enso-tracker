@@ -3,8 +3,8 @@
     "oni_value": 1.8,
     "oni_season": "JJA",
     "oni_date": "2026-07-15",
-    "nino34_value": 1.44,
-    "nino34_date": "2026-06-15",
+    "nino34_value": 2.6,
+    "nino34_date": "2026-08-15",
     "soi_value": -1.1,
     "soi_date": "2026-08-15",
     "conditions": "El Niño",
@@ -11121,7 +11121,145 @@
       }
     ]
   },
-  "subsurface": null,
+  "subsurface": {
+    "longitudes": [
+      165.0,
+      180.0,
+      190.0,
+      205.0,
+      220.0,
+      235.0,
+      250.0,
+      265.0
+    ],
+    "lon_labels": [
+      "165°E",
+      "180°",
+      "170°W",
+      "155°W",
+      "140°W",
+      "125°W",
+      "110°W",
+      "95°W"
+    ],
+    "depths": [
+      1.0,
+      25.0,
+      50.0,
+      80.0,
+      100.0,
+      125.0,
+      150.0,
+      200.0,
+      250.0,
+      300.0
+    ],
+    "temperatures": [
+      [
+        29.71,
+        30.0,
+        30.2,
+        29.91,
+        28.97,
+        28.23,
+        27.47,
+        26.9
+      ],
+      [
+        29.62,
+        29.85,
+        30.04,
+        29.79,
+        28.9,
+        28.18,
+        27.39,
+        26.73
+      ],
+      [
+        29.62,
+        29.78,
+        29.94,
+        29.71,
+        28.81,
+        28.08,
+        26.96,
+        25.72
+      ],
+      [
+        29.42,
+        29.53,
+        29.76,
+        29.45,
+        28.48,
+        27.4,
+        25.05,
+        23.0
+      ],
+      [
+        28.27,
+        29.17,
+        29.45,
+        29.21,
+        27.99,
+        26.07,
+        22.29,
+        19.78
+      ],
+      [
+        25.22,
+        26.37,
+        27.85,
+        27.49,
+        25.72,
+        21.99,
+        18.48,
+        16.88
+      ],
+      [
+        22.57,
+        21.68,
+        22.04,
+        21.69,
+        20.84,
+        17.2,
+        15.87,
+        15.38
+      ],
+      [
+        16.91,
+        16.82,
+        16.8,
+        15.32,
+        14.89,
+        13.99,
+        13.7,
+        null
+      ],
+      [
+        13.43,
+        13.75,
+        13.5,
+        13.08,
+        13.1,
+        12.95,
+        12.99,
+        13.56
+      ],
+      [
+        12.44,
+        12.18,
+        12.14,
+        12.37,
+        12.52,
+        12.45,
+        12.6,
+        13.08
+      ]
+    ],
+    "period_start": "2026-06-16",
+    "period_end": "2026-08-16",
+    "source": "TAO/TRITON ERDDAP (pmelTaoMonT)"
+  },
   "iri_forecast": {
     "probabilities": [
       {
@@ -11187,9 +11325,9 @@
   },
   "data_sources": {
     "oni": "CPC",
-    "nino34": "CPC",
+    "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-05T11:35:27Z",
+  "last_updated": "2026-09-05T15:03:08Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
