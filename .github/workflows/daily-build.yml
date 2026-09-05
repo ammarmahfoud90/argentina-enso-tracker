@@ -54,7 +54,8 @@ jobs:
               d = json.load(f)
 
           required = ['current', 'oni_series', 'correlations', 'episodes',
-                      'seasonal_correlations', 'iri_forecast', 'last_updated']
+                      'seasonal_correlations', 'frequency_stats',
+                      'frequency_methodology', 'iri_forecast', 'last_updated']
           missing = [k for k in required if k not in d]
           if missing:
               print(f'FAIL: missing keys: {missing}', file=sys.stderr)
@@ -68,6 +69,10 @@ jobs:
           assert len(d['correlations']) > 0, 'no correlation rows'
           sc = d['seasonal_correlations']
           assert all(k in sc for k in ['SON','DEF','MAM','JJA']), 'missing seasonal keys'
+          fs = d['frequency_stats']
+          assert all(k in fs for k in ['SON','DEF','MAM','JJA']), 'missing frequency_stats seasons'
+          fm = d['frequency_methodology']
+          assert 'families' in fm, 'frequency_methodology missing families'
 
           # --- IRI forecast: warn but allow stale cache up to 45 days ---
           iri = d['iri_forecast']

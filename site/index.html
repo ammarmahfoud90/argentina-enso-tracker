@@ -76,6 +76,11 @@
     @media(prefers-reduced-motion:reduce){.status-dot{animation:none;}}
     .hero-phase{font-size:40px;font-weight:800;letter-spacing:-0.015em;line-height:1.1;color:#FFFFFF;}
     .hero-desc{margin:14px 0 0;font-size:15px;line-height:1.55;color:rgba(255,255,255,0.75);max-width:44ch;}
+    .executive-summary{margin:18px 0 0;max-width:54ch;}
+    .summary-line{font-size:15px;line-height:1.55;color:rgba(255,255,255,0.85);margin:0 0 6px;}
+    .summary-highlight{font-weight:600;color:rgba(255,255,255,0.95);}
+    .summary-caveat{font-size:13px;color:rgba(255,255,255,0.5);margin:0;}
+    .summary-trajectory{margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.5);max-width:54ch;}
     .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px;margin-top:22px;}
     .region-pills{display:flex;flex-wrap:wrap;gap:8px;}
     .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);cursor:pointer;transition:all var(--ease-smooth);}
@@ -137,6 +142,12 @@
     .section-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;}
     .section-desc{margin:0 0 20px;font-size:14px;color:#555C68;}
     .section-desc-wide{max-width:76ch;}
+
+    /* Glossary tooltips */
+    .glossary{border-bottom:1px dotted #79818E;cursor:help;position:relative;}
+    .glossary::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#14161A;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;padding:6px 10px;border-radius:4px;white-space:normal;width:max-content;max-width:280px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,0.25);}
+    .glossary:hover::after,.glossary:focus::after{opacity:1;}
+    @media(max-width:600px){.glossary::after{left:0;transform:none;}}
 
     /* Scroll reveal */
     .reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease;}
@@ -298,6 +309,13 @@
     html.dark #loading{background:var(--dark-bg);color:#888;}
     html.dark #dark-mode-toggle{background:rgba(20,24,50,0.6);border-color:rgba(100,120,200,0.25);color:#e0e0e8;}
     html.dark #season-select{background:rgba(20,24,50,0.6) !important;color:#e0e0e8 !important;border-color:rgba(100,120,200,0.25) !important;}
+    html.dark .glossary{border-bottom-color:#aab;}
+    html.dark .glossary::after{background:#1a1e3a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
+    html.dark #enso-timeline text{fill:#888;}
+    html.dark #enso-timeline line{stroke:rgba(100,120,200,0.25);}
+    html.dark #enso-timeline rect[fill="#EDEFF3"]{fill:rgba(20,24,50,0.5);}
+    html.dark #enso-timeline rect[fill="#14161A"]{fill:#e0e0e8;}
+    html.dark #enso-timeline text[fill="#14161A"]{fill:#e0e0e8;}
     html.dark .section p[id$="-note"]{color:#aab !important;}
     html.dark .section [style*="color:#14161A"]{color:#e0e0e8 !important;}
     html.dark .section [style*="color:#555C68"]{color:#aab !important;}
@@ -316,16 +334,17 @@
 <!-- Sticky navigation -->
 <nav class="sticky-nav" id="sticky-nav" aria-label="Navegación por sección">
   <div class="sticky-nav-inner">
-    <a href="#estado-section">Estado ENSO</a>
-    <a href="#oni-section">ONI</a>
-    <a href="#soi-section">SOI</a>
-    <a href="#subsurface-section">Subsuperficial</a>
-    <a href="#sst-map-section">Mapa TSM</a>
-    <a href="#forecast-section">Pronóstico</a>
-    <a href="#compare-section">Comparación</a>
-    <a href="#corr-section">Correlaciones</a>
-    <a href="#risk-section">Riesgo regional</a>
-    <a href="#data-sources-section">Fuentes</a>
+    <a href="#estado-section">¿Qué pasa ahora?</a>
+    <a href="#oni-section">¿Cómo evolucionó?</a>
+    <a href="#soi-section">¿Hay alerta temprana?</a>
+    <a href="#subsurface-section">¿Qué pasa en el océano?</a>
+    <a href="#sst-map-section">¿Dónde está el calor?</a>
+    <a href="#forecast-section">¿Qué se espera?</a>
+    <a href="#compare-section">¿Se parece a otro episodio?</a>
+    <a href="#timeline-section">Línea de tiempo</a>
+    <a href="#corr-section">¿Cómo afecta la lluvia?</a>
+    <a href="#risk-section">¿Qué significa para mi región?</a>
+    <a href="#data-sources-section">Fuentes y método</a>
   </div>
 </nav>
 
@@ -345,7 +364,7 @@
     <div class="masthead-meta">
       <div class="label">Actualizado <span id="freshness-dot" title="Estado de los datos" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;"></span></div>
       <div class="date" id="updated-date">—</div>
-      <div class="desc">Estado ENSO y correlación histórica con<br>precipitación en 5 regiones argentinas</div>
+      <div class="desc">Estado <span class="glossary" data-tip="El Niño–Oscilación del Sur: ciclo climático del Pacífico ecuatorial que influye en la precipitación de Argentina." style="color:inherit;">ENSO</span> y su relación histórica con<br>la lluvia en 5 regiones argentinas</div>
     </div>
   </header>
 
@@ -357,7 +376,12 @@
         <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;" id="status-label"></span>
       </div>
       <div class="hero-phase" id="hero-phase"></div>
-      <p class="hero-desc" id="hero-desc"></p>
+      <div class="executive-summary" id="executive-summary">
+        <p id="summary-line1" class="summary-line"></p>
+        <p id="summary-line2" class="summary-line summary-highlight"></p>
+        <p id="summary-line3" class="summary-line summary-caveat"></p>
+      </div>
+      <p class="summary-trajectory" id="hero-desc"></p>
       <div class="region-selector-label">Qué significa para mi región</div>
       <div class="region-pills" id="region-pills"></div>
       <div class="advice-panel" id="advice-panel"></div>
@@ -395,10 +419,10 @@
   <!-- 4. ONI historical chart -->
   <section class="section reveal" id="oni-section">
     <div class="section-header">
-      <h2>Serie histórica ONI</h2>
+      <h2>¿Cómo evolucionó el ENSO?</h2>
       <div class="section-meta" id="chart-range-label"></div>
     </div>
-    <p class="section-desc">Oceanic Niño Index — media móvil de 3 meses de la anomalía SST en Niño 3.4 (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020). Fuente: NOAA CPC.</p>
+    <p class="section-desc">El <span class="glossary" data-tip="Oceanic Niño Index: media móvil de 3 meses de la anomalía de temperatura en la región Niño 3.4 del Pacífico. Fuente: NOAA CPC.">ONI</span> resume cuánto se desvía la temperatura del Pacífico central respecto de lo normal. Es el índice principal para determinar si estamos en <span class="glossary" data-tip="Calentamiento anómalo del Pacífico ecuatorial. Se declara cuando el ONI supera +0.5 °C durante 5 trimestres consecutivos.">El Niño</span>, <span class="glossary" data-tip="Enfriamiento anómalo del Pacífico ecuatorial. Se declara cuando el ONI baja de −0.5 °C durante 5 trimestres consecutivos.">La Niña</span> o fase Neutral. Fuente: NOAA CPC.</p>
     <div class="range-switcher">
       <button class="range-btn active" data-desde="1970">1970–hoy</button>
       <button class="range-btn" data-desde="2000">2000–hoy</button>
@@ -418,10 +442,10 @@
   <!-- 4b. SOI Tracker — early warning indicator -->
   <section class="section reveal" id="soi-section">
     <div class="section-header">
-      <h2>SOI Tracker</h2>
+      <h2>¿Hay señales tempranas de cambio?</h2>
       <div class="section-meta" id="soi-range-label"></div>
     </div>
-    <p class="section-desc section-desc-wide">Índice de Oscilación Sur (SOI) — diferencia estandarizada de presión atmosférica entre Tahiti y Darwin. El SOI lidera al ONI por 2–4 semanas, funcionando como indicador temprano de transiciones ENSO. Valores negativos sostenidos → condiciones El Niño. Valores positivos sostenidos → La Niña.</p>
+    <p class="section-desc section-desc-wide">La presión atmosférica entre Tahití y Darwin anticipa los cambios en la temperatura del Pacífico. El <span class="glossary" data-tip="Southern Oscillation Index: diferencia estandarizada de presión entre Tahití y Darwin. Indicador atmosférico complementario del ONI.">SOI</span> suele adelantarse 2 a 4 semanas al ONI. Valores negativos sostenidos acompañan El Niño; valores positivos sostenidos, La Niña.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:16px;">
       <div>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;">SOI actual</span>
@@ -437,20 +461,20 @@
   <!-- 4c. Subsurface temperature cross-section -->
   <section class="section reveal" id="subsurface-section" style="display:none;">
     <div class="section-header">
-      <h2>Temperatura subsuperficial ecuatorial</h2>
+      <h2>¿Qué pasa debajo de la superficie?</h2>
       <div class="section-meta" id="subsurface-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide">Perfil de <strong>temperatura absoluta</strong> (°C, no anomalía) a lo largo del Pacífico ecuatorial (0° latitud, 165°E–95°W) hasta 300 m de profundidad. La inclinación de la termoclina revela el estado ENSO: durante El Niño, aguas cálidas se acumulan en el Pacífico oriental; durante La Niña, la termoclina se eleva en el este. Fuente: boyas TAO/TRITON (NOAA PMEL) — observaciones in situ, no reanálisis.</p>
+    <p class="section-desc section-desc-wide">El calor acumulado bajo la superficie anticipa lo que pasará en la temperatura de superficie meses después. Durante El Niño, el agua cálida se desplaza hacia el Pacífico oriental. Durante La Niña, asciende agua fría en esa zona. Este perfil muestra temperatura absoluta (°C) hasta 300 m de profundidad, medida por <span class="glossary" data-tip="Red de boyas ancladas en el Pacífico ecuatorial que miden temperatura, corrientes y vientos en tiempo casi real.">boyas TAO/TRITON</span> (NOAA PMEL).</p>
     <div id="subsurface-plotly" style="width:100%;height:400px;" role="img" aria-label="Heatmap de temperatura subsuperficial del Pacífico ecuatorial, profundidad vs longitud"></div>
   </section>
 
   <!-- 4d. Interactive Pacific SST anomaly map -->
   <section class="section reveal" id="sst-map-section" style="display:none;">
     <div class="section-header">
-      <h2>Mapa de anomalía TSM — Pacífico Ecuatorial</h2>
+      <h2>¿Dónde se concentra el calor?</h2>
       <div class="section-meta" id="sst-map-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide">Anomalía de Temperatura Superficial del Mar (TSM) — Pacífico Ecuatorial (Base 1991–2020). Fuente: NOAA OISST v2.1 (resolución ~2°). Los recuadros indican las regiones Niño de monitoreo.</p>
+    <p class="section-desc section-desc-wide">La <span class="glossary" data-tip="Temperatura Superficial del Mar. El mapa muestra la anomalía: diferencia respecto del promedio 1991–2020.">TSM</span> en el Pacífico ecuatorial, comparada con el promedio 1991–2020. Los recuadros marcan las regiones Niño que se usan para monitoreo. Fuente: NOAA OISST v2.1.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:12px;">
       <button class="range-btn" id="sst-play-btn" aria-label="Reproducir animación del mapa">▶ Reproducir</button>
       <div id="sst-month-label" style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;letter-spacing:-0.01em;"></div>
@@ -465,10 +489,10 @@
   <!-- 5. Forecast section — IRI plume + links -->
   <section class="section reveal" id="forecast-section">
     <div class="section-header">
-      <h2>Pronóstico ENSO</h2>
+      <h2>¿Qué se espera para los próximos meses?</h2>
       <div class="section-meta" id="forecast-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide">Probabilidades por fase para los próximos trimestres (IRI/CCSR) y predicciones individuales de modelos climáticos (pluma ENSO). Fuente: International Research Institute, Columbia University.</p>
+    <p class="section-desc section-desc-wide">Cada mes, múltiples modelos climáticos proyectan hacia dónde se moverá el ENSO. El gráfico muestra las chances asignadas a cada fase (El Niño, Neutral, La Niña) por trimestre. Fuente: IRI/CCSR, Columbia University.</p>
 
     <!-- IRI forecast visualizations -->
     <div id="iri-forecast-panel" style="display:none;">
@@ -477,19 +501,19 @@
         <button class="range-btn" id="forecast-btn-plume">Pluma de modelos</button>
       </div>
       <div id="iri-probs-view">
-        <div id="iri-probs-plotly" style="width:100%;height:360px;" role="img" aria-label="Probabilidades ENSO por trimestre — El Niño, Neutral, La Niña"></div>
+        <div id="iri-probs-plotly" style="width:100%;height:360px;" role="img" aria-label="Probabilidades ENSO por trimestre: El Niño, Neutral, La Niña"></div>
       </div>
       <div id="iri-plume-view" style="display:none;">
         <div style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
           <img id="iri-plume-img" alt="IRI ENSO model predictions plume" style="max-width:100%;height:auto;display:inline-block;"
             onerror="this.style.display='none';this.nextElementSibling.style.display='';">
-          <p id="iri-plume-fallback" style="display:none;font-size:13px;color:#79818E;padding:40px 0;">Pluma de modelos no disponible. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver en IRI →</a></p>
+          <p id="iri-plume-fallback" style="display:none;font-size:13px;color:#79818E;padding:40px 0;">Pluma de modelos no disponible. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
         </div>
       </div>
       <div id="iri-no-data" style="display:none;background:#F4F6F9;border-radius:4px;padding:40px 20px;text-align:center;">
-        <p style="font-size:14px;color:#79818E;">Pronóstico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver directamente en IRI →</a></p>
+        <p style="font-size:14px;color:#79818E;">Pronóstico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
       </div>
-      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR — Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Ver en IRI →</a></p>
+      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;">Fuente: IRI/CCSR, Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
     </div>
 
     <div class="forecast-links" style="margin-top:20px;">
@@ -497,19 +521,19 @@
         <span class="forecast-source-name">NOAA ENSO Advisory</span>
         <span class="forecast-tag" style="color:#1E3FAE;">Mensual</span>
         <span class="forecast-desc">Diagnóstico y pronóstico oficial del NOAA Climate Prediction Center.</span>
-        <span class="forecast-cta">Ver →</span>
+        <span class="forecast-cta">Consultar</span>
       </a>
       <a class="forecast-link-row" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">
         <span class="forecast-source-name">IRI ENSO Forecast</span>
         <span class="forecast-tag" style="color:#C2382A;">Probabilístico</span>
-        <span class="forecast-desc">Pronóstico completo del IRI — probabilidades, pluma de modelos, análisis.</span>
-        <span class="forecast-cta">Ver →</span>
+        <span class="forecast-desc">Pronóstico completo del IRI: probabilidades, pluma de modelos, análisis.</span>
+        <span class="forecast-cta">Consultar</span>
       </a>
       <a class="forecast-link-row" href="https://origin.cpc.ncep.noaa.gov/products/analysis_monitoring/ensostuff/ONI_v5.php" target="_blank" rel="noopener">
-        <span class="forecast-source-name">NOAA ONI — series</span>
+        <span class="forecast-source-name">NOAA ONI: serie histórica</span>
         <span class="forecast-tag" style="color:#79818E;">Histórico</span>
         <span class="forecast-desc">Serie histórica del Oceanic Niño Index y valores proyectados.</span>
-        <span class="forecast-cta">Ver →</span>
+        <span class="forecast-cta">Consultar</span>
       </a>
     </div>
   </section>
@@ -517,10 +541,10 @@
   <!-- 5b. Historical ENSO event comparison -->
   <section class="section reveal" id="compare-section">
     <div class="section-header">
-      <h2>Comparación histórica</h2>
-      <div class="section-meta">Eventos seleccionados vs episodio actual</div>
+      <h2>¿Se parece a algún episodio anterior?</h2>
+      <div class="section-meta">Episodio actual vs históricos</div>
     </div>
-    <p class="section-desc section-desc-wide">Superposición del ONI actual sobre trayectorias de episodios ENSO históricos notables. Cada curva se alinea al mes de inicio del episodio. El episodio actual se ancla al primer mes que cruza el umbral ONI ±0.5; los históricos usan meses de inicio seleccionados editorialmente (la mayoría coinciden con el cruce, pero el desfase puede ser de 1–2 meses).</p>
+    <p class="section-desc section-desc-wide">El episodio actual superpuesto a las trayectorias de episodios ENSO históricos notables. Cada curva arranca desde el mes en que el ONI cruzó el umbral ±0.5. Permite comparar ritmo e intensidad, no predecir que se repetirá un patrón.</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <button class="range-btn active" data-compare="nino" id="compare-btn-nino">El Niño históricos</button>
       <button class="range-btn" data-compare="nina" id="compare-btn-nina">La Niña históricos</button>
@@ -528,10 +552,17 @@
     <div id="compare-plotly" style="width:100%;height:360px;" role="img" aria-label="Comparación del episodio ENSO actual con eventos históricos"></div>
   </section>
 
+  <!-- 5c. ENSO episode timeline -->
+  <section class="section reveal" id="timeline-section">
+    <h2 style="margin-bottom:6px;">¿Cuándo ocurrieron El Niño y La Niña?</h2>
+    <p class="section-desc section-desc-wide">Cada barra es un episodio ENSO formal (criterio NOAA CPC: ONI sobre el umbral ±0.5 durante al menos 5 trimestres consecutivos). El ancho refleja la duración.</p>
+    <div id="enso-timeline" style="width:100%;overflow-x:auto;"></div>
+  </section>
+
   <!-- 6. Correlation heatmap -->
   <section class="section reveal" id="corr-section">
-    <h2 style="margin-bottom:6px;">Correlación ENSO × Precipitación</h2>
-    <p class="section-desc section-desc-wide">Correlación de Pearson entre ONI (ERSSTv5, períodos base centrados de 30 años; actual: 1991–2020) y precipitación mensual regional (CHIRPS v2.0, 1981–2025). <strong>Lag</strong> = meses que el ONI lidera la precipitación. Significancia: * p&lt;0.05 · ** p&lt;0.01 · *** p&lt;0.001. <strong>Nota:</strong> correlaciones anuales agregadas — la señal es más fuerte en primavera-verano en el centro y noreste (NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***). En los Andes centrales la señal es invernal (Cuyo JJA r=+0.25**), asociada a la precipitación nival.</p>
+    <h2 style="margin-bottom:6px;">¿Cómo se relaciona el ENSO con la lluvia?</h2>
+    <p class="section-desc section-desc-wide">Qué tan asociados están el estado del Pacífico (<span class="glossary" data-tip="Oceanic Niño Index: media móvil de 3 meses de la anomalía de temperatura en la región Niño 3.4.">ONI</span>) y la precipitación en cada región argentina, usando datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones, resolución 0.05°.">CHIRPS</span> v2.0 (1981–2025). Las barras más altas indican regiones donde el ENSO tiene más influencia sobre la lluvia. Use el selector de estación para ver cuándo es más fuerte la señal.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;">Estación:</label>
       <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -551,19 +582,22 @@
     <div class="heatmap-legend">
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">correlación</span>
       <div class="heatmap-legend-bar"></div>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 → +0.25</span>
+      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 a +0.25</span>
     </div>
-    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;">Lectura: el NEA y la Pampa Húmeda muestran la señal ENSO más fuerte — años El Niño tienden a ser más lluviosos, con el ONI liderando 0–2 meses. En el agregado anual, la señal es débil o nula en NOA, Cuyo y Patagonia. Estacionalmente, Cuyo muestra señal significativa en invierno (JJA, r=+0.25**) y Patagonia en primavera (SON, r=+0.18*).</p>
-    <p style="margin:10px 0 0;font-size:12px;color:#79818E;max-width:76ch;line-height:1.55;font-family:'IBM Plex Mono',monospace;background:#F0F4FF;padding:8px 12px;border-radius:3px;border-left:3px solid #1E3FAE;">Use el selector "Estación" para comparar la señal ENSO por trimestre. La teleconexión es más fuerte en primavera-verano en el centro y noreste (NEA SON +0.32***, Pampa Húmeda DEF +0.39***). En los Andes centrales la señal es invernal (Cuyo JJA +0.25**), asociada a la precipitación nival. En el sur, el SAM compite con el ENSO como forzante dominante.</p>
+    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;">NEA y Pampa Húmeda tienen la señal más clara: años El Niño tienden a ser más lluviosos, con 0 a 2 meses de retardo. NOA, Cuyo y Patagonia no muestran señal en el agregado anual, pero sí por estación. Cuyo en invierno y Patagonia en primavera responden al ENSO cuando se miran por separado.</p>
+    <details style="margin:10px 0 0;max-width:76ch;">
+      <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>
+      <p style="margin:8px 0 0;font-size:12px;color:#79818E;line-height:1.55;font-family:'IBM Plex Mono',monospace;">Correlación de Pearson ONI vs precipitación regional (CHIRPS v2.0, 1981–2025). Significancia: * p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001 con <span class="glossary" data-tip="Grados de libertad efectivos. Corrige la autocorrelación del ONI para no sobreestimar la significancia.">n<sub>eff</sub></span> (Bretherton 1999). Señal estacional: NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***, Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*. El <span class="glossary" data-tip="Modo Anular del Sur. Patrón de circulación atmosférica que influye en la precipitación del sur de Sudamérica, independiente del ENSO.">SAM</span> compite con el ENSO como forzante dominante en el sur.</p>
+    </details>
   </section>
 
   <!-- 7. Regional risk -->
   <section class="section reveal" id="risk-section" style="border-top:1px solid var(--color-border);margin-top:36px;">
-    <h2 style="margin-bottom:6px;">Señal histórica por región</h2>
-    <p class="section-desc section-desc-wide">Señal histórica = estado ENSO actual × correlación regional 1981–2025. Los colores reflejan la dirección esperada de precipitación según la fase actual. Las correlaciones son promedios regionales — no usar para decisiones a escala provincial sin validación local.</p>
+    <h2 style="margin-bottom:6px;">¿Qué significa para cada región?</h2>
+    <p class="section-desc section-desc-wide">Los colores reflejan la dirección de lluvia que se observó históricamente durante fases similares a la actual (1981–2025). Son promedios regionales basados en datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones.">CHIRPS</span>. No reemplazan un pronóstico ni aplican a escala provincial sin validación local.</p>
     <div class="risk-grid">
       <div class="risk-map-container" id="risk-map-container">
-        <svg id="argentina-map" role="img" aria-label="Mapa de señal ENSO por región — Argentina"></svg>
+        <svg id="argentina-map" role="img" aria-label="Mapa de señal ENSO por región en Argentina"></svg>
         <div class="map-tooltip" id="map-tooltip"></div>
       </div>
       <div>
@@ -602,7 +636,7 @@
             <tr style="border-bottom:1px solid #E4E7EC;">
               <td style="padding:8px 12px;font-weight:600;">Niño 3.4 SST</td>
               <td style="padding:8px 12px;">ERDDAP ncepNinoSSTwk (OISST v2, composites semanales promediados a mensual). Difiere del Niño 3.4 mensual de ERSSTv5 que usan NOAA CPC e IRI.</td>
-              <td style="padding:8px 12px;">Semanal → mensual</td>
+              <td style="padding:8px 12px;">Semanal, promediada a mensual</td>
               <td style="padding:8px 12px;">~1 semana</td>
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
@@ -631,12 +665,12 @@
             </tr>
           </tbody>
         </table>
-        <p><strong>Metodología de correlación:</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0–3 meses. Significancia estadística: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~lat −40 a −37, lon −65 a −62, ~10% de celdas) y entre NOA y Cuyo (~lat −29 a −28, lon −69 a −65, ~9%). NEA y Pampa Húmeda no comparten dominio espacial; sus correlaciones son independientes en ese sentido. Al ser regiones limítrofes, la autocorrelación espacial de la precipitación implica que tampoco son estrictamente independientes. Correlaciones calculadas sobre todos los meses del año (agregación anual) y desagregadas por trimestre (SON, DEF, MAM, JJA). Use el selector "Estación" en la sección de correlaciones para comparar.</p>
-        <p style="margin-top:8px;"><strong>Base del ONI:</strong> El ONI se calcula como media móvil de 3 meses de la anomalía SST en la región Niño 3.4, usando ERSSTv5 con períodos base de 30 años centrados y actualizados cada 5 años (NOAA CPC). Para los valores recientes, la base vigente es 1991–2020. Otros proveedores (IRI) pueden usar bases distintas o productos diferentes (e.g., ERSSTv5 mensual vs. OISST semanal), lo que produce valores ligeramente distintos para la misma temporada.</p>
-        <p style="margin-top:8px;"><strong>Limitación CHIRPS en precipitación nival:</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación de la fuente, no por ausencia física del fenómeno. En Cuyo, la correlación invernal (JJA) es significativa (r&nbsp;≈&nbsp;+0.25, p&nbsp;&lt;&nbsp;0.01) pero se diluye en la agregación anual.</p>
-        <p style="margin-top:8px;"><strong>Grados de libertad efectivos:</strong> El ONI (media móvil de 3 meses) está fuertemente autocorrelacionado. Los p-values se calculan usando n<sub>eff</sub> (Bretherton et al. 1999) en lugar de n bruto, para evitar sobreestimar la significancia. Se reportan ambos valores (n y n<sub>eff</sub>) en el detalle de cada correlación.</p>
-        <p style="margin-top:8px;"><strong>Detección de episodios:</strong> Criterio NOAA CPC — ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
-        <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py) → JSON → HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
+        <p><strong>Metodología de correlación.</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0 a 3 meses. Significancia: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~10% de celdas) y entre NOA y Cuyo (~9%). NEA y Pampa Húmeda no comparten dominio espacial; sus correlaciones son independientes en ese sentido, aunque la autocorrelación espacial de la precipitación limita la independencia estricta. Correlaciones calculadas sobre todos los meses del año y por trimestre (SON, DEF, MAM, JJA).</p>
+        <p style="margin-top:8px;"><strong>Base del ONI.</strong> Media móvil de 3 meses de la anomalía SST en la región Niño 3.4, usando ERSSTv5 con períodos base de 30 años centrados (NOAA CPC). Base vigente: 1991–2020. Otros proveedores (IRI) pueden usar bases distintas, lo que produce valores ligeramente distintos para la misma temporada.</p>
+        <p style="margin-top:8px;"><strong>Limitación CHIRPS en precipitación nival.</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación, no por ausencia física del fenómeno.</p>
+        <p style="margin-top:8px;"><strong>Grados de libertad efectivos.</strong> El ONI está fuertemente autocorrelacionado por ser media móvil de 3 meses. Los p-values usan n<sub>eff</sub> (Bretherton et al. 1999), no n bruto, para evitar sobreestimar la significancia. Se reportan ambos valores en el detalle de cada correlación.</p>
+        <p style="margin-top:8px;"><strong>Detección de episodios.</strong> Criterio NOAA CPC: ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
+        <p style="margin-top:8px;color:#79818E;font-size:12px;">Pipeline: Python (build.py), JSON, HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
       </div>
     </details>
   </section>
@@ -650,7 +684,7 @@
     </div>
     <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
-      <span>Índices automáticos — no constituyen declaración oficial</span>
+      <span>Índices automáticos. No constituyen declaración oficial.</span>
       <span>Correlaciones anuales y estacionales (1981–2025) · CHIRPS v2.0</span>
     </div>
   </footer>
@@ -1960,7 +1994,7 @@ function updateFooterTimestamp(lastUpdated) {
   if (hoursOld > 48) {
     el.style.color = '#991B1B';
     el.style.fontWeight = '700';
-    el.textContent = `Datos generados el ${fmt} (hace ${Math.round(hoursOld / 24)} dias — revise el pipeline).`;
+    el.textContent = `Datos generados el ${fmt} (hace ${Math.round(hoursOld / 24)} dias. Revise el pipeline).`;
   } else {
     el.textContent = `Datos generados el ${fmt}.`;
   }
@@ -2069,24 +2103,22 @@ function regionDetailText(region, best, isSig) {
     ? ' CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO cordillerana puede estar subestimada por limitación de la fuente, no por ausencia del fenómeno.'
     : '';
   if (!best || !isSig) {
-    return `Sin correlación estadísticamente significativa en ningún lag. La variabilidad local domina sobre la señal ENSO para esta región.${chirpsCaveat}`;
+    return `No se detecta una relación estadística clara entre el ENSO y la lluvia en esta región (agregación anual). La variabilidad local domina.${chirpsCaveat}`;
   }
   const r = best.pearson_r;
-  const absR = Math.abs(r);
-  const direction = r > 0 ? 'positiva' : 'negativa';
-  const strength = absR >= 0.20 ? 'robusta' : 'débil';
   const signal = r > 0 ? 'más lluviosos' : 'más secos';
   const ninaEffect = r > 0 ? 'déficit hídrico' : 'exceso hídrico';
   const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
-  return `Correlación ${direction} y ${strength} (r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m). ` +
-    `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
-    `La asociación lineal corresponde a un R² de ${(r * r * 100).toFixed(1)}% (proporción de varianza compartida). Señal estadística — no certeza operacional.${chirpsCaveat}`;
+  return `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
+    `Es una señal estadística, no certeza operacional.${chirpsCaveat}` +
+    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>` +
+    `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
 }
 
 /* ── Risk summary paragraph ── */
 function riskSummaryText(phase) {
-  if (phase === 'El Niño') return 'La señal histórica apunta a precipitación sobre lo normal en NEA y Pampa Húmeda (riesgo de exceso hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).';
-  if (phase === 'La Niña') return 'La señal histórica apunta a precipitación bajo lo normal en NEA y Pampa Húmeda (riesgo de déficit hídrico). Sin señal anual significativa en NOA, Cuyo ni Patagonia (señal estacional: Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*).';
+  if (phase === 'El Niño') return 'Históricamente, los años El Niño tienden a ser más lluviosos en NEA y Pampa Húmeda. NOA, Cuyo y Patagonia no muestran señal clara en el agregado anual, pero sí por estación.';
+  if (phase === 'La Niña') return 'Históricamente, los años La Niña tienden a ser más secos en NEA y Pampa Húmeda. NOA, Cuyo y Patagonia no muestran señal clara en el agregado anual, pero sí por estación.';
   return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
 }
 
@@ -2123,7 +2155,63 @@ async function main() {
   let selRegion = regionOrder[0];
   const plotlyReady = typeof Plotly !== 'undefined';
   const seasonalCorr = data.seasonal_correlations || {};
+  const freqStats = data.frequency_stats || {};
   let updateAdvice = function() {};
+
+  /* ── Three-line executive summary ── */
+  const SEASON_LABEL = {SON: 'primaveras', DEF: 'veranos', MAM: 'otoños', JJA: 'inviernos'};
+  const oniSign = cur.oni_value >= 0 ? '+' : '';
+
+  function updateSummary(region) {
+    const el1 = document.getElementById('summary-line1');
+    const el2 = document.getElementById('summary-line2');
+    const el3 = document.getElementById('summary-line3');
+    if (!el1) return;
+
+    /* Line 1: what is happening */
+    if (phase === 'Neutral') {
+      el1.textContent = 'El Pac\u00edfico ecuatorial est\u00e1 en su rango normal. El ONI marca ' + oniSign + cur.oni_value.toFixed(2) + ' \u00b0C.';
+    } else {
+      const tempWord = phase === 'El Ni\u00f1o' ? 'm\u00e1s c\u00e1lido' : 'm\u00e1s fr\u00edo';
+      const intStr = conditionsIntensity ? ', ' + phase + ' ' + conditionsIntensity : '';
+      el1.textContent = 'El Pac\u00edfico ecuatorial est\u00e1 ' + tempWord + ' de lo normal. El ONI marca ' + oniSign + cur.oni_value.toFixed(2) + ' \u00b0C' + intStr + '.';
+    }
+
+    /* Line 2: what history shows for selected region */
+    if (phase === 'Neutral') {
+      el2.textContent = 'Sin fase ENSO activa, la se\u00f1al hist\u00f3rica no apunta a una direcci\u00f3n de lluvia. Planificar con climatolog\u00eda estacional.';
+    } else {
+      const pk = phase === 'El Ni\u00f1o' ? 'el_nino' : 'la_nina';
+      let bestSn = null, bestP = 1;
+      for (const sn of ['DEF','SON','MAM','JJA']) {
+        const cell = (freqStats[sn] || {})[region];
+        if (cell && cell[pk] && cell[pk].significant && cell[pk].p_binomial < bestP) {
+          bestP = cell[pk].p_binomial; bestSn = sn;
+        }
+      }
+      if (bestSn) {
+        const cell = freqStats[bestSn][region][pk];
+        const seasonName = SEASON_LABEL[bestSn];
+        const okn = pk === 'el_nino' ? 'la_nina' : 'el_nino';
+        const otherPhase = pk === 'el_nino' ? 'La Ni\u00f1a' : 'El Ni\u00f1o';
+        const oc = (freqStats[bestSn][region] || {})[okn];
+        let txt = 'De los ' + cell.N + ' ' + seasonName + ' con ' + phase + ' desde 1981, ' + cell.M_above_median + ' fueron m\u00e1s lluviosos que lo normal en ' + region + '.';
+        if (oc) {
+          txt += ' Con ' + otherPhase + ', ' + (oc.significant ? 'solo ' : '') + oc.M_above_median + ' de ' + oc.N + '.';
+        }
+        if (cell.deviation_pct_of_climatology) {
+          const s = cell.deviation_pct_of_climatology > 0 ? '+' : '';
+          txt += ' En promedio, llovi\u00f3 un ' + s + cell.deviation_pct_of_climatology + '% en esos ' + seasonName + '.';
+        }
+        el2.textContent = txt;
+      } else {
+        el2.textContent = 'No se detecta se\u00f1al estad\u00edstica clara del ENSO sobre la lluvia en ' + region + ' (1981\u20132025).';
+      }
+    }
+
+    /* Line 3: what we don't know */
+    el3.textContent = 'Esto no es un pron\u00f3stico. El ENSO explica solo una parte de la variabilidad de precipitaci\u00f3n.';
+  }
 
   /* ── Masthead date ── */
   try {
@@ -2147,9 +2235,6 @@ async function main() {
     statusLabel.textContent = (phase === 'El Niño' ? `El Niño${episodeTag}` : `La Niña${episodeTag}`) + ' · NOAA CPC';
   }
   /* statusLabel inherits white from command-center */
-
-  /* Sign prefix for ONI display (+/-) — needed by trajectory and hero description */
-  const oniSign = cur.oni_value >= 0 ? '+' : '';
 
   /* Trajectory: ONI trend from last 3 values + gap vs Niño 3.4 */
   let trajectoryNote = '';
@@ -2206,19 +2291,17 @@ async function main() {
     onsetMonth = `${MESES_LARGO[onsetDate.getUTCMonth()]} ${onsetDate.getUTCFullYear()}`;
   }
 
+  /* Populate three-line summary (region-dependent, updated on pill click too) */
+  updateSummary(selRegion);
+
+  /* Trajectory note goes in the smaller hero-desc element */
   const descEl = document.getElementById('hero-desc');
-  if (phase === 'Neutral') {
-    descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ` +
-      'Condición neutra — sin señal de fase ENSO activa. Planificar con climatología estacional.';
+  if (phase !== 'Neutral' && onsetMonth) {
+    let traj = 'En curso desde ' + onsetMonth + '.';
+    if (trajectoryNote) traj += trajectoryNote;
+    descEl.textContent = traj;
   } else {
-    const intensityStr = conditionsIntensity ? ` ${conditionsIntensity}` : '';
-    const episodeNote = episodeConfirmed
-      ? 'Episodio formal confirmado por el CPC.'
-      : 'El CPC lo declarará episodio formal cuando complete cinco trimestres consecutivos sobre el umbral.';
-    const impactNote = phase === 'El Niño'
-      ? 'Mayor probabilidad histórica de precipitación sobre lo normal en NEA y Pampa Húmeda.'
-      : 'Mayor probabilidad histórica de déficit hídrico en NEA y Pampa Húmeda.';
-    descEl.textContent = `${phase}${intensityStr}, en curso desde ${onsetMonth}. ONI ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}${trajectoryNote}`;
+    descEl.textContent = '';
   }
   } catch (e) { console.error('[hero]', e); }
 
@@ -2272,7 +2355,7 @@ async function main() {
     btn.className = 'region-pill';
     btn.dataset.region = region;
     btn.textContent = region;
-    btn.addEventListener('click', () => { selRegion = region; updateAdvice(region); });
+    btn.addEventListener('click', () => { selRegion = region; updateAdvice(region); updateSummary(region); });
     pillsEl.appendChild(btn);
   }
   updateAdvice(selRegion);
@@ -2487,6 +2570,62 @@ async function main() {
   document.getElementById('compare-btn-nina').addEventListener('click', () => setCompare('nina'));
   setCompare('nino');
   } catch (e) { console.error('[comparison]', e); }
+
+  /* ── ENSO episode timeline ── */
+  try {
+  const tlContainer = document.getElementById('enso-timeline');
+  if (tlContainer && data.episodes && data.episodes.length > 0) {
+    const START_YEAR = 1950;
+    const NOW = new Date();
+    const END_YEAR = NOW.getFullYear() + 1;
+    const YEAR_SPAN = END_YEAR - START_YEAR;
+    const W = 960; const H = 64; const PAD_L = 0; const PAD_R = 0;
+    const BAR_H = 18; const BAR_Y = 16;
+    const usableW = W - PAD_L - PAD_R;
+
+    const xScale = d => PAD_L + ((d.getFullYear() + d.getMonth() / 12) - START_YEAR) / YEAR_SPAN * usableW;
+
+    let svg = `<svg viewBox="0 0 ${W} ${H + 24}" style="width:100%;height:auto;display:block;font-family:'IBM Plex Mono',monospace;">`;
+
+    /* Decade grid lines */
+    for (let y = Math.ceil(START_YEAR / 10) * 10; y <= END_YEAR; y += 10) {
+      const x = xScale(new Date(y, 0, 1));
+      svg += `<line x1="${x}" x2="${x}" y1="${BAR_Y - 4}" y2="${BAR_Y + BAR_H + 4}" stroke="#C7CCD6" stroke-width="0.5"/>`;
+      svg += `<text x="${x}" y="${H + 18}" text-anchor="middle" font-size="10" fill="#79818E">${y}</text>`;
+    }
+
+    /* Background track */
+    svg += `<rect x="${PAD_L}" y="${BAR_Y}" width="${usableW}" height="${BAR_H}" rx="3" fill="#EDEFF3"/>`;
+
+    /* Episodes */
+    for (const ep of data.episodes) {
+      const s = new Date(ep.start);
+      const e = new Date(ep.end);
+      const x1 = xScale(s);
+      const x2 = xScale(e);
+      const w = Math.max(x2 - x1, 2);
+      const color = ep.type.startsWith('El') ? '#C2382A' : '#2A55D0';
+      const startStr = MONTHS_ES[s.getUTCMonth()] + ' ' + s.getUTCFullYear();
+      const endStr = MONTHS_ES[e.getUTCMonth()] + ' ' + e.getUTCFullYear();
+      svg += `<rect x="${x1}" y="${BAR_Y}" width="${w}" height="${BAR_H}" rx="2" fill="${color}" opacity="0.7">` +
+        `<title>${ep.type}: ${startStr} – ${endStr}</title></rect>`;
+    }
+
+    /* Now marker */
+    const nowX = xScale(NOW);
+    svg += `<line x1="${nowX}" x2="${nowX}" y1="${BAR_Y - 6}" y2="${BAR_Y + BAR_H + 6}" stroke="#14161A" stroke-width="1.5"/>`;
+    svg += `<text x="${nowX}" y="${BAR_Y - 8}" text-anchor="middle" font-size="9" fill="#14161A" font-weight="600">hoy</text>`;
+
+    /* Legend */
+    svg += `<rect x="${W - 160}" y="${H + 8}" width="12" height="10" rx="2" fill="#C2382A" opacity="0.7"/>`;
+    svg += `<text x="${W - 144}" y="${H + 17}" font-size="10" fill="#79818E">El Niño</text>`;
+    svg += `<rect x="${W - 80}" y="${H + 8}" width="12" height="10" rx="2" fill="#2A55D0" opacity="0.7"/>`;
+    svg += `<text x="${W - 64}" y="${H + 17}" font-size="10" fill="#79818E">La Niña</text>`;
+
+    svg += '</svg>';
+    tlContainer.innerHTML = svg;
+  }
+  } catch (e) { console.error('[timeline]', e); }
 
   /* ── Correlation bar chart + heatmap + seasonal dropdown ── */
   try {

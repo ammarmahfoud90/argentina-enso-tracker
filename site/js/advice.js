@@ -20,11 +20,6 @@ const ONI_MOD     = 1.0;
 const ONI_STRONG  = 1.5;
 const ONI_VSTRONG = 2.0;
 
-/**
- * Classify ONI magnitude into intensity label.
- * @param {number} oni  Absolute ONI value
- * @returns {string}
- */
 function _oniIntensity(oni) {
   const a = Math.abs(oni);
   if (a >= ONI_VSTRONG) return 'muy fuerte';
@@ -34,68 +29,41 @@ function _oniIntensity(oni) {
   return 'neutral';
 }
 
-/**
- * Direction of expected precipitation change given phase + correlation sign.
- */
 function _precipDirection(phase, r) {
   if (phase === 'El Niño') return r > 0 ? 'excess' : 'deficit';
   return r > 0 ? 'deficit' : 'excess';
 }
 
 function _lagStr(lag) {
-  if (lag === 0) return 'sin retardo (simultáneo)';
-  if (lag === 1) return 'con 1 mes de retardo';
-  return `con ${lag} meses de retardo`;
+  if (lag === 0) return 'sin retardo';
+  if (lag === 1) return '1 mes de retardo';
+  return `${lag} meses de retardo`;
 }
 
-function _rLabel(absR) {
-  if (absR >= 0.35) return 'fuerte';
-  if (absR >= 0.20) return 'moderada';
-  return 'débil';
-}
-
-/**
- * Summarize recent precipitation anomaly for a region.
- * @param {Array} precipAnomaly  Array of {date, month, anomaly_mm}
- * @returns {string|null}  Summary text or null if no data
- */
 function _precipSummary(precipAnomaly) {
   if (!precipAnomaly || precipAnomaly.length < 3) return null;
   const recent = precipAnomaly.slice(-3);
   const avgAnomaly = recent.reduce((sum, d) => sum + d.anomaly_mm, 0) / recent.length;
-  if (Math.abs(avgAnomaly) < 5) return null; // negligible
+  if (Math.abs(avgAnomaly) < 5) return null;
   const dir = avgAnomaly > 0 ? 'por encima' : 'por debajo';
-  return `Los últimos 3 meses muestran precipitación ${dir} de lo normal (anomalía media: ${avgAnomaly > 0 ? '+' : ''}${avgAnomaly.toFixed(0)} mm).`;
+  return `Los últimos 3 meses, la precipitación estuvo ${dir} de lo normal (${avgAnomaly > 0 ? '+' : ''}${avgAnomaly.toFixed(0)} mm de anomalía media).`;
 }
 
-/**
- * SOI trend context for the advice.
- * @param {object} soiTrend  {label, color} from soiTrend()
- * @param {number} soiValue  Current SOI value
- * @returns {string|null}
- */
 function _soiContext(soiTrend, soiValue) {
   if (!soiTrend || !soiValue) return null;
   if (soiValue <= -1.5) return 'El SOI fuertemente negativo refuerza la señal El Niño.';
-  if (soiValue <= -0.5) return 'El SOI moderadamente negativo es consistente con tendencia El Niño.';
+  if (soiValue <= -0.5) return 'El SOI moderadamente negativo es consistente con El Niño.';
   if (soiValue >= 1.5) return 'El SOI fuertemente positivo refuerza la señal La Niña.';
-  if (soiValue >= 0.5) return 'El SOI moderadamente positivo es consistente con tendencia La Niña.';
+  if (soiValue >= 0.5) return 'El SOI moderadamente positivo es consistente con La Niña.';
   return null;
 }
 
 /**
  * Build the advice object for a region.
- *
- * @param {string} regionName
- * @param {string} phase         "El Niño" | "La Niña" | "Neutral"
- * @param {object|null} bestCorr {pearson_r, pearson_p, pearson_stars, lag, n_obs}
- * @param {object} extras        Optional: {oni_value, soi_value, soi_trend, precip_anomaly}
- * @returns {{ signal: string, text: string }}
  */
 function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const ext = extras || {};
 
-  /* ── No correlation data ── */
   if (!bestCorr) {
     return {
       signal: 'none',
@@ -111,46 +79,46 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const stars = bestCorr.pearson_stars;
   const isSig = p < SIG_THRESHOLD;
   const absR  = Math.abs(r);
-  const rSign = r > 0 ? 'positiva' : 'negativa';
   const oni   = ext.oni_value;
 
   /* CHIRPS snowfall limitation caveat for mountain regions */
   const _chirpsCaveat = (regionName === 'Cuyo' || regionName === 'Patagonia')
-    ? ' Nota: CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO en la zona cordillerana puede estar subestimada. Consultar correlación estacional JJA para señal invernal.'
+    ? ' CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO cordillerana puede estar subestimada.'
     : '';
 
-  /* ── Correlation not significant ── */
+  /* Collapsible statistical detail */
+  const statDetail =
+    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>` +
+    `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">` +
+    `r = ${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, p = ${p.toFixed(3)}, ` +
+    `n = ${n}, n<sub>eff</sub> = ${nEff}, ${_lagStr(lag)}` +
+    `</span></details>`;
+
+  /* Not significant */
   if (!isSig) {
     let text =
-      `<strong>${regionName}</strong>: la correlación ONI–precipitación no es ` +
-      `estadísticamente significativa ` +
-      `(mejor r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}, p&nbsp;=&nbsp;${p.toFixed(3)}, ` +
-      `n&nbsp;=&nbsp;${n}, n<sub>eff</sub>&nbsp;=&nbsp;${nEff}). No se emite señal direccional.${_chirpsCaveat}`;
+      `<strong>${regionName}</strong>: no se detecta relación estadística clara entre el ENSO y la lluvia en esta región (agregación anual).${_chirpsCaveat}`;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
+    text += statDetail;
     return { signal: 'none', text };
   }
 
-  /* ── ENSO Neutral ── */
+  /* ENSO Neutral */
   if (phase === 'Neutral') {
     let text =
-      `<strong>${regionName}</strong>: condiciones ENSO Neutral (ONI ${oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : '—'}). ` +
-      `Correlación histórica ${rSign} significativa ` +
-      `(r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, ${_lagStr(lag)}), ` +
-      `pero sin fase activa no se proyecta dirección de anomalía.`;
+      `<strong>${regionName}</strong>: condiciones ENSO Neutral (ONI ${oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : '?'}). ` +
+      `Existe correlación histórica significativa, pero sin fase activa no se proyecta dirección de anomalía.`;
     const soi = _soiContext(ext.soi_trend, ext.soi_value);
     if (soi) text += ' ' + soi;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
+    text += statDetail;
     return { signal: 'neutral', text };
   }
 
-  /* ── Active phase (El Niño / La Niña) ── */
+  /* Active phase (El Niño / La Niña) */
   const direction = _precipDirection(phase, r);
-  const intensity = _rLabel(absR);
-  const r2pct = (r * r * 100).toFixed(1);
-
-  /* ONI intensity grading */
   const oniLabel = oni != null ? _oniIntensity(oni) : null;
   const phaseStr = oniLabel && oniLabel !== 'neutral'
     ? `${phase} ${oniLabel}`
@@ -166,23 +134,18 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   }
 
   let text =
-    `<strong>${regionName}</strong> · Fase activa: <strong>${phaseStr}</strong>` +
+    `<strong>${regionName}</strong>: fase activa <strong>${phaseStr}</strong>` +
     (oni != null ? ` (ONI ${oni >= 0 ? '+' : ''}${oni.toFixed(2)})` : '') + `. ` +
-    `Correlación ${rSign} ${intensity} ` +
-    `(r&nbsp;=&nbsp;${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, ` +
-    `n&nbsp;=&nbsp;${n}, n<sub>eff</sub>&nbsp;=&nbsp;${nEff}, ${_lagStr(lag)}). ` +
-    `Históricamente: ${dirText} → <strong>${implication}</strong>. ` +
-    `Asociación lineal: R² = ${r2pct}%.`;
+    `Históricamente, ${dirText} en esta región. <strong>${implication}</strong>.`;
 
-  /* Append SOI context */
   const soi = _soiContext(ext.soi_trend, ext.soi_value);
   if (soi) text += ' ' + soi;
 
-  /* Append precipitation obs */
   const precip = _precipSummary(ext.precip_anomaly);
   if (precip) text += ' ' + precip;
 
-  text += ' Señal estadística — validar con pronóstico NOAA/IRI.';
+  text += ' Señal estadística. Validar con pronóstico NOAA/IRI.';
+  text += statDetail;
 
   return { signal: direction, text };
 }

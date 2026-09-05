@@ -410,6 +410,215 @@ def build_payload() -> dict:
     else:
         logger.warning("Pairs Parquet not found — seasonal correlations skipped")
 
+    # 8c. Frequency stats: how often was rainfall above median during El Niño / La Niña?
+    frequency_stats: dict = {}
+    frequency_methodology: dict = {}
+    if pairs_path.exists():
+        import numpy as _np
+        from scipy import stats as _stats
+
+        def _assign_season(month: int) -> str:
+            if month in (9, 10, 11): return "SON"
+            if month in (12, 1, 2):  return "DEF"
+            if month in (3, 4, 5):   return "MAM"
+            return "JJA"
+
+        _fdf = pairs_df.copy()
+        _fdf["season"] = _fdf["month"].apply(_assign_season)
+        _fdf["season_year"] = _fdf["date"].dt.year
+        _fdf.loc[_fdf["month"] == 12, "season_year"] = _fdf.loc[_fdf["month"] == 12, "date"].dt.year + 1
+
+        _sg = _fdf.groupby(["season_year", "season"])
+        _precip_mean = _sg[region_cols].mean()
+        _precip_total = _sg[region_cols].sum()
+        _oni_mean = _sg["oni"].mean()
+        _mcounts = _sg["month"].count()
+
+        _sm = _precip_mean.copy()
+        _sm["oni_mean"] = _oni_mean
+        _sm = _sm[_mcounts == 3]
+
+        _st = _precip_total.copy()
+        _st["oni_mean"] = _oni_mean
+        _st = _st[_mcounts == 3]
+
+        _sm["phase"] = "Neutral"
+        _sm.loc[_sm["oni_mean"] >= ENSO_EL_NINO_THRESHOLD, "phase"] = "El Niño"
+        _sm.loc[_sm["oni_mean"] <= ENSO_LA_NINA_THRESHOLD, "phase"] = "La Niña"
+        _st["phase"] = _sm["phase"]
+
+        # Confirmatory cells: prior hypothesis backed by independent r analysis
+        _CONFIRMATORY = {
+            ("DEF", "Pampa Húmeda", "el_nino"),
+            ("DEF", "Pampa Húmeda", "la_nina"),
+            ("DEF", "NEA", "el_nino"),
+            ("SON", "NEA", "el_nino"),
+        }
+        _PRELIMINARY = {
+            ("MAM", "NEA", "el_nino"),
+            ("JJA", "Cuyo", "el_nino"),
+        }
+
+        _conf_sig = 0
+        _expl_sig = 0
+
+        for _sn in ["SON", "DEF", "MAM", "JJA"]:
+            _s_mean = _sm.xs(_sn, level="season")
+            _s_total = _st.xs(_sn, level="season")
+            _sr = {}
+
+            for _reg in REGION_ORDER:
+                if _reg not in region_cols:
+                    continue
+                _median_all = float(_s_mean[_reg].median())
+                _mean_monthly = float(_s_mean[_reg].mean())
+                _mean_seasonal = float(_s_total[_reg].mean())
+
+                _entry = {
+                    "climatological_median_monthly_mm": round(_median_all, 1),
+                    "climatological_mean_monthly_mm": round(_mean_monthly, 1),
+                    "climatological_mean_seasonal_mm": round(_mean_seasonal, 1),
+                    "total_seasons": len(_s_mean),
+                }
+
+                for _pk, _pl in [("el_nino", "El Niño"), ("la_nina", "La Niña")]:
+                    _sub_m = _s_mean[_s_mean["phase"] == _pl]
+                    _sub_t = _s_total[_s_total["phase"] == _pl]
+                    _N = len(_sub_m)
+                    if _N == 0:
+                        continue
+                    _M = int((_sub_m[_reg] > _median_all).sum())
+
+                    _bt = _stats.binomtest(_M, _N, 0.5, alternative="two-sided")
+                    _p = round(float(_bt.pvalue), 4)
+                    _is_sig = _p < SIGNIFICANCE_THRESHOLD
+
+                    _ck = (_sn, _reg, _pk)
+                    _family = "confirmatory" if _ck in _CONFIRMATORY else "exploratory"
+                    if _is_sig:
+                        if _family == "confirmatory":
+                            _conf_sig += 1
+                        else:
+                            _expl_sig += 1
+
+                    _pm = float(_sub_m[_reg].mean())
+                    _dev_m = round(_pm - _mean_monthly, 1)
+                    _ps = float(_sub_t[_reg].mean())
+                    _dev_s = round(_ps - _mean_seasonal, 1)
+                    _dev_pct = round((_dev_s / _mean_seasonal) * 100, 1) if _mean_seasonal > 0 else 0.0
+
+                    _devs_m = _sub_m[_reg] - _mean_monthly
+                    _devs_s = _sub_t[_reg] - _mean_seasonal
+
+                    _cell = {
+                        "N": _N,
+                        "M_above_median": _M,
+                        "p_binomial": _p,
+                        "significant": _is_sig,
+                        "family": _family,
+                        "low_n": _N < 10,
+                        "mean_deviation_monthly_mm": _dev_m,
+                        "mean_deviation_seasonal_mm": _dev_s,
+                        "deviation_pct_of_climatology": _dev_pct,
+                        "range_monthly_mm": [round(float(_devs_m.min()), 1), round(float(_devs_m.max()), 1)],
+                        "range_seasonal_mm": [round(float(_devs_s.min()), 1), round(float(_devs_s.max()), 1)],
+                    }
+
+                    if _ck in _PRELIMINARY:
+                        _cell["preliminary"] = True
+
+                    if _sn == "JJA" and _reg == "Cuyo" and _pk == "el_nino":
+                        _cell["note"] = (
+                            "Direccion consistente (7/7) pero magnitud posiblemente "
+                            "subestimada: CHIRPS no captura bien la precipitacion nival "
+                            "en Cuyo invernal, y N=7 es el minimo de la tabla."
+                        )
+
+                    _entry[_pk] = _cell
+                _sr[_reg] = _entry
+            frequency_stats[_sn] = _sr
+
+        frequency_methodology = {
+            "threshold_above_normal": "mediana climatologica (1981-2025) de la region y estacion",
+            "deviation_pct_denominator": (
+                "media climatologica (no mediana). La mediana se usa como umbral "
+                "para clasificar temporadas; la media se usa como referencia para "
+                "cuantificar la magnitud del desvio."
+            ),
+            "oni_classification": (
+                "El Nino: ONI estacional medio >= +0.5; "
+                "La Nina: ONI estacional medio <= -0.5"
+            ),
+            "test": "binomtest bilateral (scipy.stats.binomtest, H0: p=0.5)",
+            "families": {
+                "confirmatory": {
+                    "description": (
+                        "Hipotesis previa respaldada por el analisis de correlacion "
+                        "independiente (r=+0.39*** Pampa Humeda DEF, r=+0.32*** NEA SON) "
+                        "y consistente con la literatura de teleconexion ENSO en el "
+                        "sudeste de Sudamerica."
+                    ),
+                    "cells": [
+                        "DEF Pampa Humeda El Nino",
+                        "DEF Pampa Humeda La Nina",
+                        "DEF NEA El Nino",
+                        "SON NEA El Nino",
+                    ],
+                    "n_tests": 4,
+                    "significant": _conf_sig,
+                },
+                "exploratory": {
+                    "description": (
+                        "Surgieron de recorrer la tabla sin hipotesis previa. No "
+                        "sobreviven una correccion por comparaciones multiples dentro "
+                        "de su familia y requieren confirmacion con mas temporadas."
+                    ),
+                    "n_tests": 36,
+                    "significant": _expl_sig,
+                    "expected_by_chance": round(36 * 0.05, 1),
+                },
+            },
+            "n_variation_note": (
+                "N varia entre estaciones (DEF~15, SON~14, MAM~9, JJA~7) porque "
+                "los eventos ENSO alcanzan su pico en el verano austral (DEF). En "
+                "otono e invierno, menos temporadas cumplen el umbral ONI >= 0.5."
+            ),
+            "units": {
+                "mean_deviation_monthly_mm": (
+                    "Desviacion del promedio mensual dentro de la estacion (mm/mes). "
+                    "Es el promedio de los 3 desvios mensuales."
+                ),
+                "mean_deviation_seasonal_mm": (
+                    "Desviacion del acumulado estacional (mm/estacion). "
+                    "Igual a monthly x 3 porque es el promedio de los desvios "
+                    "de las sumas estacionales."
+                ),
+                "deviation_pct_of_climatology": (
+                    "Desviacion como porcentaje de la media climatologica estacional."
+                ),
+                "range_monthly_mm": (
+                    "Rango [min, max] de los desvios mensuales promedio "
+                    "por temporada individual."
+                ),
+                "range_seasonal_mm": (
+                    "Rango [min, max] de los desvios del acumulado estacional "
+                    "por temporada individual. Calculado directamente desde los "
+                    "acumulados, NO escalado desde el rango mensual."
+                ),
+            },
+            "data_source": "CHIRPS v2.0 (1981-2025) via IRI OPeNDAP, ONI de NOAA CPC",
+            "chirps_caveat": (
+                "CHIRPS es un producto basado en infrarrojo + estaciones. Subestima "
+                "la precipitacion nival, especialmente en Cuyo y Patagonia en invierno."
+            ),
+        }
+        logger.info(
+            "Frequency stats: confirmatory %d/%d sig, exploratory %d/%d sig (expected ~%.1f)",
+            _conf_sig, 4, _expl_sig, 36, 36 * 0.05,
+        )
+    else:
+        logger.warning("Pairs Parquet not found — frequency stats skipped")
+
     # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
     logger.info("Fetching subsurface temperature data…")
     subsurface = fetch_subsurface_cross_section()
@@ -463,6 +672,8 @@ def build_payload() -> dict:
         "soi_series_24m": soi_24m,
         "correlations":  corr_records,
         "seasonal_correlations": seasonal_correlations,
+        "frequency_stats": frequency_stats,
+        "frequency_methodology": frequency_methodology,
         "region_meta":   region_meta,
         "region_order":  REGION_ORDER,
         "episodes":      episodes,

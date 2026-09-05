@@ -10519,6 +10519,934 @@
       }
     ]
   },
+  "frequency_stats": {
+    "SON": {
+      "Pampa Húmeda": {
+        "climatological_median_monthly_mm": 80.4,
+        "climatological_mean_monthly_mm": 80.6,
+        "climatological_mean_seasonal_mm": 241.7,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 14,
+          "M_above_median": 8,
+          "p_binomial": 0.7905,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 5.0,
+          "mean_deviation_seasonal_mm": 15.0,
+          "deviation_pct_of_climatology": 6.2,
+          "range_monthly_mm": [
+            -13.0,
+            40.6
+          ],
+          "range_seasonal_mm": [
+            -39.1,
+            121.7
+          ]
+        },
+        "la_nina": {
+          "N": 15,
+          "M_above_median": 5,
+          "p_binomial": 0.3018,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -7.2,
+          "mean_deviation_seasonal_mm": -21.5,
+          "deviation_pct_of_climatology": -8.9,
+          "range_monthly_mm": [
+            -26.6,
+            19.9
+          ],
+          "range_seasonal_mm": [
+            -79.9,
+            59.8
+          ]
+        }
+      },
+      "NEA": {
+        "climatological_median_monthly_mm": 124.5,
+        "climatological_mean_monthly_mm": 124.6,
+        "climatological_mean_seasonal_mm": 373.7,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 14,
+          "M_above_median": 12,
+          "p_binomial": 0.0129,
+          "significant": true,
+          "family": "confirmatory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 20.0,
+          "mean_deviation_seasonal_mm": 59.9,
+          "deviation_pct_of_climatology": 16.0,
+          "range_monthly_mm": [
+            -21.3,
+            54.5
+          ],
+          "range_seasonal_mm": [
+            -63.8,
+            163.4
+          ]
+        },
+        "la_nina": {
+          "N": 15,
+          "M_above_median": 4,
+          "p_binomial": 0.1185,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -12.9,
+          "mean_deviation_seasonal_mm": -38.8,
+          "deviation_pct_of_climatology": -10.4,
+          "range_monthly_mm": [
+            -55.6,
+            17.7
+          ],
+          "range_seasonal_mm": [
+            -166.9,
+            53.2
+          ]
+        }
+      },
+      "NOA": {
+        "climatological_median_monthly_mm": 32.8,
+        "climatological_mean_monthly_mm": 33.8,
+        "climatological_mean_seasonal_mm": 101.3,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 14,
+          "M_above_median": 8,
+          "p_binomial": 0.7905,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 1.4,
+          "mean_deviation_seasonal_mm": 4.3,
+          "deviation_pct_of_climatology": 4.2,
+          "range_monthly_mm": [
+            -8.1,
+            17.1
+          ],
+          "range_seasonal_mm": [
+            -24.2,
+            51.2
+          ]
+        },
+        "la_nina": {
+          "N": 15,
+          "M_above_median": 4,
+          "p_binomial": 0.1185,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -4.2,
+          "mean_deviation_seasonal_mm": -12.6,
+          "deviation_pct_of_climatology": -12.4,
+          "range_monthly_mm": [
+            -14.8,
+            7.7
+          ],
+          "range_seasonal_mm": [
+            -44.5,
+            23.0
+          ]
+        }
+      },
+      "Cuyo": {
+        "climatological_median_monthly_mm": 24.6,
+        "climatological_mean_monthly_mm": 25.3,
+        "climatological_mean_seasonal_mm": 75.9,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 14,
+          "M_above_median": 5,
+          "p_binomial": 0.424,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -0.8,
+          "mean_deviation_seasonal_mm": -2.5,
+          "deviation_pct_of_climatology": -3.3,
+          "range_monthly_mm": [
+            -10.5,
+            11.5
+          ],
+          "range_seasonal_mm": [
+            -31.6,
+            34.4
+          ]
+        },
+        "la_nina": {
+          "N": 15,
+          "M_above_median": 8,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 0.1,
+          "mean_deviation_seasonal_mm": 0.4,
+          "deviation_pct_of_climatology": 0.5,
+          "range_monthly_mm": [
+            -8.3,
+            15.2
+          ],
+          "range_seasonal_mm": [
+            -25.0,
+            45.5
+          ]
+        }
+      },
+      "Patagonia": {
+        "climatological_median_monthly_mm": 36.5,
+        "climatological_mean_monthly_mm": 36.6,
+        "climatological_mean_seasonal_mm": 109.7,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 14,
+          "M_above_median": 9,
+          "p_binomial": 0.424,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 3.6,
+          "mean_deviation_seasonal_mm": 10.9,
+          "deviation_pct_of_climatology": 9.9,
+          "range_monthly_mm": [
+            -10.9,
+            23.3
+          ],
+          "range_seasonal_mm": [
+            -32.8,
+            69.9
+          ]
+        },
+        "la_nina": {
+          "N": 15,
+          "M_above_median": 6,
+          "p_binomial": 0.6072,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -1.9,
+          "mean_deviation_seasonal_mm": -5.7,
+          "deviation_pct_of_climatology": -5.2,
+          "range_monthly_mm": [
+            -11.8,
+            10.9
+          ],
+          "range_seasonal_mm": [
+            -35.4,
+            32.7
+          ]
+        }
+      }
+    },
+    "DEF": {
+      "Pampa Húmeda": {
+        "climatological_median_monthly_mm": 92.5,
+        "climatological_mean_monthly_mm": 99.9,
+        "climatological_mean_seasonal_mm": 299.8,
+        "total_seasons": 44,
+        "el_nino": {
+          "N": 15,
+          "M_above_median": 13,
+          "p_binomial": 0.0074,
+          "significant": true,
+          "family": "confirmatory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 18.1,
+          "mean_deviation_seasonal_mm": 54.3,
+          "deviation_pct_of_climatology": 18.1,
+          "range_monthly_mm": [
+            -19.5,
+            58.1
+          ],
+          "range_seasonal_mm": [
+            -58.6,
+            174.2
+          ]
+        },
+        "la_nina": {
+          "N": 16,
+          "M_above_median": 3,
+          "p_binomial": 0.0213,
+          "significant": true,
+          "family": "confirmatory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -13.1,
+          "mean_deviation_seasonal_mm": -39.4,
+          "deviation_pct_of_climatology": -13.1,
+          "range_monthly_mm": [
+            -39.9,
+            45.9
+          ],
+          "range_seasonal_mm": [
+            -119.6,
+            137.8
+          ]
+        }
+      },
+      "NEA": {
+        "climatological_median_monthly_mm": 141.4,
+        "climatological_mean_monthly_mm": 141.7,
+        "climatological_mean_seasonal_mm": 425.1,
+        "total_seasons": 44,
+        "el_nino": {
+          "N": 15,
+          "M_above_median": 13,
+          "p_binomial": 0.0074,
+          "significant": true,
+          "family": "confirmatory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 20.2,
+          "mean_deviation_seasonal_mm": 60.6,
+          "deviation_pct_of_climatology": 14.3,
+          "range_monthly_mm": [
+            -27.3,
+            90.7
+          ],
+          "range_seasonal_mm": [
+            -81.8,
+            272.2
+          ]
+        },
+        "la_nina": {
+          "N": 16,
+          "M_above_median": 6,
+          "p_binomial": 0.4545,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -10.0,
+          "mean_deviation_seasonal_mm": -30.0,
+          "deviation_pct_of_climatology": -7.1,
+          "range_monthly_mm": [
+            -80.2,
+            29.1
+          ],
+          "range_seasonal_mm": [
+            -240.7,
+            87.4
+          ]
+        }
+      },
+      "NOA": {
+        "climatological_median_monthly_mm": 108.0,
+        "climatological_mean_monthly_mm": 105.3,
+        "climatological_mean_seasonal_mm": 316.0,
+        "total_seasons": 44,
+        "el_nino": {
+          "N": 15,
+          "M_above_median": 9,
+          "p_binomial": 0.6072,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 3.9,
+          "mean_deviation_seasonal_mm": 11.8,
+          "deviation_pct_of_climatology": 3.7,
+          "range_monthly_mm": [
+            -20.8,
+            27.3
+          ],
+          "range_seasonal_mm": [
+            -62.3,
+            82.0
+          ]
+        },
+        "la_nina": {
+          "N": 16,
+          "M_above_median": 8,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -1.2,
+          "mean_deviation_seasonal_mm": -3.5,
+          "deviation_pct_of_climatology": -1.1,
+          "range_monthly_mm": [
+            -35.1,
+            34.1
+          ],
+          "range_seasonal_mm": [
+            -105.2,
+            102.3
+          ]
+        }
+      },
+      "Cuyo": {
+        "climatological_median_monthly_mm": 53.5,
+        "climatological_mean_monthly_mm": 55.7,
+        "climatological_mean_seasonal_mm": 167.0,
+        "total_seasons": 44,
+        "el_nino": {
+          "N": 15,
+          "M_above_median": 9,
+          "p_binomial": 0.6072,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 2.6,
+          "mean_deviation_seasonal_mm": 7.9,
+          "deviation_pct_of_climatology": 4.7,
+          "range_monthly_mm": [
+            -9.4,
+            21.0
+          ],
+          "range_seasonal_mm": [
+            -28.2,
+            63.1
+          ]
+        },
+        "la_nina": {
+          "N": 16,
+          "M_above_median": 7,
+          "p_binomial": 0.8036,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -1.1,
+          "mean_deviation_seasonal_mm": -3.2,
+          "deviation_pct_of_climatology": -1.9,
+          "range_monthly_mm": [
+            -14.0,
+            17.6
+          ],
+          "range_seasonal_mm": [
+            -42.0,
+            52.8
+          ]
+        }
+      },
+      "Patagonia": {
+        "climatological_median_monthly_mm": 27.5,
+        "climatological_mean_monthly_mm": 28.4,
+        "climatological_mean_seasonal_mm": 85.3,
+        "total_seasons": 44,
+        "el_nino": {
+          "N": 15,
+          "M_above_median": 7,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": -0.7,
+          "mean_deviation_seasonal_mm": -2.2,
+          "deviation_pct_of_climatology": -2.6,
+          "range_monthly_mm": [
+            -9.4,
+            9.6
+          ],
+          "range_seasonal_mm": [
+            -28.1,
+            28.7
+          ]
+        },
+        "la_nina": {
+          "N": 16,
+          "M_above_median": 9,
+          "p_binomial": 0.8036,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": false,
+          "mean_deviation_monthly_mm": 1.0,
+          "mean_deviation_seasonal_mm": 3.0,
+          "deviation_pct_of_climatology": 3.5,
+          "range_monthly_mm": [
+            -5.3,
+            12.4
+          ],
+          "range_seasonal_mm": [
+            -15.9,
+            37.3
+          ]
+        }
+      }
+    },
+    "MAM": {
+      "Pampa Húmeda": {
+        "climatological_median_monthly_mm": 84.6,
+        "climatological_mean_monthly_mm": 86.6,
+        "climatological_mean_seasonal_mm": 259.8,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 9,
+          "M_above_median": 7,
+          "p_binomial": 0.1797,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 6.1,
+          "mean_deviation_seasonal_mm": 18.2,
+          "deviation_pct_of_climatology": 7.0,
+          "range_monthly_mm": [
+            -10.7,
+            21.2
+          ],
+          "range_seasonal_mm": [
+            -32.1,
+            63.7
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 3,
+          "p_binomial": 0.7266,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -9.3,
+          "mean_deviation_seasonal_mm": -28.0,
+          "deviation_pct_of_climatology": -10.8,
+          "range_monthly_mm": [
+            -37.9,
+            29.6
+          ],
+          "range_seasonal_mm": [
+            -113.6,
+            88.7
+          ]
+        }
+      },
+      "NEA": {
+        "climatological_median_monthly_mm": 120.5,
+        "climatological_mean_monthly_mm": 125.5,
+        "climatological_mean_seasonal_mm": 376.6,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 9,
+          "M_above_median": 8,
+          "p_binomial": 0.0391,
+          "significant": true,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 27.2,
+          "mean_deviation_seasonal_mm": 81.7,
+          "deviation_pct_of_climatology": 21.7,
+          "range_monthly_mm": [
+            -24.6,
+            72.5
+          ],
+          "range_seasonal_mm": [
+            -73.8,
+            217.4
+          ],
+          "preliminary": true
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 3,
+          "p_binomial": 0.7266,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -13.1,
+          "mean_deviation_seasonal_mm": -39.3,
+          "deviation_pct_of_climatology": -10.4,
+          "range_monthly_mm": [
+            -47.0,
+            36.8
+          ],
+          "range_seasonal_mm": [
+            -141.1,
+            110.3
+          ]
+        }
+      },
+      "NOA": {
+        "climatological_median_monthly_mm": 41.4,
+        "climatological_mean_monthly_mm": 41.7,
+        "climatological_mean_seasonal_mm": 125.0,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 9,
+          "M_above_median": 3,
+          "p_binomial": 0.5078,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -0.1,
+          "mean_deviation_seasonal_mm": -0.2,
+          "deviation_pct_of_climatology": -0.2,
+          "range_monthly_mm": [
+            -5.2,
+            7.8
+          ],
+          "range_seasonal_mm": [
+            -15.5,
+            23.4
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 0.1,
+          "mean_deviation_seasonal_mm": 0.3,
+          "deviation_pct_of_climatology": 0.2,
+          "range_monthly_mm": [
+            -8.7,
+            10.4
+          ],
+          "range_seasonal_mm": [
+            -26.2,
+            31.2
+          ]
+        }
+      },
+      "Cuyo": {
+        "climatological_median_monthly_mm": 27.8,
+        "climatological_mean_monthly_mm": 27.1,
+        "climatological_mean_seasonal_mm": 81.4,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 9,
+          "M_above_median": 7,
+          "p_binomial": 0.1797,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 3.2,
+          "mean_deviation_seasonal_mm": 9.7,
+          "deviation_pct_of_climatology": 11.9,
+          "range_monthly_mm": [
+            -7.1,
+            12.9
+          ],
+          "range_seasonal_mm": [
+            -21.4,
+            38.7
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -1.2,
+          "mean_deviation_seasonal_mm": -3.7,
+          "deviation_pct_of_climatology": -4.5,
+          "range_monthly_mm": [
+            -10.4,
+            10.1
+          ],
+          "range_seasonal_mm": [
+            -31.1,
+            30.2
+          ]
+        }
+      },
+      "Patagonia": {
+        "climatological_median_monthly_mm": 47.1,
+        "climatological_mean_monthly_mm": 48.8,
+        "climatological_mean_seasonal_mm": 146.3,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 9,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -1.5,
+          "mean_deviation_seasonal_mm": -4.5,
+          "deviation_pct_of_climatology": -3.1,
+          "range_monthly_mm": [
+            -17.3,
+            21.2
+          ],
+          "range_seasonal_mm": [
+            -51.9,
+            63.5
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 2,
+          "p_binomial": 0.2891,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -3.4,
+          "mean_deviation_seasonal_mm": -10.1,
+          "deviation_pct_of_climatology": -6.9,
+          "range_monthly_mm": [
+            -18.1,
+            4.9
+          ],
+          "range_seasonal_mm": [
+            -54.3,
+            14.6
+          ]
+        }
+      }
+    },
+    "JJA": {
+      "Pampa Húmeda": {
+        "climatological_median_monthly_mm": 34.5,
+        "climatological_mean_monthly_mm": 34.0,
+        "climatological_mean_seasonal_mm": 101.9,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 7,
+          "M_above_median": 6,
+          "p_binomial": 0.125,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 7.1,
+          "mean_deviation_seasonal_mm": 21.3,
+          "deviation_pct_of_climatology": 20.9,
+          "range_monthly_mm": [
+            -5.8,
+            17.1
+          ],
+          "range_seasonal_mm": [
+            -17.5,
+            51.3
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 1,
+          "p_binomial": 0.0703,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -4.4,
+          "mean_deviation_seasonal_mm": -13.2,
+          "deviation_pct_of_climatology": -13.0,
+          "range_monthly_mm": [
+            -12.1,
+            7.0
+          ],
+          "range_seasonal_mm": [
+            -36.3,
+            21.0
+          ]
+        }
+      },
+      "NEA": {
+        "climatological_median_monthly_mm": 56.1,
+        "climatological_mean_monthly_mm": 61.0,
+        "climatological_mean_seasonal_mm": 182.9,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 7,
+          "M_above_median": 5,
+          "p_binomial": 0.4531,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 10.1,
+          "mean_deviation_seasonal_mm": 30.3,
+          "deviation_pct_of_climatology": 16.6,
+          "range_monthly_mm": [
+            -15.3,
+            37.4
+          ],
+          "range_seasonal_mm": [
+            -46.0,
+            112.1
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 3,
+          "p_binomial": 0.7266,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -6.1,
+          "mean_deviation_seasonal_mm": -18.3,
+          "deviation_pct_of_climatology": -10.0,
+          "range_monthly_mm": [
+            -30.3,
+            12.2
+          ],
+          "range_seasonal_mm": [
+            -90.8,
+            36.5
+          ]
+        }
+      },
+      "NOA": {
+        "climatological_median_monthly_mm": 6.1,
+        "climatological_mean_monthly_mm": 6.3,
+        "climatological_mean_seasonal_mm": 18.9,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 7,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 0.2,
+          "mean_deviation_seasonal_mm": 0.5,
+          "deviation_pct_of_climatology": 2.6,
+          "range_monthly_mm": [
+            -1.3,
+            1.3
+          ],
+          "range_seasonal_mm": [
+            -3.9,
+            4.0
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 5,
+          "p_binomial": 0.7266,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 0.2,
+          "mean_deviation_seasonal_mm": 0.5,
+          "deviation_pct_of_climatology": 2.6,
+          "range_monthly_mm": [
+            -1.6,
+            2.6
+          ],
+          "range_seasonal_mm": [
+            -4.7,
+            7.7
+          ]
+        }
+      },
+      "Cuyo": {
+        "climatological_median_monthly_mm": 8.1,
+        "climatological_mean_monthly_mm": 8.8,
+        "climatological_mean_seasonal_mm": 26.4,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 7,
+          "M_above_median": 7,
+          "p_binomial": 0.0156,
+          "significant": true,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 2.8,
+          "mean_deviation_seasonal_mm": 8.3,
+          "deviation_pct_of_climatology": 31.4,
+          "range_monthly_mm": [
+            0.5,
+            5.1
+          ],
+          "range_seasonal_mm": [
+            1.5,
+            15.2
+          ],
+          "preliminary": true,
+          "note": "Direccion consistente (7/7) pero magnitud posiblemente subestimada: CHIRPS no captura bien la precipitacion nival en Cuyo invernal, y N=7 es el minimo de la tabla."
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -0.5,
+          "mean_deviation_seasonal_mm": -1.4,
+          "deviation_pct_of_climatology": -5.3,
+          "range_monthly_mm": [
+            -3.0,
+            2.4
+          ],
+          "range_seasonal_mm": [
+            -8.9,
+            7.2
+          ]
+        }
+      },
+      "Patagonia": {
+        "climatological_median_monthly_mm": 54.3,
+        "climatological_mean_monthly_mm": 55.0,
+        "climatological_mean_seasonal_mm": 164.9,
+        "total_seasons": 45,
+        "el_nino": {
+          "N": 7,
+          "M_above_median": 5,
+          "p_binomial": 0.4531,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": 6.4,
+          "mean_deviation_seasonal_mm": 19.3,
+          "deviation_pct_of_climatology": 11.7,
+          "range_monthly_mm": [
+            -1.8,
+            17.2
+          ],
+          "range_seasonal_mm": [
+            -5.5,
+            51.6
+          ]
+        },
+        "la_nina": {
+          "N": 8,
+          "M_above_median": 4,
+          "p_binomial": 1.0,
+          "significant": false,
+          "family": "exploratory",
+          "low_n": true,
+          "mean_deviation_monthly_mm": -1.5,
+          "mean_deviation_seasonal_mm": -4.4,
+          "deviation_pct_of_climatology": -2.7,
+          "range_monthly_mm": [
+            -15.2,
+            15.9
+          ],
+          "range_seasonal_mm": [
+            -45.7,
+            47.6
+          ]
+        }
+      }
+    }
+  },
+  "frequency_methodology": {
+    "threshold_above_normal": "mediana climatologica (1981-2025) de la region y estacion",
+    "deviation_pct_denominator": "media climatologica (no mediana). La mediana se usa como umbral para clasificar temporadas; la media se usa como referencia para cuantificar la magnitud del desvio.",
+    "oni_classification": "El Nino: ONI estacional medio >= +0.5; La Nina: ONI estacional medio <= -0.5",
+    "test": "binomtest bilateral (scipy.stats.binomtest, H0: p=0.5)",
+    "families": {
+      "confirmatory": {
+        "description": "Hipotesis previa respaldada por el analisis de correlacion independiente (r=+0.39*** Pampa Humeda DEF, r=+0.32*** NEA SON) y consistente con la literatura de teleconexion ENSO en el sudeste de Sudamerica.",
+        "cells": [
+          "DEF Pampa Humeda El Nino",
+          "DEF Pampa Humeda La Nina",
+          "DEF NEA El Nino",
+          "SON NEA El Nino"
+        ],
+        "n_tests": 4,
+        "significant": 4
+      },
+      "exploratory": {
+        "description": "Surgieron de recorrer la tabla sin hipotesis previa. No sobreviven una correccion por comparaciones multiples dentro de su familia y requieren confirmacion con mas temporadas.",
+        "n_tests": 36,
+        "significant": 2,
+        "expected_by_chance": 1.8
+      }
+    },
+    "n_variation_note": "N varia entre estaciones (DEF~15, SON~14, MAM~9, JJA~7) porque los eventos ENSO alcanzan su pico en el verano austral (DEF). En otono e invierno, menos temporadas cumplen el umbral ONI >= 0.5.",
+    "units": {
+      "mean_deviation_monthly_mm": "Desviacion del promedio mensual dentro de la estacion (mm/mes). Es el promedio de los 3 desvios mensuales.",
+      "mean_deviation_seasonal_mm": "Desviacion del acumulado estacional (mm/estacion). Igual a monthly x 3 porque es el promedio de los desvios de las sumas estacionales.",
+      "deviation_pct_of_climatology": "Desviacion como porcentaje de la media climatologica estacional.",
+      "range_monthly_mm": "Rango [min, max] de los desvios mensuales promedio por temporada individual.",
+      "range_seasonal_mm": "Rango [min, max] de los desvios del acumulado estacional por temporada individual. Calculado directamente desde los acumulados, NO escalado desde el rango mensual."
+    },
+    "data_source": "CHIRPS v2.0 (1981-2025) via IRI OPeNDAP, ONI de NOAA CPC",
+    "chirps_caveat": "CHIRPS es un producto basado en infrarrojo + estaciones. Subestima la precipitacion nival, especialmente en Cuyo y Patagonia en invierno."
+  },
   "region_meta": {
     "Pampa Húmeda": {
       "provinces": [
@@ -11328,6 +12256,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-05T15:03:08Z",
+  "last_updated": "2026-09-05T20:40:29Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
