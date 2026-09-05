@@ -79,8 +79,8 @@
     .executive-summary{margin:18px 0 0;max-width:54ch;}
     .summary-line{font-size:15px;line-height:1.55;color:rgba(255,255,255,0.85);margin:0 0 6px;}
     .summary-highlight{font-weight:600;color:rgba(255,255,255,0.95);}
-    .summary-caveat{font-size:13px;color:rgba(255,255,255,0.5);margin:0;}
-    .summary-trajectory{margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.5);max-width:54ch;}
+    .summary-caveat{font-size:13px;color:rgba(255,255,255,0.85);margin:0;font-weight:500;}
+    .summary-trajectory{margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.75);max-width:54ch;}
     .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px;margin-top:22px;}
     .region-pills{display:flex;flex-wrap:wrap;gap:8px;}
     .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:6px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);cursor:pointer;transition:all var(--ease-smooth);}
@@ -891,19 +891,36 @@ function buildOniGauge(svgId, oniValue) {
 
 /* ── Region signal color (D1 palette) ── */
 function regionSignalColor(r, p, phase) {
-  if (p >= SIG_THRESHOLD) return '#94a3b8'; /* gray — not significant */
+  if (p >= SIG_THRESHOLD) return '#a3a3a3'; /* true neutral grey — not significant */
   /* Expected precipitation direction given current phase */
   const wet = (phase === 'El Niño' && r > 0) || (phase === 'La Niña' && r < 0);
   const dry = (phase === 'El Niño' && r < 0) || (phase === 'La Niña' && r > 0);
-  if (phase === 'Neutral') return '#94a3b8'; /* no directional signal during neutral */
+  if (phase === 'Neutral') return '#a3a3a3'; /* no directional signal during neutral */
   if (wet) return '#3b82f6'; /* blue — wet signal */
   if (dry) return '#b45309'; /* ochre — deficit signal */
-  return '#94a3b8';
+  return '#a3a3a3';
+}
+
+/* ── Region color by magnitude (% deviation) ── */
+function regionMagnitudeOpacity(region, phase, freqStats) {
+  if (phase === 'Neutral') return 0.35;
+  const pk = phase === 'El Niño' ? 'el_nino' : 'la_nina';
+  /* Find best significant season */
+  let bestDevPct = 0;
+  for (const sn of ['DEF','SON','MAM','JJA']) {
+    const cell = ((freqStats[sn] || {})[region] || {})[pk];
+    if (cell && cell.significant) {
+      bestDevPct = Math.max(bestDevPct, Math.abs(cell.deviation_pct_of_climatology || 0));
+    }
+  }
+  if (bestDevPct === 0) return 0.35; /* no significant signal */
+  /* Scale: 0% → 0.35, 20% → 0.7 */
+  return 0.35 + Math.min(0.35, bestDevPct / 20 * 0.35);
 }
 
 /* ── Traffic light color ── */
 function trafficLightColor(r, p) {
-  if (p >= SIG_THRESHOLD) return '#22c55e'; /* green — no significant signal */
+  if (p >= SIG_THRESHOLD) return '#a3a3a3'; /* neutral grey — no significant signal */
   const absR = Math.abs(r);
   if (absR >= 0.20) return '#ef4444'; /* red — strong/moderate signal */
   return '#eab308'; /* yellow — weak but significant */
@@ -915,8 +932,8 @@ function badgeInfo(r, p, phase) {
     return { text: 'Sin señal', cls: 'risk-badge-none' };
   }
   const wet = (phase === 'El Niño' && r > 0) || (phase === 'La Niña' && r < 0);
-  if (wet) return { text: 'Exceso hídrico', cls: 'risk-badge-wet' };
-  return { text: 'Déficit', cls: 'risk-badge-dry' };
+  if (wet) return { text: 'Más lluvia', cls: 'risk-badge-wet' };
+  return { text: 'Menos lluvia', cls: 'risk-badge-dry' };
 }
 
 /* ── Region bounding boxes (from config.py, WGS-84) ── */
@@ -944,7 +961,7 @@ function bboxToGeoJSON(b) {
 }
 
 /* ── Argentina choropleth map ── */
-async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect) {
+async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freqStats) {
   if (typeof d3 === 'undefined' || typeof topojson === 'undefined') return;
 
   const topo = await (await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/countries-110m.json')).json();
@@ -992,7 +1009,7 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect) {
     .attr('d', path)
     .attr('fill', d => {
       const b = best[d.properties.name];
-      if (!b) return '#94a3b8';
+      if (!b) return '#a3a3a3';
       return regionSignalColor(b.pearson_r, b.pearson_p, phase);
     })
     .attr('fill-opacity', prefRM ? null : 0)
@@ -1001,21 +1018,19 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect) {
     .attr('stroke-opacity', 0.3)
     .attr('cursor', 'pointer');
 
-  /* Staggered fade-in */
+  /* Staggered fade-in — opacity by magnitude when freq data available */
+  function regionOpacity(d) {
+    const b = best[d.properties.name];
+    if (!b || b.pearson_p >= SIG_THRESHOLD) return 0.35; /* grey is clearly visible */
+    if (freqStats) return regionMagnitudeOpacity(d.properties.name, phase, freqStats);
+    return 0.4 + Math.min(0.35, Math.abs(b.pearson_r));
+  }
   if (!prefRM) {
     regionPaths.transition().duration(500)
       .delay((d, i) => 200 + i * 120)
-      .attr('fill-opacity', d => {
-        const b = best[d.properties.name];
-        if (!b || b.pearson_p >= SIG_THRESHOLD) return 0.25;
-        return 0.35 + Math.min(0.35, Math.abs(b.pearson_r));
-      });
+      .attr('fill-opacity', regionOpacity);
   } else {
-    regionPaths.attr('fill-opacity', d => {
-      const b = best[d.properties.name];
-      if (!b || b.pearson_p >= SIG_THRESHOLD) return 0.25;
-      return 0.35 + Math.min(0.35, Math.abs(b.pearson_r));
-    });
+    regionPaths.attr('fill-opacity', regionOpacity);
   }
 
   regionPaths
@@ -1080,7 +1095,7 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect) {
   const legendData = [
     { color: '#3b82f6', label: 'Más lluvia (señal histórica)' },
     { color: '#b45309', label: 'Menos lluvia (señal histórica)' },
-    { color: '#94a3b8', label: 'Sin señal significativa' },
+    { color: '#a3a3a3', label: 'Sin señal significativa' },
   ];
   const container = document.getElementById('risk-map-container');
   let legendEl = container.querySelector('.map-legend');
@@ -1098,7 +1113,7 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect) {
 }
 
 /* ── Risk cards ── */
-function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, regionMeta, onSelect) {
+function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, regionMeta, onSelect, freqStats) {
   const container = document.getElementById(containerId);
   if (!container) return;
   container.innerHTML = '';
@@ -1117,9 +1132,8 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
     const isSig = b && b.pearson_p < SIG_THRESHOLD;
     const meta = (regionMeta || {})[region] || {};
     const provinces = Array.isArray(meta.provinces) ? meta.provinces.join(', ') : '';
-    const rStr = b ? (b.pearson_r >= 0 ? '+' : '') + b.pearson_r.toFixed(3) + (b.pearson_stars || '') : '—';
     const badge = b ? badgeInfo(b.pearson_r, b.pearson_p, phase) : badgeInfo(0, 1, phase);
-    const tlColor = b ? trafficLightColor(b.pearson_r, b.pearson_p) : '#22c55e';
+    const tlColor = b ? trafficLightColor(b.pearson_r, b.pearson_p) : '#a3a3a3';
 
     const card = document.createElement('div');
     card.className = 'risk-card';
@@ -1128,17 +1142,34 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
     card.setAttribute('tabindex', '0');
     card.setAttribute('aria-label', `${region}: ${badge.text}`);
 
-    /* Build seasonal hint for annually n.s. regions */
-    let seasonalHint = '';
-    if (!isSig && seasonalCorr) {
-      const seasonLabels = { SON: 'SON', DEF: 'DEF', MAM: 'MAM', JJA: 'JJA' };
-      for (const [sn, recs] of Object.entries(seasonalCorr)) {
-        const hits = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
-        if (hits.length > 0) {
-          const topHit = hits.reduce((a, c) => Math.abs(a.pearson_r) > Math.abs(c.pearson_r) ? a : c);
-          const sSign = topHit.pearson_r >= 0 ? '+' : '';
-          seasonalHint = ` · ${seasonLabels[sn] || sn} ${sSign}${topHit.pearson_r.toFixed(2)}${topHit.pearson_stars || ''}`;
-          break; /* show strongest seasonal only */
+    /* Build frequency-based summary for the card */
+    let freqHint = '';
+    if (freqStats && phase !== 'Neutral') {
+      const pk = phase === 'El Niño' ? 'el_nino' : 'la_nina';
+      let bestCell = null, bestSn = null;
+      for (const sn of ['DEF','SON','MAM','JJA']) {
+        const cell = ((freqStats[sn] || {})[region] || {})[pk];
+        if (cell && cell.significant && (!bestCell || cell.p_binomial < bestCell.p_binomial)) {
+          bestCell = cell; bestSn = sn;
+        }
+      }
+      if (bestCell) {
+        const devStr = bestCell.deviation_pct_of_climatology != null
+          ? ` (${bestCell.deviation_pct_of_climatology > 0 ? '+' : ''}${bestCell.deviation_pct_of_climatology}%)`
+          : '';
+        freqHint = `${bestCell.M_above_median}/${bestCell.N} ${bestSn}${devStr}`;
+      } else if (!isSig) {
+        /* Check for seasonal hint even without freq significance */
+        if (seasonalCorr) {
+          const seasonLabels = { SON: 'SON', DEF: 'DEF', MAM: 'MAM', JJA: 'JJA' };
+          for (const [sn, recs] of Object.entries(seasonalCorr)) {
+            const hits = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+            if (hits.length > 0) {
+              const topHit = hits.reduce((a, c) => Math.abs(a.pearson_r) > Math.abs(c.pearson_r) ? a : c);
+              freqHint = `${seasonLabels[sn]} r=${topHit.pearson_r >= 0 ? '+' : ''}${topHit.pearson_r.toFixed(2)}${topHit.pearson_stars || ''}`;
+              break;
+            }
+          }
         }
       }
     }
@@ -1149,7 +1180,7 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
         `<div class="risk-card-name">${region}</div>` +
         `<div class="risk-card-prov">${provinces}</div>` +
       `</div>` +
-      `<div class="risk-card-r">${rStr}${seasonalHint}</div>` +
+      `<div class="risk-card-r">${freqHint}</div>` +
       `<span class="risk-badge ${badge.cls}">${badge.text}</span>`;
 
     card.addEventListener('click', () => { if (onSelect) onSelect(region); });
@@ -2098,28 +2129,102 @@ function buildPrecipBars(anomalyArr) {
 }
 
 /* ── Risk region detail text ── */
-function regionDetailText(region, best, isSig) {
+function regionDetailText(region, best, isSig, freqStats) {
   const chirpsCaveat = (region === 'Cuyo' || region === 'Patagonia')
     ? ' CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO cordillerana puede estar subestimada por limitación de la fuente, no por ausencia del fenómeno.'
     : '';
+
+  let html = '';
+
   if (!best || !isSig) {
-    return `No se detecta una relación estadística clara entre el ENSO y la lluvia en esta región (agregación anual). La variabilidad local domina.${chirpsCaveat}`;
+    html += `No se detecta una relación estadística clara entre el ENSO y la lluvia en esta región (agregación anual). La variabilidad local domina.${chirpsCaveat}`;
+  } else {
+    const r = best.pearson_r;
+    const signal = r > 0 ? 'más lluviosos' : 'más secos';
+    const ninaEffect = r > 0 ? 'menos lluvia' : 'más lluvia';
+    const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
+    html += `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
+      `Es una señal estadística, no certeza operacional.${chirpsCaveat}` +
+      `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>` +
+      `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
   }
-  const r = best.pearson_r;
-  const signal = r > 0 ? 'más lluviosos' : 'más secos';
-  const ninaEffect = r > 0 ? 'déficit hídrico' : 'exceso hídrico';
-  const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
-  return `Años El Niño tienden a ser ${signal} en esta región; años La Niña se asocian con ${ninaEffect}. ` +
-    `Es una señal estadística, no certeza operacional.${chirpsCaveat}` +
-    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>` +
-    `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
+
+  /* Frequency table by season */
+  if (freqStats) {
+    const SEASON_NAMES = { DEF: 'Verano (DEF)', SON: 'Primavera (SON)', MAM: 'Otoño (MAM)', JJA: 'Invierno (JJA)' };
+    let rows = '';
+    let hasData = false;
+    for (const sn of ['DEF','SON','MAM','JJA']) {
+      const entry = (freqStats[sn] || {})[region];
+      if (!entry) continue;
+      for (const [pk, label] of [['el_nino', 'El Niño'], ['la_nina', 'La Niña']]) {
+        const c = entry[pk];
+        if (!c) continue;
+        hasData = true;
+        const sigMark = c.significant ? ' *' : '';
+        const prelim = c.preliminary ? ' <span style="color:#b45309;font-size:10px;">preliminar</span>' : '';
+        const devPct = c.deviation_pct_of_climatology != null
+          ? `${c.deviation_pct_of_climatology > 0 ? '+' : ''}${c.deviation_pct_of_climatology}%`
+          : '—';
+        const devMm = c.mean_deviation_seasonal_mm != null
+          ? `${c.mean_deviation_seasonal_mm > 0 ? '+' : ''}${c.mean_deviation_seasonal_mm} mm`
+          : '';
+        const range = c.range_seasonal_mm
+          ? `[${c.range_seasonal_mm[0] > 0 ? '+' : ''}${c.range_seasonal_mm[0]}, ${c.range_seasonal_mm[1] > 0 ? '+' : ''}${c.range_seasonal_mm[1]}]`
+          : '';
+        rows += `<tr style="border-bottom:1px solid #eee;">` +
+          `<td style="padding:3px 6px;">${SEASON_NAMES[sn]}</td>` +
+          `<td style="padding:3px 6px;">${label}</td>` +
+          `<td style="padding:3px 6px;text-align:center;font-weight:${c.significant ? '700' : '400'};">${c.M_above_median}/${c.N}${sigMark}</td>` +
+          `<td style="padding:3px 6px;text-align:right;">${devPct}</td>` +
+          `<td style="padding:3px 6px;text-align:right;color:#79818E;">${devMm}</td>` +
+          `<td style="padding:3px 6px;text-align:right;color:#79818E;">${range}</td>` +
+          `<td style="padding:3px 6px;text-align:right;">p=${c.p_binomial.toFixed(3)}${prelim}</td></tr>`;
+      }
+    }
+    if (hasData) {
+      html += `<details style="margin-top:10px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Frecuencia estacional ▸</summary>` +
+        `<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:6px;">` +
+        `<thead><tr style="border-bottom:2px solid #ddd;color:#79818E;text-align:left;">` +
+        `<th style="padding:3px 6px;">Estación</th><th style="padding:3px 6px;">Fase</th>` +
+        `<th style="padding:3px 6px;text-align:center;">Sobre mediana</th>` +
+        `<th style="padding:3px 6px;text-align:right;">Desvío %</th>` +
+        `<th style="padding:3px 6px;text-align:right;">mm/est</th>` +
+        `<th style="padding:3px 6px;text-align:right;">Rango</th>` +
+        `<th style="padding:3px 6px;text-align:right;">p</th></tr></thead>` +
+        `<tbody>${rows}</tbody></table>` +
+        `<p style="font-size:10px;color:#79818E;margin-top:4px;">* p &lt; 0.05 (binomial bilateral). Desvío % = respecto de la media climatológica estacional. Rango = [min, max] de desvíos estacionales individuales.</p>` +
+        `</details>`;
+    }
+  }
+
+  return html;
 }
 
 /* ── Risk summary paragraph ── */
-function riskSummaryText(phase) {
-  if (phase === 'El Niño') return 'Históricamente, los años El Niño tienden a ser más lluviosos en NEA y Pampa Húmeda. NOA, Cuyo y Patagonia no muestran señal clara en el agregado anual, pero sí por estación.';
-  if (phase === 'La Niña') return 'Históricamente, los años La Niña tienden a ser más secos en NEA y Pampa Húmeda. NOA, Cuyo y Patagonia no muestran señal clara en el agregado anual, pero sí por estación.';
-  return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
+function riskSummaryText(phase, freqStats) {
+  if (phase === 'Neutral') {
+    return 'Con el ONI en fase Neutral, la señal ENSO se debilita. Planificar con climatología local y pronósticos de corto plazo.';
+  }
+
+  let text = '';
+  if (phase === 'El Niño') {
+    text = 'Históricamente, los años El Niño tienden a ser más lluviosos en NEA y Pampa Húmeda: oportunidad para la campaña agrícola, pero riesgo de anegamiento para infraestructura y cuencas urbanas.';
+  } else {
+    text = 'Históricamente, los años La Niña tienden a ser más secos en NEA y Pampa Húmeda: riesgo de déficit para la campaña agrícola, menor presión sobre infraestructura de drenaje.';
+  }
+
+  /* M4: Highlight Pampa Húmeda double-sided significance */
+  if (freqStats) {
+    const pDef = (freqStats['DEF'] || {})['Pampa Húmeda'] || {};
+    const en = pDef['el_nino'], ln = pDef['la_nina'];
+    if (en && en.significant && ln && ln.significant) {
+      text += ` Pampa Húmeda en verano (DEF) es el caso más fuerte: ${en.M_above_median}/${en.N} veranos El Niño sobre la mediana (p=${en.p_binomial.toFixed(3)}) contra ${ln.M_above_median}/${ln.N} en La Niña (p=${ln.p_binomial.toFixed(3)}). Correlación y frecuencia coinciden (r=+0.39***).`;
+    }
+  }
+
+  text += ' NOA, Cuyo y Patagonia no muestran señal clara en el agregado anual, pero sí por estación.';
+  return text;
 }
 
 /* ── Main ── */
@@ -2227,12 +2332,20 @@ async function main() {
   const dotEl = document.getElementById('status-dot');
   dotEl.style.background = pColor;
   dotEl.style.color = pColor;
+
+  /* ── Canonical phase label — single source for the entire page ── */
+  let canonicalPhase;
+  if (phase === 'Neutral') {
+    canonicalPhase = 'Neutral';
+  } else {
+    const intensityStr = conditionsIntensity ? ` ${conditionsIntensity}` : '';
+    canonicalPhase = `${phase}${intensityStr}`;
+  }
   const statusLabel = document.getElementById('status-label');
   if (phase === 'Neutral') {
     statusLabel.textContent = 'Condiciones Neutrales · NOAA CPC';
   } else {
-    const episodeTag = episodeConfirmed ? '' : ' en desarrollo';
-    statusLabel.textContent = (phase === 'El Niño' ? `El Niño${episodeTag}` : `La Niña${episodeTag}`) + ' · NOAA CPC';
+    statusLabel.textContent = canonicalPhase + ' · NOAA CPC';
   }
   /* statusLabel inherits white from command-center */
 
@@ -2245,23 +2358,29 @@ async function main() {
     const gap = cur.nino34_value - cur.oni_value; /* positive = SST ahead, negative = ONI ahead */
     const nino34Str = `${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)}`;
 
-    if (phase === 'El Niño') {
+    /* Guard: do NOT generate trend claims if the date gap between ONI and
+       Niño 3.4 exceeds 30 days. When one indicator is stale, comparing
+       them produces physically false statements (C2 regression). */
+    const oniDateMs = new Date(cur.oni_date + 'T12:00:00Z').getTime();
+    const n34DateMs = new Date(cur.nino34_date + 'T12:00:00Z').getTime();
+    const dateGapDays = Math.abs(n34DateMs - oniDateMs) / (1000 * 86400);
+    const canCompareTrend = dateGapDays <= 45;
+
+    if (canCompareTrend && phase === 'El Niño') {
       if (gap < -0.15) {
-        /* ONI has overtaken Niño 3.4 — surface cooling, average still rising from inertia */
-        trajectoryNote = ` El ONI (${oniSign}${cur.oni_value.toFixed(2)}) ha superado al Niño 3.4 semanal (${nino34Str} °C): la señal de superficie está enfriándose mientras el promedio trimestral sigue subiendo por inercia.`;
+        trajectoryNote = ` El Niño 3.4 mensual (${nino34Str} °C) está por debajo del ONI (${oniSign}${cur.oni_value.toFixed(2)}). La superficie se ha enfriado respecto del promedio trimestral.`;
       } else if (gap > 0.5 && oniSlope > 0.15) {
-        trajectoryNote = ` Niño 3.4 semanal (${nino34Str} °C) por encima del ONI — fortalecimiento en curso.`;
+        trajectoryNote = ` Niño 3.4 mensual (${nino34Str} °C) por encima del ONI. Fortalecimiento en curso.`;
       } else if (Math.abs(gap) <= 0.15 && oniSlope > 0.1) {
         trajectoryNote = ` El ONI está alcanzando a la señal de superficie (Niño 3.4 ${nino34Str} °C). La brecha se ha cerrado.`;
       } else if (oniDecel < -0.15) {
         trajectoryNote = ` El ONI sigue positivo pero la tasa de aumento se está desacelerando.`;
       }
-    } else {
-      /* La Niña: mirror logic */
+    } else if (canCompareTrend && phase === 'La Niña') {
       if (gap > 0.15) {
-        trajectoryNote = ` El ONI (${oniSign}${cur.oni_value.toFixed(2)}) ha superado al Niño 3.4 semanal (${nino34Str} °C): la señal de superficie está calentándose mientras el promedio trimestral sigue bajando por inercia.`;
+        trajectoryNote = ` El Niño 3.4 mensual (${nino34Str} °C) está por encima del ONI (${oniSign}${cur.oni_value.toFixed(2)}). La superficie se ha calentado respecto del promedio trimestral.`;
       } else if (gap < -0.5 && oniSlope < -0.15) {
-        trajectoryNote = ` Niño 3.4 semanal (${nino34Str} °C) por debajo del ONI — fortalecimiento en curso.`;
+        trajectoryNote = ` Niño 3.4 mensual (${nino34Str} °C) por debajo del ONI. Fortalecimiento en curso.`;
       } else if (Math.abs(gap) <= 0.15 && oniSlope < -0.1) {
         trajectoryNote = ` El ONI está alcanzando a la señal de superficie (Niño 3.4 ${nino34Str} °C). La brecha se ha cerrado.`;
       } else if (oniDecel > 0.15) {
@@ -2270,11 +2389,8 @@ async function main() {
     }
   }
 
-  /* Hero phase label includes intensity when available */
-  const heroPhaseText = conditionsIntensity && phase !== 'Neutral'
-    ? `${phase} ${conditionsIntensity}`
-    : phase;
-  document.getElementById('hero-phase').textContent = heroPhaseText;
+  /* Hero phase label — uses canonical label */
+  document.getElementById('hero-phase').textContent = canonicalPhase;
 
   /* ── Compute onset month (first crossing of ±0.5 in current run) ── */
   const oniThreshold = phase === 'El Niño' ? 0.5 : -0.5;
@@ -2297,7 +2413,7 @@ async function main() {
   /* Trajectory note goes in the smaller hero-desc element */
   const descEl = document.getElementById('hero-desc');
   if (phase !== 'Neutral' && onsetMonth) {
-    let traj = 'En curso desde ' + onsetMonth + '.';
+    let traj = canonicalPhase + ' en curso desde ' + onsetMonth + '.';
     if (trajectoryNote) traj += trajectoryNote;
     descEl.textContent = traj;
   } else {
@@ -2579,19 +2695,20 @@ async function main() {
     const NOW = new Date();
     const END_YEAR = NOW.getFullYear() + 1;
     const YEAR_SPAN = END_YEAR - START_YEAR;
-    const W = 960; const H = 64; const PAD_L = 0; const PAD_R = 0;
+    const W = 960; const H = 64; const PAD_L = 24; const PAD_R = 10;
     const BAR_H = 18; const BAR_Y = 16;
     const usableW = W - PAD_L - PAD_R;
+    const LEGEND_Y = H + 28;
 
     const xScale = d => PAD_L + ((d.getFullYear() + d.getMonth() / 12) - START_YEAR) / YEAR_SPAN * usableW;
 
-    let svg = `<svg viewBox="0 0 ${W} ${H + 24}" style="width:100%;height:auto;display:block;font-family:'IBM Plex Mono',monospace;">`;
+    let svg = `<svg viewBox="0 0 ${W} ${LEGEND_Y + 6}" style="width:100%;height:auto;display:block;font-family:'IBM Plex Mono',monospace;">`;
 
     /* Decade grid lines */
     for (let y = Math.ceil(START_YEAR / 10) * 10; y <= END_YEAR; y += 10) {
       const x = xScale(new Date(y, 0, 1));
       svg += `<line x1="${x}" x2="${x}" y1="${BAR_Y - 4}" y2="${BAR_Y + BAR_H + 4}" stroke="#C7CCD6" stroke-width="0.5"/>`;
-      svg += `<text x="${x}" y="${H + 18}" text-anchor="middle" font-size="10" fill="#79818E">${y}</text>`;
+      svg += `<text x="${x}" y="${H + 14}" text-anchor="middle" font-size="10" fill="#79818E">${y}</text>`;
     }
 
     /* Background track */
@@ -2616,11 +2733,11 @@ async function main() {
     svg += `<line x1="${nowX}" x2="${nowX}" y1="${BAR_Y - 6}" y2="${BAR_Y + BAR_H + 6}" stroke="#14161A" stroke-width="1.5"/>`;
     svg += `<text x="${nowX}" y="${BAR_Y - 8}" text-anchor="middle" font-size="9" fill="#14161A" font-weight="600">hoy</text>`;
 
-    /* Legend */
-    svg += `<rect x="${W - 160}" y="${H + 8}" width="12" height="10" rx="2" fill="#C2382A" opacity="0.7"/>`;
-    svg += `<text x="${W - 144}" y="${H + 17}" font-size="10" fill="#79818E">El Niño</text>`;
-    svg += `<rect x="${W - 80}" y="${H + 8}" width="12" height="10" rx="2" fill="#2A55D0" opacity="0.7"/>`;
-    svg += `<text x="${W - 64}" y="${H + 17}" font-size="10" fill="#79818E">La Niña</text>`;
+    /* Legend — positioned below decade labels to avoid overlap */
+    svg += `<rect x="${PAD_L}" y="${LEGEND_Y - 10}" width="12" height="10" rx="2" fill="#C2382A" opacity="0.7"/>`;
+    svg += `<text x="${PAD_L + 16}" y="${LEGEND_Y - 1}" font-size="10" fill="#79818E">El Niño</text>`;
+    svg += `<rect x="${PAD_L + 80}" y="${LEGEND_Y - 10}" width="12" height="10" rx="2" fill="#2A55D0" opacity="0.7"/>`;
+    svg += `<text x="${PAD_L + 96}" y="${LEGEND_Y - 1}" font-size="10" fill="#79818E">La Niña</text>`;
 
     svg += '</svg>';
     tlContainer.innerHTML = svg;
@@ -2681,14 +2798,14 @@ async function main() {
   });
 
   /* Build risk cards */
-  buildRiskCards('risk-cards', regionOrder, best, phase, seasonalCorr, data.region_meta, selectRegion);
+  buildRiskCards('risk-cards', regionOrder, best, phase, seasonalCorr, data.region_meta, selectRegion, freqStats);
 
   /* Build Argentina choropleth map (async — D3 + TopoJSON) */
-  buildArgentinaMap('argentina-map', regionOrder, best, phase, selectRegion)
+  buildArgentinaMap('argentina-map', regionOrder, best, phase, selectRegion, freqStats)
     .then(ref => { mapRef = ref; })
     .catch(() => { /* D3/TopoJSON not loaded — map stays empty */ });
 
-  document.getElementById('risk-summary').textContent = riskSummaryText(phase);
+  document.getElementById('risk-summary').textContent = riskSummaryText(phase, freqStats);
 
   /* ── Accordions ── */
   const accordionEl = document.getElementById('accordions');
@@ -2723,7 +2840,7 @@ async function main() {
 
     const detailPara = document.createElement('p');
     detailPara.className = 'acc-detail';
-    detailPara.innerHTML = regionDetailText(region, b, isSig);
+    detailPara.innerHTML = regionDetailText(region, b, isSig, freqStats);
     detail.appendChild(detailPara);
 
     /* If annual is n.s., check seasonal correlations for a significant signal */
@@ -2734,12 +2851,23 @@ async function main() {
         const regRecs = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
         if (regRecs.length > 0) {
           const best_s = regRecs.reduce((a, b) => Math.abs(a.pearson_r) > Math.abs(b.pearson_r) ? a : b);
-          seasonalHits.push({ season: sn, label: seasonLabels[sn] || sn, r: best_s.pearson_r, stars: best_s.pearson_stars, lag: best_s.lag });
+          /* Cross-check with frequency stats for discrepancy */
+          const pk = best_s.pearson_r > 0 ? 'el_nino' : 'la_nina';
+          const freqCell = ((freqStats[sn] || {})[region] || {})[pk];
+          let freqNote = '';
+          if (freqCell) {
+            if (freqCell.significant) {
+              freqNote = ` (frecuencia: ${freqCell.M_above_median}/${freqCell.N}, p=${freqCell.p_binomial.toFixed(3)} — ambos métodos coinciden)`;
+            } else {
+              freqNote = ` (frecuencia: ${freqCell.M_above_median}/${freqCell.N}, p=${freqCell.p_binomial.toFixed(2)} — los métodos discrepan: correlación significativa pero frecuencia no)`;
+            }
+          }
+          seasonalHits.push({ season: sn, label: seasonLabels[sn] || sn, r: best_s.pearson_r, stars: best_s.pearson_stars, lag: best_s.lag, freqNote });
         }
       }
       if (seasonalHits.length > 0) {
         const hitText = seasonalHits.map(h =>
-          `${h.label}: r=${h.r >= 0 ? '+' : ''}${h.r.toFixed(3)}${h.stars} (lag ${h.lag}m)`
+          `${h.label}: r=${h.r >= 0 ? '+' : ''}${h.r.toFixed(3)}${h.stars} (lag ${h.lag}m)${h.freqNote}`
         ).join('; ');
         const seasonNote = document.createElement('p');
         seasonNote.className = 'acc-detail';
@@ -2856,21 +2984,14 @@ async function main() {
     applyDarkMode(!document.documentElement.classList.contains('dark'));
   });
 
-  /* ── Dynamic page title ── */
-  let phaseLabel;
-  if (phase === 'Neutral') {
-    phaseLabel = 'Neutral';
-  } else {
-    const episodeSuffix = episodeConfirmed ? '' : ' (en desarrollo)';
-    phaseLabel = phase === 'El Niño' ? `El Niño${episodeSuffix}` : `La Niña${episodeSuffix}`;
-  }
-  document.title = `Argentina ENSO Tracker — ${phaseLabel} (ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)})`;
+  /* ── Dynamic page title — uses canonical label ── */
+  document.title = `Argentina ENSO Tracker — ${canonicalPhase} (ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)})`;
   const ogTitle = document.querySelector('meta[property="og:title"]');
   if (ogTitle) ogTitle.content = document.title;
   const twTitle = document.querySelector('meta[name="twitter:title"]');
   if (twTitle) twTitle.content = document.title;
   const ogDesc = document.querySelector('meta[property="og:description"]');
-  if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${phaseLabel}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
+  if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${canonicalPhase}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
 
   /* ── Scroll reveal (IntersectionObserver) ── */
   if (!prefersReducedMotion) {

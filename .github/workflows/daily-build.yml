@@ -67,6 +67,36 @@ jobs:
           assert c['phase'] in ('El Niño', 'La Niña', 'Neutral'), 'invalid phase'
           assert len(d['oni_series']) > 100, 'oni_series too short'
           assert len(d['correlations']) > 0, 'no correlation rows'
+
+          # --- REGRESSION TEST: Niño 3.4 must be newer than ONI ---
+          # This regression has occurred twice: the pipeline fell back to CPC
+          # (same latency as ONI) without failing, publishing stale data.
+          from datetime import date as _date
+          oni_d = _date.fromisoformat(c['oni_date'])
+          n34_d = _date.fromisoformat(c['nino34_date'])
+          if n34_d <= oni_d:
+              print(f'FAIL: Niño 3.4 date ({n34_d}) is NOT more recent than ONI date ({oni_d}). '
+                    f'ERDDAP likely failed and CPC fallback was used. '
+                    f'This regression has happened before — refusing to deploy stale data.',
+                    file=sys.stderr)
+              sys.exit(1)
+          print(f'OK: Niño 3.4 date ({n34_d}) > ONI date ({oni_d})')
+
+          # --- Freshness test: each indicator declares expected latency ---
+          from datetime import timedelta
+          today = _date.today()
+          freshness = {
+              'ONI': (oni_d, 90, 'oni_date'),     # ~2 months + buffer
+              'Niño 3.4': (n34_d, 45, 'nino34_date'),  # ~1 week + buffer
+              'SOI': (_date.fromisoformat(c['soi_date']), 60, 'soi_date'),  # ~1 month + buffer
+          }
+          for name, (ind_date, max_days, field) in freshness.items():
+              age = (today - ind_date).days
+              if age > max_days:
+                  print(f'::warning::{name} is {age} days old (limit: {max_days}d). Date: {ind_date}.')
+              else:
+                  print(f'OK: {name} freshness: {age}d old (limit: {max_days}d)')
+
           sc = d['seasonal_correlations']
           assert all(k in sc for k in ['SON','DEF','MAM','JJA']), 'missing seasonal keys'
           fs = d['frequency_stats']
@@ -91,6 +121,31 @@ jobs:
           else:
               print('FAIL: iri_forecast is None and no cached version available', file=sys.stderr)
               sys.exit(1)
+
+          # --- Cross-check: correlation vs frequency verdicts ---
+          # When one method says significant and the other does not, warn.
+          # This happened with Patagonia SON (r=+0.18* but 9/14 p=0.42).
+          discrepancies = []
+          for sn in ['SON','DEF','MAM','JJA']:
+              s_corrs = sc.get(sn, [])
+              s_freq = fs.get(sn, {})
+              for corr_rec in s_corrs:
+                  reg = corr_rec['region']
+                  corr_sig = corr_rec['pearson_p'] < 0.05
+                  for pk in ['el_nino', 'la_nina']:
+                      freq_cell = (s_freq.get(reg) or {}).get(pk)
+                      if not freq_cell:
+                          continue
+                      freq_sig = freq_cell.get('significant', False)
+                      if corr_sig != freq_sig and corr_rec['lag'] == 0:
+                          direction = 'corr=sig freq=ns' if corr_sig else 'corr=ns freq=sig'
+                          discrepancies.append(f'{sn} {reg} {pk}: {direction} '
+                              f'(r={corr_rec["pearson_r"]}, p_corr={corr_rec["pearson_p"]}, '
+                              f'M/N={freq_cell["M_above_median"]}/{freq_cell["N"]}, p_freq={freq_cell["p_binomial"]})')
+          if discrepancies:
+              for disc in discrepancies:
+                  print(f'::warning::Method discrepancy: {disc}')
+              print(f'WARN: {len(discrepancies)} correlation vs frequency discrepancies (see above)')
 
           print(f"OK: phase={c['phase']}, ONI={c['oni_value']}, "
                 f"{len(d['oni_series'])} ONI points, "

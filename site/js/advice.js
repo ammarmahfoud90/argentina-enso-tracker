@@ -127,10 +127,10 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   let dirText, implication;
   if (direction === 'excess') {
     dirText     = 'precipitación sobre lo normal';
-    implication = 'riesgo de exceso hídrico';
+    implication = 'más lluvia: oportunidad para la campaña agrícola, riesgo de anegamiento para infraestructura';
   } else {
     dirText     = 'precipitación bajo lo normal';
-    implication = 'riesgo de déficit hídrico';
+    implication = 'menos lluvia: riesgo de déficit para la campaña agrícola';
   }
 
   let text =

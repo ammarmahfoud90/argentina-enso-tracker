@@ -543,13 +543,22 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     # Niño 3.4 must be more recent than ONI to add value (ONI has ~2-month
     # latency; ERDDAP weekly composites are near-real-time).  If dates match,
     # the ERDDAP fetch likely failed and the CPC fallback was used silently.
+    # REGRESSION TEST: this check was a warning, but the regression occurred
+    # twice (nino34 date going backwards). Now it's a hard error so the build
+    # fails loudly instead of publishing stale data.
     oni_date = latest_oni["date"].date() if hasattr(latest_oni["date"], "date") else latest_oni["date"]
     nino34_date = latest_nino["date"].date() if hasattr(latest_nino["date"], "date") else latest_nino["date"]
     if nino34_date <= oni_date:
-        logger.warning(
-            "Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
-            "source=%s. ERDDAP may have failed; CPC fallback has same latency as ONI.",
+        logger.error(
+            "REGRESSION: Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
+            "source=%s. ERDDAP may have failed; CPC fallback has same latency as ONI. "
+            "The build will NOT publish stale Niño 3.4 data.",
             nino34_date, oni_date, nino_source,
+        )
+        raise RuntimeError(
+            f"Niño 3.4 date ({nino34_date}) <= ONI date ({oni_date}). "
+            f"Source: {nino_source}. Refusing to build with stale Niño 3.4 data. "
+            f"This regression has occurred before — see C1 in the issue tracker."
         )
 
     # --- Phase classification ---
