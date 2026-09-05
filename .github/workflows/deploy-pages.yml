@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Smoke-lint inline JS
+        run: |
+          npm i --no-save eslint
+          node tests/smoke-lint.mjs
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 

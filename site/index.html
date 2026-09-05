@@ -2118,14 +2118,24 @@ async function main() {
   const pColor = phaseColor(phase);
   const best = bestByRegion(data.correlations, data.region_order || Object.keys(data.region_meta || {}));
 
+  /* ── Shared state hoisted for section isolation ── */
+  const regionOrder = data.region_order || ['NEA', 'Pampa Húmeda', 'NOA', 'Cuyo', 'Patagonia'];
+  let selRegion = regionOrder[0];
+  const plotlyReady = typeof Plotly !== 'undefined';
+  const seasonalCorr = data.seasonal_correlations || {};
+  let updateAdvice = function() {};
+
   /* ── Masthead date ── */
+  try {
   const upd = new Date(data.last_updated);
   const dd = String(upd.getUTCDate()).padStart(2, '0');
   const mm = String(upd.getUTCMonth() + 1).padStart(2, '0');
   const yyyy = upd.getUTCFullYear();
   document.getElementById('updated-date').textContent = `${dd} · ${mm} · ${yyyy}`;
+  } catch (e) { console.error('[masthead]', e); }
 
   /* ── Hero ── */
+  try {
   const dotEl = document.getElementById('status-dot');
   dotEl.style.background = pColor;
   dotEl.style.color = pColor;
@@ -2137,6 +2147,9 @@ async function main() {
     statusLabel.textContent = (phase === 'El Niño' ? `El Niño${episodeTag}` : `La Niña${episodeTag}`) + ' · NOAA CPC';
   }
   /* statusLabel inherits white from command-center */
+
+  /* Sign prefix for ONI display (+/-) — needed by trajectory and hero description */
+  const oniSign = cur.oni_value >= 0 ? '+' : '';
 
   /* Trajectory: ONI trend from last 3 values + gap vs Niño 3.4 */
   let trajectoryNote = '';
@@ -2194,7 +2207,6 @@ async function main() {
   }
 
   const descEl = document.getElementById('hero-desc');
-  const oniSign = cur.oni_value >= 0 ? '+' : '';
   if (phase === 'Neutral') {
     descEl.textContent = `ONI de ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ` +
       'Condición neutra — sin señal de fase ENSO activa. Planificar con climatología estacional.';
@@ -2208,8 +2220,10 @@ async function main() {
       : 'Mayor probabilidad histórica de déficit hídrico en NEA y Pampa Húmeda.';
     descEl.textContent = `${phase}${intensityStr}, en curso desde ${onsetMonth}. ONI ${oniSign}${cur.oni_value.toFixed(2)} °C (${cur.oni_season}). ${impactNote} ${episodeNote}${trajectoryNote}`;
   }
+  } catch (e) { console.error('[hero]', e); }
 
   /* ── ONI Gauge ── */
+  try {
   buildOniGauge('gauge-svg', cur.oni_value);
   const gaugeValueEl = document.getElementById('gauge-oni-value');
   countUp(gaugeValueEl, cur.oni_value, v => (v >= 0 ? '+' : '') + v.toFixed(2));
@@ -2228,16 +2242,14 @@ async function main() {
     else if (phase === 'La Niña') ccEl.classList.add('phase-nina');
     else ccEl.classList.add('phase-neutral');
   }
+  } catch (e) { console.error('[gauge]', e); }
 
   /* ── Region selector ── */
-  const regionOrder = data.region_order || ['NEA', 'Pampa Húmeda', 'NOA', 'Cuyo', 'Patagonia'];
-  let selRegion = regionOrder[0];
-
-  /* SOI trend for advice module */
+  try {
   const soi24mData = data.soi_series_24m || [];
   const adviceSoiTrend = typeof soiTrend === 'function' ? soiTrend(soi24mData) : null;
 
-  function updateAdvice(region) {
+  updateAdvice = function(region) {
     const bestCorr = best[region];
     const extras = {
       oni_value: cur.oni_value,
@@ -2252,7 +2264,7 @@ async function main() {
     document.querySelectorAll('.region-pill').forEach(btn => {
       btn.classList.toggle('active', btn.dataset.region === region);
     });
-  }
+  };
 
   const pillsEl = document.getElementById('region-pills');
   for (const region of regionOrder) {
@@ -2264,11 +2276,10 @@ async function main() {
     pillsEl.appendChild(btn);
   }
   updateAdvice(selRegion);
-
-  /* (Indicators absorbed into gauge panel above) */
+  } catch (e) { console.error('[region-selector]', e); }
 
   /* ── ONI Chart (Plotly) ── */
-  const plotlyReady = typeof Plotly !== 'undefined';
+  try {
   let currentDesde = 1970;
 
   function setRange(desde) {
@@ -2293,8 +2304,10 @@ async function main() {
   /* ── Data freshness indicator ── */
   updateFreshnessIndicator(data.last_updated);
   updateFooterTimestamp(data.last_updated);
+  } catch (e) { console.error('[oni-chart]', e); }
 
   /* ── SOI Tracker ── */
+  try {
   const soi24m = data.soi_series_24m || [];
   if (soi24m.length > 0) {
     const soiTrackerVal = document.getElementById('soi-tracker-val');
@@ -2316,8 +2329,10 @@ async function main() {
 
     if (plotlyReady) buildSoiPlotly('soi-plotly', soi24m);
   }
+  } catch (e) { console.error('[soi-tracker]', e); }
 
   /* ── IRI Forecast panel ── */
+  try {
   const iriForecast = data.iri_forecast;
   if (iriForecast) {
     const panel = document.getElementById('iri-forecast-panel');
@@ -2366,8 +2381,10 @@ async function main() {
     }
     document.getElementById('forecast-meta').textContent = metaText;
   }
+  } catch (e) { console.error('[iri-forecast]', e); }
 
   /* ── Subsurface temperature heatmap ── */
+  try {
   if (data.subsurface && plotlyReady) {
     const shown = buildSubsurfaceHeatmap('subsurface-plotly', data.subsurface);
     if (shown) {
@@ -2455,8 +2472,10 @@ async function main() {
         /* SST map not available — section stays hidden */
       });
   }
+  } catch (e) { console.error('[subsurface-sst]', e); }
 
   /* ── Historical comparison ── */
+  try {
   let currentCompare = 'nino';
   function setCompare(type) {
     currentCompare = type;
@@ -2467,9 +2486,10 @@ async function main() {
   document.getElementById('compare-btn-nino').addEventListener('click', () => setCompare('nino'));
   document.getElementById('compare-btn-nina').addEventListener('click', () => setCompare('nina'));
   setCompare('nino');
+  } catch (e) { console.error('[comparison]', e); }
 
   /* ── Correlation bar chart + heatmap + seasonal dropdown ── */
-  const seasonalCorr = data.seasonal_correlations || {};
+  try {
   function updateCorrelationView(season) {
     const corrs = season === 'annual' ? data.correlations : (seasonalCorr[season] || []);
     if (plotlyReady) buildCorrelationBarChart('corr-bar-chart', corrs, regionOrder);
@@ -2486,8 +2506,10 @@ async function main() {
   }
   document.getElementById('season-select').addEventListener('change', (e) => updateCorrelationView(e.target.value));
   updateCorrelationView('annual');
+  } catch (e) { console.error('[correlations]', e); }
 
   /* ── Risk section: map + cards ── */
+  try {
   const sortedRegions = [...regionOrder].sort((a, b) => {
     const bA = best[a], bB = best[b];
     const sigA = bA && bA.pearson_p < SIG_THRESHOLD;
@@ -2590,8 +2612,10 @@ async function main() {
 
     accordionEl.appendChild(detail);
   }
+  } catch (e) { console.error('[risk-section]', e); }
 
   /* ── Sticky nav: show after scroll past masthead, highlight active section ── */
+  try {
   const stickyNav = document.getElementById('sticky-nav');
   const navLinks = stickyNav.querySelectorAll('a');
   const sectionIds = Array.from(navLinks).map(a => a.getAttribute('href').slice(1));
@@ -2718,6 +2742,7 @@ async function main() {
   } else {
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
   }
+  } catch (e) { console.error('[ui-chrome]', e); }
 
 }
 
