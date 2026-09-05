@@ -2327,14 +2327,14 @@ async function main() {
   document.getElementById('updated-date').textContent = `${dd} · ${mm} · ${yyyy}`;
   } catch (e) { console.error('[masthead]', e); }
 
+  /* ── Canonical phase label — single source for the entire page ── */
+  let canonicalPhase = phase || 'ENSO';
+
   /* ── Hero ── */
   try {
   const dotEl = document.getElementById('status-dot');
   dotEl.style.background = pColor;
   dotEl.style.color = pColor;
-
-  /* ── Canonical phase label — single source for the entire page ── */
-  let canonicalPhase;
   if (phase === 'Neutral') {
     canonicalPhase = 'Neutral';
   } else {
