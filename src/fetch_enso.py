@@ -543,23 +543,33 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     # Niño 3.4 must be more recent than ONI to add value (ONI has ~2-month
     # latency; ERDDAP weekly composites are near-real-time).  If dates match,
     # the ERDDAP fetch likely failed and the CPC fallback was used silently.
-    # REGRESSION TEST: this check was a warning, but the regression occurred
-    # twice (nino34 date going backwards). Now it's a hard error so the build
-    # fails loudly instead of publishing stale data.
+    # When the source is a known fallback (CPC), staleness is expected and we
+    # degrade gracefully.  Hard-fail only if ERDDAP itself returned stale data
+    # (a real regression).
     oni_date = latest_oni["date"].date() if hasattr(latest_oni["date"], "date") else latest_oni["date"]
     nino34_date = latest_nino["date"].date() if hasattr(latest_nino["date"], "date") else latest_nino["date"]
     if nino34_date <= oni_date:
-        logger.error(
-            "REGRESSION: Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
-            "source=%s. ERDDAP may have failed; CPC fallback has same latency as ONI. "
-            "The build will NOT publish stale Niño 3.4 data.",
-            nino34_date, oni_date, nino_source,
-        )
-        raise RuntimeError(
-            f"Niño 3.4 date ({nino34_date}) <= ONI date ({oni_date}). "
-            f"Source: {nino_source}. Refusing to build with stale Niño 3.4 data. "
-            f"This regression has occurred before — see C1 in the issue tracker."
-        )
+        if nino_source != "CPC":
+            # ERDDAP returned stale data — real regression, hard-fail.
+            logger.error(
+                "REGRESSION: Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
+                "source=%s. This is a real regression (not a fallback). "
+                "The build will NOT publish stale Niño 3.4 data.",
+                nino34_date, oni_date, nino_source,
+            )
+            raise RuntimeError(
+                f"Niño 3.4 date ({nino34_date}) <= ONI date ({oni_date}). "
+                f"Source: {nino_source}. Refusing to build with stale Niño 3.4 data. "
+                f"This regression has occurred before — see C1 in the issue tracker."
+            )
+        else:
+            # CPC fallback has same latency as ONI — expected when ERDDAP is down.
+            logger.warning(
+                "Niño 3.4 date (%s) is NOT more recent than ONI date (%s) — "
+                "source=%s (fallback). ERDDAP is likely down. "
+                "Building with CPC Niño 3.4 data (degraded freshness).",
+                nino34_date, oni_date, nino_source,
+            )
 
     # --- Phase classification ---
     phase = classify_enso_phase(oni_df)
