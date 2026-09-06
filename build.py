@@ -40,7 +40,11 @@ from src.config import (
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
+from src.compute_composites import compute_composites
+from src.compute_spi import compute_all_spi
 from src.fetch_enso import fetch_enso_snapshot
+from src.fetch_sam import fetch_sam_series
+from src.parana_data import get_parana_data
 from src.fetch_iri_forecast import fetch_iri_forecast
 from src.fetch_sst_map import fetch_sst_map
 from src.fetch_subsurface import fetch_subsurface_cross_section
@@ -619,6 +623,103 @@ def build_payload() -> dict:
     else:
         logger.warning("Pairs Parquet not found — frequency stats skipped")
 
+    # 8d. Composite analysis by ENSO intensity
+    composite_analysis: dict = {}
+    if pairs_path.exists():
+        try:
+            composite_analysis = compute_composites(pairs_df)
+            logger.info("Composite analysis: %d regions", len(composite_analysis))
+        except Exception as exc:
+            logger.warning("Composite analysis failed: %s", exc)
+    else:
+        logger.warning("Pairs Parquet not found — composite analysis skipped")
+
+    # 8e. SPI-3 drought index
+    spi_series: dict = {}
+    spi_current: dict = {}
+    if pairs_path.exists():
+        try:
+            spi_series, spi_current = compute_all_spi(pairs_df)
+            logger.info("SPI-3: %d regions", len(spi_current))
+        except Exception as exc:
+            logger.warning("SPI computation failed: %s", exc)
+    else:
+        logger.warning("Pairs Parquet not found — SPI skipped")
+
+    # 8f. Temperature correlations (from pre-computed Parquet)
+    temp_correlations: list[dict] = []
+    seasonal_temp_correlations: dict = {}
+    temp_corr_path = Path("data/processed/temp_correlations.parquet")
+    temp_pairs_path = Path("data/processed/oni_temp_pairs.parquet")
+    if temp_corr_path.exists():
+        try:
+            temp_corr_df = pd.read_parquet(temp_corr_path)
+            for _, row in temp_corr_df.iterrows():
+                temp_correlations.append({
+                    "region": str(row["region"]),
+                    "lag": int(row["lag"]),
+                    "pearson_r": round(float(row["pearson_r"]), 4),
+                    "pearson_p": round(float(row["pearson_p"]), 4),
+                    "pearson_stars": _sig_stars(float(row["pearson_p"])),
+                    "spearman_r": round(float(row["spearman_r"]), 4),
+                    "spearman_p": round(float(row["spearman_p"]), 4),
+                    "n_obs": int(row["n_obs"]),
+                    "n_eff": int(row["n_eff"]) if "n_eff" in row.index else None,
+                })
+            logger.info("Temperature correlations: %d rows from %s", len(temp_correlations), temp_corr_path)
+
+            # Compute seasonal temp correlations if pairs available
+            if temp_pairs_path.exists():
+                import numpy as _np
+                from scipy import stats as _stats
+                from src.compute_correlations import compute_n_eff as _compute_n_eff
+
+                temp_pairs_df = pd.read_parquet(temp_pairs_path)
+                temp_pairs_df["date"] = pd.to_datetime(temp_pairs_df["date"])
+                temp_pairs_df["ym"] = temp_pairs_df["date"].dt.to_period("M")
+                temp_pairs_df["month"] = temp_pairs_df["date"].dt.month
+                _oni_t = temp_pairs_df[["ym", "oni"]].copy()
+                _temp_cols = [c for c in REGION_ORDER if c in temp_pairs_df.columns]
+
+                for season_name, months_list in [("SON",[9,10,11]),("DEF",[12,1,2]),("MAM",[3,4,5]),("JJA",[6,7,8])]:
+                    season_temp = temp_pairs_df[temp_pairs_df["month"].isin(months_list)]
+                    season_records = []
+                    for lag in CORRELATION_LAGS:
+                        oni_shifted = _oni_t.copy()
+                        oni_shifted["ym"] = oni_shifted["ym"] + lag
+                        merged = season_temp.merge(oni_shifted, on="ym", how="inner")
+                        for region in _temp_cols:
+                            paired = merged[["oni", region]].dropna()
+                            n = len(paired)
+                            if n < 20:
+                                continue
+                            x, y = paired["oni"].values, paired[region].values
+                            pr, pp_naive = _stats.pearsonr(x, y)
+                            sr, sp = _stats.spearmanr(x, y)
+                            n_eff = _compute_n_eff(x, y)
+                            if n_eff > 2 and abs(pr) < 1.0:
+                                t_stat = pr * _np.sqrt((n_eff - 2) / (1 - pr ** 2))
+                                pp = float(2 * _stats.t.sf(abs(t_stat), df=n_eff - 2))
+                            else:
+                                pp = pp_naive
+                            season_records.append({
+                                "region": region, "lag": lag,
+                                "pearson_r": round(float(pr), 4),
+                                "pearson_p": round(float(pp), 4),
+                                "pearson_stars": _sig_stars(float(pp)),
+                                "spearman_r": round(float(sr), 4),
+                                "spearman_p": round(float(sp), 4),
+                                "n_obs": n, "n_eff": n_eff,
+                            })
+                    seasonal_temp_correlations[season_name] = season_records
+                logger.info("Seasonal temp correlations: %s",
+                            {k: len(v) for k, v in seasonal_temp_correlations.items()})
+        except Exception as exc:
+            logger.warning("Temperature correlations failed: %s", exc)
+    else:
+        logger.info("Temperature correlations Parquet not found — section will be hidden. "
+                     "Run `python -m src.compute_temp_correlations` to generate.")
+
     # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
     logger.info("Fetching subsurface temperature data…")
     subsurface = fetch_subsurface_cross_section()
@@ -626,6 +727,24 @@ def build_payload() -> dict:
         logger.info("Subsurface: %d lons x %d depths", len(subsurface["longitudes"]), len(subsurface["depths"]))
     else:
         logger.warning("Subsurface data unavailable — section will be hidden in frontend")
+
+    # 9b. SAM/AAO index
+    logger.info("Fetching SAM/AAO index from NOAA CPC…")
+    sam_monthly_records: list[dict] | None = None
+    sam_value: float | None = None
+    sam_date_str: str | None = None
+    try:
+        sam_df, sam_value, sam_date = fetch_sam_series()
+        sam_monthly_records = []
+        for _, row in sam_df.iterrows():
+            sam_monthly_records.append({
+                "date": row["date"].date().isoformat(),
+                "sam": round(float(row["sam"]), 2),
+            })
+        sam_date_str = sam_date.isoformat()
+        logger.info("SAM: latest=%.2f (%s), %d records", sam_value, sam_date_str, len(sam_monthly_records))
+    except Exception as exc:
+        logger.warning("SAM/AAO fetch failed: %s — section will be hidden", exc)
 
     # 10. IRI forecast (parsed probabilities + SVG URLs)
     #     Graceful degradation: if fetch fails, reuse last valid forecast from
@@ -665,6 +784,8 @@ def build_payload() -> dict:
             "episode_confirmed": snapshot.episode_confirmed,
             "phase":       snapshot.phase,
             "phase_source": snapshot.phase_source,
+            "sam_value":   sam_value,
+            "sam_date":    sam_date_str,
         },
         "oni_series":    oni_records,
         "oni_series_24m": oni_24m,
@@ -679,8 +800,89 @@ def build_payload() -> dict:
         "episodes":      episodes,
         "correlation_cache": cache_meta,
         "precip_anomaly_12m": precip_anomaly_12m,
+        "composite_analysis": composite_analysis,
+        "spi_series":    spi_series,
+        "spi_current":   spi_current,
+        "sam_monthly":   sam_monthly_records,
+        "parana_enso":   get_parana_data(),
+        "temp_correlations": temp_correlations if temp_correlations else None,
+        "seasonal_temp_correlations": seasonal_temp_correlations if seasonal_temp_correlations else None,
         "subsurface":    subsurface,
         "iri_forecast":  iri_forecast,
+        "notable_events": [
+            {
+                "year_range": "1982–83", "name": "El Niño 1982–83",
+                "type": "El Niño", "oni_peak": 2.1, "peak_season": "DJF 1983",
+                "start_year": 1982, "start_month": 5,
+                "argentina_impact": (
+                    "Inundaciones extraordinarias en el Litoral y Pampa Húmeda. "
+                    "El Paraná alcanzó 7.52 m en Rosario (julio 1983). "
+                    "Pérdidas agrícolas masivas en la región pampeana."
+                ),
+                "category": "muy fuerte",
+            },
+            {
+                "year_range": "1997–98", "name": "El Niño 1997–98",
+                "type": "El Niño", "oni_peak": 2.4, "peak_season": "NDJ 1998",
+                "start_year": 1997, "start_month": 5,
+                "argentina_impact": (
+                    "El evento más intenso del siglo XX. Inundaciones severas "
+                    "en el NEA y Litoral. Crecidas del Paraná, Uruguay y afluentes. "
+                    "Lluvias récord en primavera y verano en la Pampa Húmeda."
+                ),
+                "category": "muy fuerte",
+            },
+            {
+                "year_range": "2008–09", "name": "La Niña 2008–09",
+                "type": "La Niña", "oni_peak": -0.8, "peak_season": "DJF 2009",
+                "start_year": 2008, "start_month": 11,
+                "argentina_impact": (
+                    "Sequía severa en la Pampa Húmeda y el NEA. "
+                    "Campaña agrícola 2008/09 con pérdidas de producción de soja y maíz "
+                    "estimadas en más de USD 5.000 millones."
+                ),
+                "category": "moderado",
+            },
+            {
+                "year_range": "2010–12", "name": "La Niña 2010–12",
+                "type": "La Niña", "oni_peak": -1.7, "peak_season": "DJF 2011",
+                "start_year": 2010, "start_month": 6,
+                "argentina_impact": (
+                    "Doble La Niña prolongada. Bajante significativa del Paraná. "
+                    "Déficit hídrico en la Pampa Húmeda y Litoral, afectando "
+                    "la navegación fluvial y la producción agrícola."
+                ),
+                "category": "fuerte",
+            },
+            {
+                "year_range": "2015–16", "name": "El Niño 2015–16",
+                "type": "El Niño", "oni_peak": 2.6, "peak_season": "NDJ 2016",
+                "start_year": 2015, "start_month": 3,
+                "argentina_impact": (
+                    "El más intenso registrado. Inundaciones graves en el Litoral "
+                    "y noreste de Buenos Aires. Evacuaciones masivas en Concordia, "
+                    "Concepción del Uruguay y zonas ribereñas del Paraná."
+                ),
+                "category": "muy fuerte",
+            },
+            {
+                "year_range": "2020–23", "name": "Triple La Niña 2020–23",
+                "type": "La Niña", "oni_peak": -1.1, "peak_season": "NDJ 2021",
+                "start_year": 2020, "start_month": 8,
+                "argentina_impact": (
+                    "Tres temporadas consecutivas de La Niña — evento inusual. "
+                    "Bajante histórica del Paraná en 2021 (mínimos en 77 años). "
+                    "Sequía persistente en la Pampa Húmeda, pérdidas agrícolas "
+                    "acumuladas superiores a USD 20.000 millones."
+                ),
+                "category": "moderado (persistente)",
+            },
+        ],
+        "smn_outlook": {
+            "url": "https://www.smn.gob.ar/clima/tendencias",
+            "title": "Perspectiva Climática Trimestral — SMN Argentina",
+            "description": "Pronóstico estacional oficial del Servicio Meteorológico Nacional de Argentina.",
+        },
         "data_sources":  snapshot.data_sources or {},
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (

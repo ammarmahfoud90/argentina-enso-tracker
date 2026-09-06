@@ -30,6 +30,13 @@ NOAA_SOI_URL = (
 """Southern Oscillation Index (SOI) — standardised difference of
 sea-level pressure between Tahiti and Darwin.  Updated monthly."""
 
+NOAA_AAO_URL = (
+    "https://www.cpc.ncep.noaa.gov/products/precip/CWlink/daily_ao_index/aao/"
+    "monthly.aao.index.b79.current.ascii.table"
+)
+"""NOAA CPC Antarctic Oscillation (AAO/SAM) monthly index, 1979-present.
+The dominant mode of atmospheric variability in the Southern Hemisphere."""
+
 # ---------------------------------------------------------------------------
 # ERDDAP endpoints — structured CSV/JSON access (primary for Niño 3.4 & SOI)
 # ---------------------------------------------------------------------------
@@ -101,6 +108,12 @@ CHIRPS_BASE_URL = (
 )
 """CHIRPS v2.0 global monthly NetCDF files (0.05° resolution, 1981-present).
 File naming: chirps-v2.0.YYYY.months_p05.nc"""
+
+CPC_TEMP_BASE_URL = (
+    "https://downloads.psl.noaa.gov/Datasets/cpc_global_temp/"
+)
+"""CPC Global Temperature daily files (tmax, tmin), 0.5 degree, 1979-present.
+File pattern: tmax.YYYY.nc, tmin.YYYY.nc. Used for temperature correlations."""
 
 IRI_CHIRPS_BASE_URL = (
     "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/"
