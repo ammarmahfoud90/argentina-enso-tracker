@@ -60,7 +60,7 @@
     .command-center.phase-nina{background:var(--gradient-nina);}
     .command-center.phase-neutral{background:var(--gradient-neutral);}
     .command-center::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(255,255,255,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 20%,rgba(255,255,255,0.06) 0%,transparent 50%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(255,255,255,0.04) 0%,transparent 40%);background-size:200% 200%;animation:omAurora 15s ease-in-out infinite;pointer-events:none;z-index:0;}
-    .command-center>*{position:relative;z-index:1;}
+    .command-center>*{position:relative;z-index:2;}
     .command-center::after{content:'';position:absolute;bottom:-1px;left:0;width:200%;height:50px;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%23f8f9fc'/%3E%3C/svg%3E") repeat-x bottom center;background-size:1440px 50px;z-index:1;animation:omWave 25s linear infinite;}
     .command-center,.command-center *{color:rgba(255,255,255,0.92);}
     .command-center .region-pill.active{color:#14161A;}
