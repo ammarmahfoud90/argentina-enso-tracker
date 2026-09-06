@@ -1,9 +1,13 @@
 name: Deploy to GitHub Pages
 
-# Fires on every push to main (including daily-build data commits)
-# and can be triggered manually from the Actions tab.
+# Fires on every push to main, after daily-build completes (bot pushes
+# don't trigger the push event), and on manual dispatch.
 on:
   push:
+    branches: [main]
+  workflow_run:
+    workflows: ["Daily ENSO build"]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
 
@@ -23,6 +27,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
