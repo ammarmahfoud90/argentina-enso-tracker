@@ -166,5 +166,6 @@ jobs:
             echo "No changes in data files — nothing to commit."
           else
             git commit -m "data: daily ENSO update $(date -u +%Y-%m-%d)"
+            git pull --rebase
             git push
           fi
