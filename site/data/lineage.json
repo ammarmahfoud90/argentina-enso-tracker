@@ -1,0 +1,364 @@
+{
+  "build_id": "2026-09-07T03:52:00.080625+00:00",
+  "sources": [
+    {
+      "name": "NOAA ONI",
+      "url": "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+      "access_method": "live_fetch",
+      "status": "success",
+      "date_range_start": "1950-01-15",
+      "date_range_end": "2026-07-15",
+      "row_count": 919,
+      "feeds_sections": [
+        "current",
+        "oni_series",
+        "episodes"
+      ]
+    },
+    {
+      "name": "NOAA SOI",
+      "url": null,
+      "access_method": "live_fetch",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": 908,
+      "feeds_sections": [
+        "soi_series"
+      ]
+    },
+    {
+      "name": "CHIRPS correlations",
+      "url": null,
+      "access_method": "parquet",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": 20,
+      "feeds_sections": [
+        "correlations",
+        "region_meta"
+      ]
+    },
+    {
+      "name": "CHIRPS precip pairs",
+      "url": null,
+      "access_method": "parquet",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": 540,
+      "feeds_sections": [
+        "precip_anomaly_12m",
+        "seasonal_correlations",
+        "frequency_stats",
+        "composite_analysis",
+        "spi_series"
+      ]
+    },
+    {
+      "name": "CPC temperature correlations",
+      "url": null,
+      "access_method": "parquet",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": 20,
+      "feeds_sections": [
+        "temp_correlations",
+        "seasonal_temp_correlations"
+      ]
+    },
+    {
+      "name": "TAO/TRITON",
+      "url": null,
+      "access_method": "live_fetch",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": null,
+      "feeds_sections": [
+        "subsurface"
+      ]
+    },
+    {
+      "name": "NOAA SAM/AAO",
+      "url": null,
+      "access_method": "live_fetch",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": 564,
+      "feeds_sections": [
+        "sam_monthly",
+        "current.sam_value"
+      ]
+    },
+    {
+      "name": "IRI forecast",
+      "url": null,
+      "access_method": "live_fetch",
+      "status": "success",
+      "date_range_start": null,
+      "date_range_end": null,
+      "row_count": null,
+      "feeds_sections": [
+        "iri_forecast"
+      ]
+    }
+  ],
+  "transforms": [
+    {
+      "name": "episode_detection",
+      "inputs": [
+        "NOAA ONI"
+      ],
+      "outputs": [
+        "episodes"
+      ],
+      "parameters": {
+        "threshold": 0.5,
+        "consecutive_months": 5
+      },
+      "status": "success",
+      "row_count_in": 919,
+      "row_count_out": 42,
+      "note": null
+    },
+    {
+      "name": "seasonal_correlations",
+      "inputs": [
+        "CHIRPS precip pairs",
+        "NOAA ONI"
+      ],
+      "outputs": [
+        "seasonal_correlations"
+      ],
+      "parameters": {},
+      "status": "success",
+      "row_count_in": null,
+      "row_count_out": 80,
+      "note": null
+    },
+    {
+      "name": "frequency_stats",
+      "inputs": [
+        "CHIRPS precip pairs",
+        "NOAA ONI"
+      ],
+      "outputs": [
+        "frequency_stats"
+      ],
+      "parameters": {},
+      "status": "success",
+      "row_count_in": null,
+      "row_count_out": null,
+      "note": null
+    },
+    {
+      "name": "composite_analysis",
+      "inputs": [
+        "CHIRPS precip pairs"
+      ],
+      "outputs": [
+        "composite_analysis"
+      ],
+      "parameters": {},
+      "status": "success",
+      "row_count_in": null,
+      "row_count_out": 5,
+      "note": null
+    },
+    {
+      "name": "spi_computation",
+      "inputs": [
+        "CHIRPS precip pairs"
+      ],
+      "outputs": [
+        "spi_series",
+        "spi_current"
+      ],
+      "parameters": {
+        "window": 3
+      },
+      "status": "success",
+      "row_count_in": null,
+      "row_count_out": 5,
+      "note": null
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "site\\data\\enso.json",
+      "size_bytes": 707753,
+      "format": "json",
+      "key_count": 28,
+      "row_count": null
+    },
+    {
+      "path": "site\\data\\enso-history.json",
+      "size_bytes": 359976,
+      "format": "json",
+      "key_count": 4,
+      "row_count": null
+    },
+    {
+      "path": "site\\data\\sst_map.json",
+      "size_bytes": 135064,
+      "format": "json",
+      "key_count": null,
+      "row_count": null
+    }
+  ],
+  "dependency_graph": {
+    "nodes": [
+      {
+        "id": "src:NOAA ONI",
+        "type": "source",
+        "label": "NOAA ONI",
+        "status": "success"
+      },
+      {
+        "id": "src:NOAA SOI",
+        "type": "source",
+        "label": "NOAA SOI",
+        "status": "success"
+      },
+      {
+        "id": "src:CHIRPS correlations",
+        "type": "source",
+        "label": "CHIRPS correlations",
+        "status": "success"
+      },
+      {
+        "id": "src:CHIRPS precip pairs",
+        "type": "source",
+        "label": "CHIRPS precip pairs",
+        "status": "success"
+      },
+      {
+        "id": "src:CPC temperature correlations",
+        "type": "source",
+        "label": "CPC temperature correlations",
+        "status": "success"
+      },
+      {
+        "id": "src:TAO/TRITON",
+        "type": "source",
+        "label": "TAO/TRITON",
+        "status": "success"
+      },
+      {
+        "id": "src:NOAA SAM/AAO",
+        "type": "source",
+        "label": "NOAA SAM/AAO",
+        "status": "success"
+      },
+      {
+        "id": "src:IRI forecast",
+        "type": "source",
+        "label": "IRI forecast",
+        "status": "success"
+      },
+      {
+        "id": "tx:episode_detection",
+        "type": "transform",
+        "label": "episode_detection",
+        "status": "success"
+      },
+      {
+        "id": "tx:seasonal_correlations",
+        "type": "transform",
+        "label": "seasonal_correlations",
+        "status": "success"
+      },
+      {
+        "id": "tx:frequency_stats",
+        "type": "transform",
+        "label": "frequency_stats",
+        "status": "success"
+      },
+      {
+        "id": "tx:composite_analysis",
+        "type": "transform",
+        "label": "composite_analysis",
+        "status": "success"
+      },
+      {
+        "id": "tx:spi_computation",
+        "type": "transform",
+        "label": "spi_computation",
+        "status": "success"
+      },
+      {
+        "id": "out:site\\data\\enso.json",
+        "type": "artifact",
+        "label": "site\\data\\enso.json"
+      },
+      {
+        "id": "out:site\\data\\enso-history.json",
+        "type": "artifact",
+        "label": "site\\data\\enso-history.json"
+      },
+      {
+        "id": "out:site\\data\\sst_map.json",
+        "type": "artifact",
+        "label": "site\\data\\sst_map.json"
+      }
+    ],
+    "edges": [
+      {
+        "from": "src:NOAA ONI",
+        "to": "tx:episode_detection"
+      },
+      {
+        "from": "tx:episode_detection",
+        "to": "out:episodes"
+      },
+      {
+        "from": "src:CHIRPS precip pairs",
+        "to": "tx:seasonal_correlations"
+      },
+      {
+        "from": "src:NOAA ONI",
+        "to": "tx:seasonal_correlations"
+      },
+      {
+        "from": "tx:seasonal_correlations",
+        "to": "out:seasonal_correlations"
+      },
+      {
+        "from": "src:CHIRPS precip pairs",
+        "to": "tx:frequency_stats"
+      },
+      {
+        "from": "src:NOAA ONI",
+        "to": "tx:frequency_stats"
+      },
+      {
+        "from": "tx:frequency_stats",
+        "to": "out:frequency_stats"
+      },
+      {
+        "from": "src:CHIRPS precip pairs",
+        "to": "tx:composite_analysis"
+      },
+      {
+        "from": "tx:composite_analysis",
+        "to": "out:composite_analysis"
+      },
+      {
+        "from": "src:CHIRPS precip pairs",
+        "to": "tx:spi_computation"
+      },
+      {
+        "from": "tx:spi_computation",
+        "to": "out:spi_series"
+      },
+      {
+        "from": "tx:spi_computation",
+        "to": "out:spi_current"
+      }
+    ]
+  }
+}

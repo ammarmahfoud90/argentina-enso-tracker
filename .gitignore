@@ -55,6 +55,10 @@ Thumbs.db
 *.log
 logs/
 
+# DuckDB warehouse (rebuilt from Parquet + live data)
+*.duckdb
+*.duckdb.wal
+
 # Pytest / coverage
 .pytest_cache/
 .coverage

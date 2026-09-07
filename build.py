@@ -35,7 +35,9 @@ from src.config import (
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
+    LINEAGE_PATH,
     PAIRS_CACHE_PATH,
+    PIPELINE_HEALTH_PATH,
     REGION_ORDER,
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
@@ -44,10 +46,18 @@ from src.compute_composites import compute_composites
 from src.compute_spi import compute_all_spi
 from src.fetch_enso import fetch_enso_snapshot
 from src.fetch_sam import fetch_sam_series
+from src.lineage import LineageTracker
 from src.parana_data import get_parana_data
+from src.pipeline_monitor import PipelineMonitor
 from src.fetch_iri_forecast import fetch_iri_forecast
 from src.fetch_sst_map import fetch_sst_map
 from src.fetch_subsurface import fetch_subsurface_cross_section
+
+try:
+    from src.warehouse import ENSOWarehouse
+    HAS_DUCKDB = True
+except ImportError:
+    HAS_DUCKDB = False
 
 logging.basicConfig(
     level=logging.INFO,
@@ -185,17 +195,39 @@ def compute_episodes(oni_df: pd.DataFrame) -> list[dict]:
 # Core build
 # ---------------------------------------------------------------------------
 
-def build_payload() -> dict:
-    """Fetch live data, read Parquet cache, and assemble the JSON payload."""
+def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
+    """Fetch live data, read Parquet cache, and assemble the JSON payload.
+
+    Returns (payload_dict, monitor, lineage) so main() can finalize outputs.
+    """
+    monitor = PipelineMonitor()
+    lineage = LineageTracker()
 
     # 1. ENSO snapshot (live NOAA fetch)
     logger.info("Fetching ENSO indices from NOAA CPC…")
-    snapshot = fetch_enso_snapshot()
+    with monitor.track_source("ENSO indices") as src:
+        snapshot = fetch_enso_snapshot()
+        src.row_count = len(snapshot.oni_series)
+        src.data_freshness_days = (datetime.now(timezone.utc).date() - snapshot.oni_date).days
     logger.info(
         "ONI=%.2f (%s) | Niño3.4=%.2f | SOI=%.1f | Phase: %s",
         snapshot.oni_value, snapshot.oni_season,
         snapshot.nino34_value, snapshot.soi_value, snapshot.phase,
     )
+    oni_src = lineage.register_source(
+        "NOAA ONI", url="https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
+        access_method="live_fetch", status="success",
+        row_count=len(snapshot.oni_series),
+        date_range_start=snapshot.oni_series.iloc[0]["date"].date().isoformat(),
+        date_range_end=snapshot.oni_series.iloc[-1]["date"].date().isoformat(),
+        feeds_sections=["current", "oni_series", "episodes"],
+    )
+    if snapshot.soi_series is not None:
+        lineage.register_source(
+            "NOAA SOI", access_method="live_fetch", status="success",
+            row_count=len(snapshot.soi_series),
+            feeds_sections=["soi_series"],
+        )
 
     # 2. Correlations Parquet
     corr_path = Path(CORRELATIONS_CACHE_PATH)
@@ -205,11 +237,25 @@ def build_payload() -> dict:
             corr_path,
         )
         sys.exit(1)
-    corr_df = pd.read_parquet(corr_path)
+    with monitor.track_source("correlations.parquet") as src:
+        corr_df = pd.read_parquet(corr_path)
+        src.row_count = len(corr_df)
+        src.cache_hit = True
+        src.status = "cached"
     logger.info("Correlations: %d rows from %s", len(corr_df), corr_path)
+    lineage.register_source(
+        "CHIRPS correlations", access_method="parquet", status="success",
+        row_count=len(corr_df),
+        feeds_sections=["correlations", "region_meta"],
+    )
 
     # 3. Episode detection
     episodes = compute_episodes(snapshot.oni_series)
+    lineage.register_transform(
+        "episode_detection", inputs=["NOAA ONI"], outputs=["episodes"],
+        parameters={"threshold": 0.5, "consecutive_months": ENSO_CONSECUTIVE_MONTHS},
+        status="success", row_count_in=len(snapshot.oni_series), row_count_out=len(episodes),
+    )
 
     # 4. ONI series — full + last 24 months
     oni_records: list[dict] = []
@@ -328,9 +374,19 @@ def build_payload() -> dict:
     precip_anomaly_12m: dict = {}
     pairs_path = Path(PAIRS_CACHE_PATH)
     if pairs_path.exists():
-        pairs_df = pd.read_parquet(pairs_path)
-        pairs_df["date"] = pd.to_datetime(pairs_df["date"])
-        pairs_df["month"] = pairs_df["date"].dt.month
+        with monitor.track_source("precipitation_pairs.parquet") as src:
+            pairs_df = pd.read_parquet(pairs_path)
+            pairs_df["date"] = pd.to_datetime(pairs_df["date"])
+            pairs_df["month"] = pairs_df["date"].dt.month
+            src.row_count = len(pairs_df)
+            src.cache_hit = True
+            src.status = "cached"
+        lineage.register_source(
+            "CHIRPS precip pairs", access_method="parquet", status="success",
+            row_count=len(pairs_df),
+            feeds_sections=["precip_anomaly_12m", "seasonal_correlations",
+                            "frequency_stats", "composite_analysis", "spi_series"],
+        )
         region_cols = [c for c in REGION_ORDER if c in pairs_df.columns]
         # Climatological mean per calendar month
         clim = pairs_df.groupby("month")[region_cols].mean()
@@ -624,12 +680,27 @@ def build_payload() -> dict:
     else:
         logger.warning("Pairs Parquet not found — frequency stats skipped")
 
+    lineage.register_transform(
+        "seasonal_correlations", inputs=["CHIRPS precip pairs", "NOAA ONI"],
+        outputs=["seasonal_correlations"], status="success",
+        row_count_out=sum(len(v) for v in seasonal_correlations.values()),
+    )
+    lineage.register_transform(
+        "frequency_stats", inputs=["CHIRPS precip pairs", "NOAA ONI"],
+        outputs=["frequency_stats"], status="success" if frequency_stats else "skipped",
+    )
+
     # 8d. Composite analysis by ENSO intensity
     composite_analysis: dict = {}
     if pairs_path.exists():
         try:
             composite_analysis = compute_composites(pairs_df)
             logger.info("Composite analysis: %d regions", len(composite_analysis))
+            lineage.register_transform(
+                "composite_analysis", inputs=["CHIRPS precip pairs"],
+                outputs=["composite_analysis"], status="success",
+                row_count_out=len(composite_analysis),
+            )
         except Exception as exc:
             logger.warning("Composite analysis failed: %s", exc)
     else:
@@ -642,6 +713,11 @@ def build_payload() -> dict:
         try:
             spi_series, spi_current = compute_all_spi(pairs_df)
             logger.info("SPI-3: %d regions", len(spi_current))
+            lineage.register_transform(
+                "spi_computation", inputs=["CHIRPS precip pairs"],
+                outputs=["spi_series", "spi_current"], status="success",
+                parameters={"window": 3}, row_count_out=len(spi_current),
+            )
         except Exception as exc:
             logger.warning("SPI computation failed: %s", exc)
     else:
@@ -654,7 +730,16 @@ def build_payload() -> dict:
     temp_pairs_path = Path("data/processed/oni_temp_pairs.parquet")
     if temp_corr_path.exists():
         try:
-            temp_corr_df = pd.read_parquet(temp_corr_path)
+            with monitor.track_source("temp_correlations.parquet") as src:
+                temp_corr_df = pd.read_parquet(temp_corr_path)
+                src.row_count = len(temp_corr_df)
+                src.cache_hit = True
+                src.status = "cached"
+            lineage.register_source(
+                "CPC temperature correlations", access_method="parquet", status="success",
+                row_count=len(temp_corr_df),
+                feeds_sections=["temp_correlations", "seasonal_temp_correlations"],
+            )
             for _, row in temp_corr_df.iterrows():
                 temp_correlations.append({
                     "region": str(row["region"]),
@@ -725,54 +810,89 @@ def build_payload() -> dict:
 
     # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
     logger.info("Fetching subsurface temperature data…")
-    subsurface = fetch_subsurface_cross_section()
-    if subsurface:
-        logger.info("Subsurface: %d lons x %d depths", len(subsurface["longitudes"]), len(subsurface["depths"]))
-    else:
-        logger.warning("Subsurface data unavailable — section will be hidden in frontend")
+    with monitor.track_source("TAO/TRITON subsurface") as src:
+        subsurface = fetch_subsurface_cross_section()
+        if subsurface:
+            src.row_count = len(subsurface.get("longitudes", []))
+            logger.info("Subsurface: %d lons x %d depths", len(subsurface["longitudes"]), len(subsurface["depths"]))
+        else:
+            src.status = "failed"
+            src.error_message = "No data returned"
+            logger.warning("Subsurface data unavailable — section will be hidden in frontend")
+    lineage.register_source(
+        "TAO/TRITON", access_method="live_fetch",
+        status="success" if subsurface else "failed",
+        feeds_sections=["subsurface"],
+    )
 
     # 9b. SAM/AAO index
     logger.info("Fetching SAM/AAO index from NOAA CPC…")
     sam_monthly_records: list[dict] | None = None
     sam_value: float | None = None
     sam_date_str: str | None = None
-    try:
-        sam_df, sam_value, sam_date = fetch_sam_series()
-        sam_monthly_records = []
-        for _, row in sam_df.iterrows():
-            sam_monthly_records.append({
-                "date": row["date"].date().isoformat(),
-                "sam": round(float(row["sam"]), 2),
-            })
-        sam_date_str = sam_date.isoformat()
-        logger.info("SAM: latest=%.2f (%s), %d records", sam_value, sam_date_str, len(sam_monthly_records))
-    except Exception as exc:
-        logger.warning("SAM/AAO fetch failed: %s — section will be hidden", exc)
+    with monitor.track_source("NOAA SAM/AAO") as src:
+        try:
+            sam_df, sam_value, sam_date = fetch_sam_series()
+            sam_monthly_records = []
+            for _, row in sam_df.iterrows():
+                sam_monthly_records.append({
+                    "date": row["date"].date().isoformat(),
+                    "sam": round(float(row["sam"]), 2),
+                })
+            sam_date_str = sam_date.isoformat()
+            src.row_count = len(sam_monthly_records)
+            src.data_freshness_days = (datetime.now(timezone.utc).date() - sam_date).days
+            logger.info("SAM: latest=%.2f (%s), %d records", sam_value, sam_date_str, len(sam_monthly_records))
+        except Exception as exc:
+            src.status = "failed"
+            src.error_message = str(exc)[:200]
+            logger.warning("SAM/AAO fetch failed: %s — section will be hidden", exc)
+    lineage.register_source(
+        "NOAA SAM/AAO", access_method="live_fetch",
+        status="success" if sam_monthly_records else "failed",
+        row_count=len(sam_monthly_records) if sam_monthly_records else 0,
+        feeds_sections=["sam_monthly", "current.sam_value"],
+    )
 
     # 10. IRI forecast (parsed probabilities + SVG URLs)
     #     Graceful degradation: if fetch fails, reuse last valid forecast from
     #     the existing enso.json and tag it with stale_since.
     logger.info("Fetching IRI forecast…")
-    iri_forecast = fetch_iri_forecast()
-    if iri_forecast:
-        logger.info(
-            "IRI forecast: %d trimesters, month=%d/%d",
-            len(iri_forecast.get("probabilities") or []),
-            iri_forecast["year"], iri_forecast["month"],
-        )
-    else:
-        logger.warning("IRI forecast fetch failed — attempting to reuse cached forecast")
-        iri_forecast = _load_cached_iri_forecast()
+    with monitor.track_source("IRI ENSO forecast") as src:
+        iri_forecast = fetch_iri_forecast()
         if iri_forecast:
+            src.row_count = len(iri_forecast.get("probabilities") or [])
             logger.info(
-                "Reusing cached IRI forecast from %d/%d (stale_since: %s)",
-                iri_forecast["year"], iri_forecast["month"],
-                iri_forecast.get("stale_since", "unknown"),
+                "IRI forecast: %d trimesters, month=%d/%d",
+                src.row_count, iri_forecast["year"], iri_forecast["month"],
             )
         else:
-            logger.warning("No cached IRI forecast available either")
+            src.status = "cached"
+            logger.warning("IRI forecast fetch failed — attempting to reuse cached forecast")
+            iri_forecast = _load_cached_iri_forecast()
+            if iri_forecast:
+                logger.info(
+                    "Reusing cached IRI forecast from %d/%d (stale_since: %s)",
+                    iri_forecast["year"], iri_forecast["month"],
+                    iri_forecast.get("stale_since", "unknown"),
+                )
+            else:
+                src.status = "failed"
+                src.error_message = "No live or cached forecast available"
+                logger.warning("No cached IRI forecast available either")
+    lineage.register_source(
+        "IRI forecast", access_method="live_fetch",
+        status="success" if iri_forecast else "failed",
+        feeds_sections=["iri_forecast"],
+    )
 
     # 11. Assemble final payload
+    # Quality checks on key DataFrames
+    monitor.track_quality("correlations", corr_df,
+                          expected_range={"pearson_r": (-1.0, 1.0), "pearson_p": (0.0, 1.0)})
+    if pairs_path.exists():
+        monitor.track_quality("precipitation_pairs", pairs_df)
+
     payload = {
         "current": {
             "oni_value":   round(snapshot.oni_value, 2),
@@ -894,7 +1014,7 @@ def build_payload() -> dict:
             "el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
         ),
     }
-    return payload
+    return payload, monitor, lineage
 
 
 def main() -> None:
@@ -919,7 +1039,7 @@ def main() -> None:
 
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    payload = build_payload()
+    payload, monitor, lineage = build_payload()
 
     # Split heavy series into a separate history file for lazy loading.
     # Core enso.json keeps 24-month slices; full series go to enso-history.json.
@@ -946,9 +1066,23 @@ def main() -> None:
         len(payload["correlations"]),
     )
 
+    # Record output artifacts
+    monitor.record_output(str(OUT_PATH), OUT_PATH.stat().st_size)
+    monitor.record_output(str(HISTORY_PATH), HISTORY_PATH.stat().st_size)
+    lineage.register_artifact(str(OUT_PATH), OUT_PATH.stat().st_size, "json",
+                              key_count=len(payload))
+    lineage.register_artifact(str(HISTORY_PATH), HISTORY_PATH.stat().st_size, "json",
+                              key_count=len(history_payload))
+
     # 12. SST anomaly map (separate file to avoid bloating enso.json)
     logger.info("Fetching OISST v2.1 SST anomaly map…")
-    sst_map = fetch_sst_map(months=12)
+    with monitor.track_source("OISST SST map") as src:
+        sst_map = fetch_sst_map(months=12)
+        if sst_map:
+            src.row_count = len(sst_map.get("times", []))
+        else:
+            src.status = "failed"
+            src.error_message = "No data returned"
     if sst_map:
         with open(SST_MAP_PATH, "w", encoding="utf-8") as fh:
             json.dump(sst_map, fh, ensure_ascii=False)
@@ -960,8 +1094,45 @@ def main() -> None:
             len(sst_map["lats"]),
             len(sst_map["lons"]),
         )
+        monitor.record_output(str(SST_MAP_PATH), SST_MAP_PATH.stat().st_size)
+        lineage.register_artifact(str(SST_MAP_PATH), SST_MAP_PATH.stat().st_size, "json")
     else:
         logger.warning("SST map unavailable — frontend will show fallback text")
+
+    # 13. Pipeline monitoring — finalize and write outputs
+    build_status = "success"
+    failed_sources = [s.source_name for s in monitor._build.sources if s.status == "failed"]
+    if failed_sources:
+        build_status = "partial"
+        monitor.add_warning(f"Data sources failed: {', '.join(failed_sources)}")
+    monitor.finalize(build_status)
+    monitor.write_health_json()
+    monitor.emit_github_annotations()
+    monitor.write_job_summary()
+    logger.info(
+        "Pipeline: %s in %.1fs — %d sources tracked",
+        monitor._build.status, monitor._build.duration_seconds or 0,
+        len(monitor._build.sources),
+    )
+
+    # 14. Lineage — write JSON output
+    lineage.write_json()
+    logger.info("Written %s", LINEAGE_PATH)
+
+    # 15. DuckDB warehouse — populate from Parquet + live data
+    if HAS_DUCKDB:
+        try:
+            warehouse = ENSOWarehouse()
+            warehouse.initialize()
+            loaded = warehouse.load_from_parquet()
+            warehouse.load_episodes(payload["episodes"])
+            lineage.store_in_duckdb(warehouse)
+            warehouse.close()
+            logger.info("DuckDB warehouse updated: %s", loaded)
+        except Exception as exc:
+            logger.warning("DuckDB warehouse failed: %s", exc)
+    else:
+        logger.info("DuckDB not installed — warehouse step skipped")
 
     logger.info("=== build.py: done ===")
 

@@ -238,3 +238,11 @@ CACHE_TTL_SECONDS: int = 3600  # 1 hour — prevents rate-limiting during builds
 REQUEST_TIMEOUT_SECONDS: int = 30
 REQUEST_MAX_RETRIES: int = 3
 REQUEST_RETRY_WAIT_SECONDS: int = 5
+
+# ---------------------------------------------------------------------------
+# DuckDB warehouse & pipeline observability
+# ---------------------------------------------------------------------------
+
+WAREHOUSE_PATH: str = "data/enso_warehouse.duckdb"
+PIPELINE_HEALTH_PATH: str = "site/data/pipeline_health.json"
+LINEAGE_PATH: str = "site/data/lineage.json"

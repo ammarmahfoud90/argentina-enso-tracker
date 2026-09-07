@@ -178,12 +178,34 @@ jobs:
                 f"IRI={iri_status}, SAM={sam_status}, temp={temp_status}")
           EOF
 
+      # ── Pipeline health check ──────────────────────────────────────────
+      - name: Pipeline health check
+        if: always()
+        run: |
+          if [ -f site/data/pipeline_health.json ]; then
+            python - <<'HEALTH'
+          import json
+          with open('site/data/pipeline_health.json') as f:
+              h = json.load(f)
+          failed = [s['name'] for s in h['sources'] if s['status'] == 'failed']
+          if failed:
+              print(f'::warning::Data sources failed: {", ".join(failed)}')
+          print(f'Build: {h["status"]} in {h["duration_seconds"]}s')
+          for s in h['sources']:
+              icon = 'OK' if s['status'] in ('success','cached') else 'WARN'
+              fresh = f'{s.get("freshness_days")}d' if s.get('freshness_days') is not None else '-'
+              lat = f'{s.get("latency_ms", 0):.0f}ms' if s.get('latency_ms') is not None else '-'
+              print(f'  {icon}: {s["name"]} ({s["status"]}, {lat}, freshness={fresh})')
+          HEALTH
+          fi
+
       # ── Commit and push if changed ────────────────────────────────────────
       - name: Commit updated data files
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add site/data/enso.json site/data/enso-history.json site/data/sst_map.json
+          git add site/data/enso.json site/data/enso-history.json site/data/sst_map.json \
+                 site/data/pipeline_health.json site/data/lineage.json
           # Only commit if files actually changed
           if git diff --cached --quiet; then
             echo "No changes in data files — nothing to commit."
