@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-09-07T03:52:00.080625+00:00",
+  "build_id": "2026-09-07T03:58:19.315968+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -189,21 +189,21 @@
   ],
   "artifacts": [
     {
-      "path": "site\\data\\enso.json",
-      "size_bytes": 707753,
+      "path": "site/data/enso.json",
+      "size_bytes": 674953,
       "format": "json",
       "key_count": 28,
       "row_count": null
     },
     {
-      "path": "site\\data\\enso-history.json",
+      "path": "site/data/enso-history.json",
       "size_bytes": 359976,
       "format": "json",
       "key_count": 4,
       "row_count": null
     },
     {
-      "path": "site\\data\\sst_map.json",
+      "path": "site/data/sst_map.json",
       "size_bytes": 135064,
       "format": "json",
       "key_count": null,
@@ -291,19 +291,19 @@
         "status": "success"
       },
       {
-        "id": "out:site\\data\\enso.json",
+        "id": "out:site/data/enso.json",
         "type": "artifact",
-        "label": "site\\data\\enso.json"
+        "label": "site/data/enso.json"
       },
       {
-        "id": "out:site\\data\\enso-history.json",
+        "id": "out:site/data/enso-history.json",
         "type": "artifact",
-        "label": "site\\data\\enso-history.json"
+        "label": "site/data/enso-history.json"
       },
       {
-        "id": "out:site\\data\\sst_map.json",
+        "id": "out:site/data/sst_map.json",
         "type": "artifact",
-        "label": "site\\data\\sst_map.json"
+        "label": "site/data/sst_map.json"
       }
     ],
     "edges": [
