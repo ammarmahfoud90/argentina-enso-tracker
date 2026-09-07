@@ -3,8 +3,8 @@
     "oni_value": 1.8,
     "oni_season": "JJA",
     "oni_date": "2026-07-15",
-    "nino34_value": 1.44,
-    "nino34_date": "2026-06-15",
+    "nino34_value": 2.6,
+    "nino34_date": "2026-08-15",
     "soi_value": -1.1,
     "soi_date": "2026-08-15",
     "conditions": "El Niño",
@@ -32793,9 +32793,9 @@
   },
   "data_sources": {
     "oni": "CPC",
-    "nino34": "CPC",
+    "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-06T23:53:59Z",
+  "last_updated": "2026-09-07T00:26:12Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
