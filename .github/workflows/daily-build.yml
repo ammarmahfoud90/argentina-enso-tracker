@@ -183,7 +183,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add site/data/enso.json site/data/sst_map.json
+          git add site/data/enso.json site/data/enso-history.json site/data/sst_map.json
           # Only commit if files actually changed
           if git diff --cached --quiet; then
             echo "No changes in data files — nothing to commit."

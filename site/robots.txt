@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://argentina-enso-tracker.onrender.com/sitemap.xml
+Sitemap: https://ammarmahfoud90.github.io/argentina-enso-tracker/sitemap.xml

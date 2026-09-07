@@ -1,0 +1,22 @@
+{
+  "name": "Argentina ENSO Impact Tracker",
+  "short_name": "ENSO Tracker",
+  "description": "Monitoreo diario del ENSO y su impacto en Argentina",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f8f9fc",
+  "theme_color": "#1E3FAE",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data/og-image.png",
+      "sizes": "1200x627",
+      "type": "image/png"
+    }
+  ]
+}

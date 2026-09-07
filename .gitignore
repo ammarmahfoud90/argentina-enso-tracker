@@ -32,6 +32,8 @@ data/processed/
 # Processed caches committed to repo (small, needed by Streamlit app).
 !data/processed/correlations.parquet
 !data/processed/oni_precip_pairs.parquet
+!data/processed/temp_correlations.parquet
+!data/processed/oni_temp_pairs.parquet
 
 # Streamlit
 .streamlit/secrets.toml

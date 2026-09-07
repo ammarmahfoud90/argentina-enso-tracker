@@ -29,27 +29,47 @@ def _opendap_url(variable: str, year: int) -> str:
 
 
 def fetch_cpc_temperature_year(year: int) -> xr.Dataset | None:
-    """Fetch CPC tmax and tmin for a given year via OPeNDAP.
+    """Fetch CPC tmax and tmin for a given year.
 
-    Returns xarray Dataset with tmax and tmin variables,
-    subsetted to South American domain (-60 to -20 lat, -75 to -50 lon).
+    Downloads NetCDF files to a local cache directory, then opens them
+    with xarray. Returns xarray Dataset subsetted to Argentina domain.
     Returns None if the data is not available.
     """
-    try:
-        tmax_url = _opendap_url("tmax", year)
-        tmin_url = _opendap_url("tmin", year)
+    import requests
 
-        # Open with OPeNDAP subsetting to South America bounding box
-        tmax = xr.open_dataset(tmax_url)
-        tmin = xr.open_dataset(tmin_url)
+    cache_dir = Path("data/cache/cpc_temp")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        datasets = {}
+        for var in ("tmax", "tmin"):
+            local_path = cache_dir / f"{var}.{year}.nc"
+            if not local_path.exists():
+                url = _opendap_url(var, year)
+                resp = requests.get(url, timeout=120)
+                resp.raise_for_status()
+                local_path.write_bytes(resp.content)
+                logger.info("Downloaded %s (%.1f MB)", local_path.name,
+                            len(resp.content) / 1024 / 1024)
+
+            ds = xr.open_dataset(local_path)
+            datasets[var] = ds
+
+        tmax = datasets["tmax"]
+        tmin = datasets["tmin"]
 
         # Subset to Argentina region (broad box covering all 5 regions)
-        lat_slice = slice(-55, -20)
-        lon_slice = slice(-75, -50)
+        # CPC data has descending latitudes (90 → -90) and 0-360 longitudes
+        lat_descending = tmax["lat"].values[0] > tmax["lat"].values[-1]
+        if lat_descending:
+            lat_slice = slice(-20, -55)  # reversed for descending coords
+        else:
+            lat_slice = slice(-55, -20)
 
-        # Handle different longitude conventions (0-360 vs -180 to 180)
         if tmax["lon"].values.max() > 180:
             lon_slice = slice(285, 310)  # 360 - 75 = 285, 360 - 50 = 310
+        else:
+            lon_slice = slice(-75, -50)
 
         tmax_sub = tmax["tmax"].sel(lat=lat_slice, lon=lon_slice)
         tmin_sub = tmin["tmin"].sel(lat=lat_slice, lon=lon_slice)
@@ -76,9 +96,11 @@ def compute_regional_temp_monthly(ds: xr.Dataset) -> pd.DataFrame:
     # Mean temperature = (tmax + tmin) / 2
     tmean = (ds["tmax"] + ds["tmin"]) / 2
 
-    # Handle longitude convention
+    # Handle coordinate conventions
     lons = tmean.lon.values
+    lats = tmean.lat.values
     use_360 = lons.max() > 180
+    lat_descending = lats[0] > lats[-1] if len(lats) > 1 else False
 
     records = []
     # Group by month
@@ -96,9 +118,13 @@ def compute_regional_temp_monthly(ds: xr.Dataset) -> pd.DataFrame:
                 lon_max = lon_max % 360
 
             try:
+                if lat_descending:
+                    lat_sl = slice(max(lat_min, lat_max), min(lat_min, lat_max))
+                else:
+                    lat_sl = slice(min(lat_min, lat_max), max(lat_min, lat_max))
                 region_data = monthly.sel(
                     time=t,
-                    lat=slice(min(lat_min, lat_max), max(lat_min, lat_max)),
+                    lat=lat_sl,
                     lon=slice(min(lon_min, lon_max), max(lon_min, lon_max)),
                 )
                 val = float(region_data.mean(skipna=True).values)

@@ -57,6 +57,7 @@ logging.basicConfig(
 logger = logging.getLogger("build")
 
 OUT_PATH = Path("site/data/enso.json")
+HISTORY_PATH = Path("site/data/enso-history.json")
 SST_MAP_PATH = Path("site/data/sst_map.json")
 
 
@@ -680,9 +681,11 @@ def build_payload() -> dict:
                 temp_pairs_df["month"] = temp_pairs_df["date"].dt.month
                 _oni_t = temp_pairs_df[["ym", "oni"]].copy()
                 _temp_cols = [c for c in REGION_ORDER if c in temp_pairs_df.columns]
+                # Drop oni from temp_pairs to avoid suffix collision in merge
+                _temp_no_oni = temp_pairs_df.drop(columns=["oni"])
 
                 for season_name, months_list in [("SON",[9,10,11]),("DEF",[12,1,2]),("MAM",[3,4,5]),("JJA",[6,7,8])]:
-                    season_temp = temp_pairs_df[temp_pairs_df["month"].isin(months_list)]
+                    season_temp = _temp_no_oni[_temp_no_oni["month"].isin(months_list)]
                     season_records = []
                     for lag in CORRELATION_LAGS:
                         oni_shifted = _oni_t.copy()
@@ -917,6 +920,18 @@ def main() -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     payload = build_payload()
+
+    # Split heavy series into a separate history file for lazy loading.
+    # Core enso.json keeps 24-month slices; full series go to enso-history.json.
+    history_keys = ["oni_series", "soi_series", "sam_monthly", "spi_series"]
+    history_payload = {}
+    for k in history_keys:
+        if k in payload and payload[k]:
+            history_payload[k] = payload[k]
+
+    with open(HISTORY_PATH, "w", encoding="utf-8") as fh:
+        json.dump(history_payload, fh, ensure_ascii=False)
+    logger.info("Written %s (%.1f KB)", HISTORY_PATH, HISTORY_PATH.stat().st_size / 1024)
 
     with open(OUT_PATH, "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
