@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-09-08T03:38:09.571696+00:00",
-  "status": "success",
-  "duration_seconds": 5.44,
-  "last_updated": "2026-09-08T03:38:15.009990+00:00",
+  "build_id": "2026-09-08T12:31:38.729484+00:00",
+  "status": "partial",
+  "duration_seconds": 488.89,
+  "last_updated": "2026-09-08T12:39:47.617184+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 1565.2,
+      "latency_ms": 64243.7,
       "freshness_days": 55
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 11.1,
+      "latency_ms": 13.8,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.6,
+      "latency_ms": 3.4,
       "freshness_days": null
     },
     {
       "name": "temp_correlations.parquet",
       "status": "cached",
-      "latency_ms": 2.2,
+      "latency_ms": 2.3,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
-      "status": "success",
-      "latency_ms": 407.3,
+      "status": "failed",
+      "latency_ms": 190150.6,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 334.7,
+      "latency_ms": 250.2,
       "freshness_days": 267
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 905.7,
+      "latency_ms": 2821.5,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
-      "status": "success",
-      "latency_ms": 1555.6,
+      "status": "failed",
+      "latency_ms": 230182.5,
       "freshness_days": null
     }
   ],
@@ -66,10 +66,11 @@
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 659.1,
-    "site/data/enso-history.json": 351.5,
-    "site/data/sst_map.json": 132.0
+    "site/data/enso.json": 657.3,
+    "site/data/enso-history.json": 351.5
   },
-  "warnings": [],
+  "warnings": [
+    "Data sources failed: TAO/TRITON subsurface, OISST SST map"
+  ],
   "errors": []
 }
