@@ -22,11 +22,11 @@ const ONI_VSTRONG = 2.0;
 
 function _oniIntensity(oni) {
   const a = Math.abs(oni);
-  if (a >= ONI_VSTRONG) return 'muy fuerte';
-  if (a >= ONI_STRONG)  return 'fuerte';
-  if (a >= ONI_MOD)     return 'moderado';
-  if (a >= ONI_WEAK)    return 'débil';
-  return 'neutral';
+  if (a >= ONI_VSTRONG) return t('adv_very_strong');
+  if (a >= ONI_STRONG)  return t('adv_strong');
+  if (a >= ONI_MOD)     return t('adv_moderate');
+  if (a >= ONI_WEAK)    return t('adv_weak');
+  return t('adv_neutral');
 }
 
 function _precipDirection(phase, r) {
@@ -35,9 +35,9 @@ function _precipDirection(phase, r) {
 }
 
 function _lagStr(lag) {
-  if (lag === 0) return 'sin retardo';
-  if (lag === 1) return '1 mes de retardo';
-  return `${lag} meses de retardo`;
+  if (lag === 0) return t('adv_no_lag');
+  if (lag === 1) return t('adv_1m_lag');
+  return t('adv_nm_lag', {n: lag});
 }
 
 function _precipSummary(precipAnomaly) {
@@ -45,16 +45,16 @@ function _precipSummary(precipAnomaly) {
   const recent = precipAnomaly.slice(-3);
   const avgAnomaly = recent.reduce((sum, d) => sum + d.anomaly_mm, 0) / recent.length;
   if (Math.abs(avgAnomaly) < 5) return null;
-  const dir = avgAnomaly > 0 ? 'por encima' : 'por debajo';
-  return `Los últimos 3 meses, la precipitación estuvo ${dir} de lo normal (${avgAnomaly > 0 ? '+' : ''}${avgAnomaly.toFixed(0)} mm de anomalía media).`;
+  const dir = avgAnomaly > 0 ? t('adv_above') : t('adv_below');
+  return t('adv_precip_summary', {dir, val: (avgAnomaly > 0 ? '+' : '') + avgAnomaly.toFixed(0)});
 }
 
 function _soiContext(soiTrend, soiValue) {
   if (!soiTrend || !soiValue) return null;
-  if (soiValue <= -1.5) return 'El SOI fuertemente negativo refuerza la señal El Niño.';
-  if (soiValue <= -0.5) return 'El SOI moderadamente negativo es consistente con El Niño.';
-  if (soiValue >= 1.5) return 'El SOI fuertemente positivo refuerza la señal La Niña.';
-  if (soiValue >= 0.5) return 'El SOI moderadamente positivo es consistente con La Niña.';
+  if (soiValue <= -1.5) return t('adv_soi_strong_nino');
+  if (soiValue <= -0.5) return t('adv_soi_mod_nino');
+  if (soiValue >= 1.5) return t('adv_soi_strong_nina');
+  if (soiValue >= 0.5) return t('adv_soi_mod_nina');
   return null;
 }
 
@@ -67,7 +67,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   if (!bestCorr) {
     return {
       signal: 'none',
-      text: `No hay datos de correlación disponibles para <strong>${regionName}</strong>.`,
+      text: t('adv_no_data', {region: regionName}),
     };
   }
 
@@ -83,12 +83,12 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   /* CHIRPS snowfall limitation caveat for mountain regions */
   const _chirpsCaveat = (regionName === 'Cuyo' || regionName === 'Patagonia')
-    ? ' CHIRPS subrepresenta precipitación nival en alta montaña; la señal ENSO cordillerana puede estar subestimada.'
+    ? t('adv_chirps_caveat')
     : '';
 
   /* Collapsible statistical detail */
   const statDetail =
-    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">Detalle estadístico ▸</summary>` +
+    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
     `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">` +
     `r = ${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, p = ${p.toFixed(3)}, ` +
     `n = ${n}, n<sub>eff</sub> = ${nEff}, ${_lagStr(lag)}` +
@@ -96,8 +96,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   /* Not significant */
   if (!isSig) {
-    let text =
-      `<strong>${regionName}</strong>: no se detecta relación estadística clara entre el ENSO y la lluvia en esta región (agregación anual).${_chirpsCaveat}`;
+    let text = t('adv_no_relation', {region: regionName}) + _chirpsCaveat;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
     text += statDetail;
@@ -106,9 +105,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   /* ENSO Neutral */
   if (phase === 'Neutral') {
-    let text =
-      `<strong>${regionName}</strong>: condiciones ENSO Neutral (ONI ${oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : '?'}). ` +
-      `Existe correlación histórica significativa, pero sin fase activa no se proyecta dirección de anomalía.`;
+    let text = t('adv_neutral_text', {region: regionName, oni: oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : '?'});
     const soi = _soiContext(ext.soi_trend, ext.soi_value);
     if (soi) text += ' ' + soi;
     const precip = _precipSummary(ext.precip_anomaly);
@@ -126,17 +123,15 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   let dirText, implication;
   if (direction === 'excess') {
-    dirText     = 'precipitación sobre lo normal';
-    implication = 'más lluvia: oportunidad para la campaña agrícola, riesgo de anegamiento para infraestructura';
+    dirText     = t('adv_excess');
+    implication = t('adv_excess_impl');
   } else {
-    dirText     = 'precipitación bajo lo normal';
-    implication = 'menos lluvia: riesgo de déficit para la campaña agrícola';
+    dirText     = t('adv_deficit');
+    implication = t('adv_deficit_impl');
   }
 
-  let text =
-    `<strong>${regionName}</strong>: fase activa <strong>${phaseStr}</strong>` +
-    (oni != null ? ` (ONI ${oni >= 0 ? '+' : ''}${oni.toFixed(2)})` : '') + `. ` +
-    `Históricamente, ${dirText} en esta región. <strong>${implication}</strong>.`;
+  const oniStr = oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : null;
+  let text = t('adv_active_text', {region: regionName, phaseStr, oniStr, dirText, implication});
 
   const soi = _soiContext(ext.soi_trend, ext.soi_value);
   if (soi) text += ' ' + soi;
@@ -144,7 +139,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const precip = _precipSummary(ext.precip_anomaly);
   if (precip) text += ' ' + precip;
 
-  text += ' Señal estadística. Validar con pronóstico NOAA/IRI.';
+  text += t('adv_validate');
   text += statDetail;
 
   return { signal: direction, text };
