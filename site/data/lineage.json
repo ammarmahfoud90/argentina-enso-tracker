@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-09-14T14:39:07.594270+00:00",
+  "build_id": "2026-09-15T13:04:26.230406+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -204,7 +204,7 @@
     },
     {
       "path": "site/data/sst_map.json",
-      "size_bytes": 134842,
+      "size_bytes": 134864,
       "format": "json",
       "key_count": null,
       "row_count": null

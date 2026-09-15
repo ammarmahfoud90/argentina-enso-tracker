@@ -3,7 +3,7 @@
     "oni_value": 1.8,
     "oni_season": "JJA",
     "oni_date": "2026-07-15",
-    "nino34_value": 2.7,
+    "nino34_value": 2.8,
     "nino34_date": "2026-09-15",
     "soi_value": -1.1,
     "soi_date": "2026-08-15",
@@ -32796,6 +32796,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-14T14:39:12Z",
+  "last_updated": "2026-09-15T13:04:30Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
