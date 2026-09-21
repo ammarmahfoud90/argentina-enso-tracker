@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-09-20T12:48:36.314989+00:00",
+  "build_id": "2026-09-21T14:46:21.111367+00:00",
   "status": "success",
-  "duration_seconds": 5.04,
-  "last_updated": "2026-09-20T12:48:41.357501+00:00",
+  "duration_seconds": 6.32,
+  "last_updated": "2026-09-21T14:46:27.434600+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 1176.6,
-      "freshness_days": 67
+      "latency_ms": 1379.5,
+      "freshness_days": 68
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 11.0,
+      "latency_ms": 12.8,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.4,
+      "latency_ms": 2.6,
       "freshness_days": null
     },
     {
       "name": "temp_correlations.parquet",
       "status": "cached",
-      "latency_ms": 2.0,
+      "latency_ms": 2.1,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
       "status": "success",
-      "latency_ms": 627.5,
+      "latency_ms": 395.2,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 58.5,
-      "freshness_days": 279
+      "latency_ms": 373.5,
+      "freshness_days": 280
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 477.7,
+      "latency_ms": 967.7,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 1811.6,
+      "latency_ms": 1741.2,
       "freshness_days": null
     }
   ],
