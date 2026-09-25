@@ -32702,14 +32702,14 @@
       {
         "trimester": "AMJ",
         "la_nina": 0,
-        "neutral": 10,
-        "el_nino": 90
+        "neutral": 13,
+        "el_nino": 87
       },
       {
         "trimester": "MJJ",
-        "la_nina": 2,
-        "neutral": 37,
-        "el_nino": 61
+        "la_nina": 3,
+        "neutral": 42,
+        "el_nino": 55
       }
     ],
     "probs_svg": "https://ensoforecast.iri.columbia.edu/figure3_plot/2026/9",
@@ -32796,6 +32796,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-24T13:05:52Z",
+  "last_updated": "2026-09-25T13:11:03Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
