@@ -32712,9 +32712,9 @@
         "el_nino": 55
       }
     ],
-    "probs_svg": "https://ensoforecast.iri.columbia.edu/figure3_plot/2026/9",
-    "plume_svg": "https://ensoforecast.iri.columbia.edu/figure4_plot/2026/9",
-    "month": 9,
+    "probs_svg": "https://ensoforecast.iri.columbia.edu/figure3_plot/2026/10",
+    "plume_svg": "https://ensoforecast.iri.columbia.edu/figure4_plot/2026/10",
+    "month": 10,
     "year": 2026,
     "source": "IRI/CCSR (Columbia University)"
   },
@@ -32796,6 +32796,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-09-30T14:30:54Z",
+  "last_updated": "2026-10-01T15:00:51Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
