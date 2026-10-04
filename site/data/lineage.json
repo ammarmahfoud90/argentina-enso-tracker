@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-10-03T12:57:17.794083+00:00",
+  "build_id": "2026-10-04T13:37:04.409994+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -7,8 +7,8 @@
       "access_method": "live_fetch",
       "status": "success",
       "date_range_start": "1950-01-15",
-      "date_range_end": "2026-07-15",
-      "row_count": 919,
+      "date_range_end": "2026-08-15",
+      "row_count": 920,
       "feeds_sections": [
         "current",
         "oni_series",
@@ -73,7 +73,7 @@
       "name": "TAO/TRITON",
       "url": null,
       "access_method": "live_fetch",
-      "status": "success",
+      "status": "failed",
       "date_range_start": null,
       "date_range_end": null,
       "row_count": null,
@@ -121,7 +121,7 @@
         "consecutive_months": 5
       },
       "status": "success",
-      "row_count_in": 919,
+      "row_count_in": 920,
       "row_count_out": 42,
       "note": null
     },
@@ -190,23 +190,16 @@
   "artifacts": [
     {
       "path": "site/data/enso.json",
-      "size_bytes": 674962,
+      "size_bytes": 673141,
       "format": "json",
       "key_count": 28,
       "row_count": null
     },
     {
       "path": "site/data/enso-history.json",
-      "size_bytes": 359976,
+      "size_bytes": 360044,
       "format": "json",
       "key_count": 4,
-      "row_count": null
-    },
-    {
-      "path": "site/data/sst_map.json",
-      "size_bytes": 134927,
-      "format": "json",
-      "key_count": null,
       "row_count": null
     }
   ],
@@ -246,7 +239,7 @@
         "id": "src:TAO/TRITON",
         "type": "source",
         "label": "TAO/TRITON",
-        "status": "success"
+        "status": "failed"
       },
       {
         "id": "src:NOAA SAM/AAO",
@@ -299,11 +292,6 @@
         "id": "out:site/data/enso-history.json",
         "type": "artifact",
         "label": "site/data/enso-history.json"
-      },
-      {
-        "id": "out:site/data/sst_map.json",
-        "type": "artifact",
-        "label": "site/data/sst_map.json"
       }
     ],
     "edges": [
