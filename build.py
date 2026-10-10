@@ -30,6 +30,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from src.compute_composites import compute_composites
 from src.compute_spi import compute_all_spi
+from src.climatology import CALIBRATION_PERIOD, reference_frame
 from src.config import (
     CORRELATIONS_CACHE_PATH,
     ENSO_CONSECUTIVE_MONTHS,
@@ -48,6 +49,7 @@ from src.fetch_subsurface import fetch_subsurface_cross_section
 from src.lineage import LineageTracker
 from src.parana_data import get_parana_data
 from src.pipeline_monitor import PipelineMonitor
+from src.refresh_observations import validate_monthly
 from src.scientific import correlations as validated_correlations
 from src.scientific import frequencies, notable_events, validate_publication
 
@@ -284,7 +286,9 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         raise RuntimeError("Dated precipitation pairs are required for scientific statistics")
     pairs_df = pd.read_parquet(pairs_path)
     pairs_df["date"] = pd.to_datetime(pairs_df["date"])
-    corr_records, seasonal_correlations = validated_correlations(pairs_df, snapshot.oni_series)
+    validate_monthly(pairs_df, "precipitation", datetime.now(timezone.utc).date())
+    corr_records, seasonal_correlations = validated_correlations(
+        pairs_df, snapshot.oni_series, calibration_period=CALIBRATION_PERIOD)
 
     region_meta = {}
     for region_name in REGION_ORDER:
@@ -312,7 +316,10 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         cache_meta["end_year"]    = int(corr_df["end_year"].iloc[0])
         cache_meta["computed_at"] = str(corr_df["computed_at"].iloc[0])
 
-    cache_meta["analysis_version"] = "2.0.0"
+    cache_meta["legacy_end_year"] = cache_meta.get("end_year")
+    cache_meta["start_year"] = int(pairs_df.date.dt.year.min())
+    cache_meta["end_year"] = int(pairs_df.date.dt.year.max())
+    cache_meta["analysis_version"] = "2.1.0"
     cache_meta["computed_at"] = datetime.now(timezone.utc).isoformat()
     cache_meta["method"] = "Recomputed from dated climate observations and current canonical ONI; BY FDR"
 
@@ -335,7 +342,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         )
         region_cols = [c for c in REGION_ORDER if c in pairs_df.columns]
         # Climatological mean per calendar month
-        clim = pairs_df.groupby("month")[region_cols].mean()
+        clim = reference_frame(pairs_df, CALIBRATION_PERIOD).groupby("month")[region_cols].mean()
         # Last 12 available months
         recent = pairs_df.sort_values("date").tail(12).reset_index(drop=True)
         for region in REGION_ORDER:
@@ -359,7 +366,8 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         logger.warning("Pairs Parquet not found at %s — precip_anomaly_12m will be empty", pairs_path)
 
     # Seasonal correlations and frequency families share an explicit calendar.
-    frequency_stats, frequency_methodology = frequencies(pairs_df, snapshot.oni_series)
+    frequency_stats, frequency_methodology = frequencies(
+        pairs_df, snapshot.oni_series, calibration_period=CALIBRATION_PERIOD)
 
     lineage.register_transform(
         "seasonal_correlations", inputs=["CHIRPS precip pairs", "NOAA ONI"],
@@ -375,7 +383,8 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     composite_analysis: dict = {}
     if pairs_path.exists():
         try:
-            composite_analysis = compute_composites(pairs_df, snapshot.oni_series)
+            composite_analysis = compute_composites(
+                pairs_df, snapshot.oni_series, calibration_period=CALIBRATION_PERIOD)
             logger.info("Composite analysis: %d regions", len(composite_analysis))
             lineage.register_transform(
                 "composite_analysis", inputs=["CHIRPS precip pairs"],
@@ -392,7 +401,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     spi_current: dict = {}
     if pairs_path.exists():
         try:
-            spi_series, spi_current = compute_all_spi(pairs_df)
+            spi_series, spi_current = compute_all_spi(pairs_df, calibration_period=CALIBRATION_PERIOD)
             logger.info("SPI-3: %d regions", len(spi_current))
             lineage.register_transform(
                 "spi_computation", inputs=["CHIRPS precip pairs"],
@@ -406,11 +415,33 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
 
     # Temperature correlations use monthly anomalies and complete seasons too.
     temp_correlations, seasonal_temp_correlations = [], {}
+    temperature_metadata = None
     temp_pairs_path = Path("data/processed/oni_temp_pairs.parquet")
     if temp_pairs_path.exists():
         temp_pairs_df = pd.read_parquet(temp_pairs_path)
+        temp_pairs_df["date"] = pd.to_datetime(temp_pairs_df.date)
+        validate_monthly(temp_pairs_df, "temperature", datetime.now(timezone.utc).date())
         temp_correlations, seasonal_temp_correlations = validated_correlations(
-            temp_pairs_df, snapshot.oni_series, variable="temperature")
+            temp_pairs_df, snapshot.oni_series, variable="temperature",
+            calibration_period=CALIBRATION_PERIOD)
+        temperature_metadata = {
+            "source": "NOAA CPC Global Temperature", "units": "degC",
+            "observations_start": temp_pairs_df.date.min().date().isoformat(),
+            "observations_end": temp_pairs_df.date.max().date().isoformat(),
+            "latest_complete_month": str(temp_pairs_df.date.max().to_period("M")),
+            "definition": "Daily (tmax+tmin)/2; monthly means require every calendar day; then unweighted spatial pixel means",
+            "daily_support_rule": "Every day must retain at least 90% of that month's maximum valid regional pixel count; permanently missing ocean cells do not count",
+            "climatology_start_year": CALIBRATION_PERIOD[0],
+            "climatology_end_year": CALIBRATION_PERIOD[1],
+            "regional_coverage": {r: {k: REGIONS[r][k] for k in ("lat_min", "lat_max", "lon_min", "lon_max")} for r in REGION_ORDER},
+        }
+
+    refresh_path = Path("data/processed/observations_refresh.json")
+    observation_refresh = json.loads(refresh_path.read_text()) if refresh_path.exists() else None
+    if observation_refresh:
+        for variable, state in observation_refresh["sources"].items():
+            if state["status"] == "retained_after_error":
+                monitor.add_warning(f"Weekly {variable} refresh failed; valid observations retained through {state['observations_end']}")
 
     with monitor.track_source("NOAA operational ENSO reference") as src:
         operational_reference = fetch_operational_reference()
@@ -530,7 +561,9 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "roni_series": roni_series,
         "roni_series_24m": roni_series[-24:],
         "scientific_methodology": {
-            "version": "2.0.0", "computed_at": datetime.now(timezone.utc).isoformat(),
+            "version": "2.1.0", "computed_at": datetime.now(timezone.utc).isoformat(),
+            "calibration_period": list(CALIBRATION_PERIOD),
+            "calibration_note": "Referencia fija 1981–2025 para mantener continuidad con la publicación previa. Es calibración del proyecto, no una normal WMO. Los meses nuevos amplían la muestra analizada, no la referencia.",
             "correlations": "Anomalías mensuales respecto de la climatología de cada mes; estaciones completas independientes en el calendario (sumas de lluvia, medias de temperatura). ONI del mes central publicado por NOAA, desplazado por lag en meses.",
             "inference": "p aproximado con n_eff por autocorrelación, también para rangos Spearman. q Benjamini-Yekutieli para cada familia de 100 pruebas región × lag × anual/estación, separada por variable y coeficiente. Los asteriscos usan q, no p nominal.",
             "limitations": "Estudio exploratorio sin validación fuera de muestra; temperatura sin detrendado. Tendencias, dependencia residual y revisión de índices pueden influir. Lag no equivale a anticipación operativa: ONI incluye tres meses y se publica después de cerrar la estación. No es un modelo de pronóstico ni una atribución causal.",
@@ -538,14 +571,18 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "precipitation_metadata": {
             "source": "CHIRPS v2.0", "observations_start": pairs_df.date.min().date().isoformat(),
             "observations_end": pairs_df.date.max().date().isoformat(),
-            "observation_age_days": (datetime.now(timezone.utc).date() - pairs_df.date.max().date()).days,
-            "climatology_start_year": int(pairs_df.date.dt.year.min()),
-            "climatology_end_year": int(pairs_df.date.dt.year.max()),
+            "latest_complete_month": str(pairs_df.date.max().to_period("M")),
+            "last_month_end": pairs_df.date.max().to_period("M").end_time.date().isoformat(),
+            "observation_age_days": (datetime.now(timezone.utc).date() - pairs_df.date.max().to_period("M").end_time.date()).days,
+            "climatology_start_year": CALIBRATION_PERIOD[0],
+            "climatology_end_year": CALIBRATION_PERIOD[1],
             "global_latitude_coverage": [-50, 50],
             "regional_coverage": {r: m["precipitation_bounds"] for r, m in region_meta.items()},
             "spatial_method": "Cajas rectangulares; media aritmética de píxeles válidos, sin máscara de Argentina ni ponderación de área",
             "limitations": "Patagonia: 37–50°S solamente. No incluye Tierra del Fuego ni todo Santa Cruz. La precipitación nival y orográfica tiene limitaciones. El SPI describe el último período observado, no la sequía actual si el archivo está atrasado.",
         },
+        "temperature_metadata": temperature_metadata,
+        "observation_refresh": observation_refresh,
         "oni_series":    oni_records,
         "oni_series_24m": oni_24m,
         "soi_series":    soi_records,

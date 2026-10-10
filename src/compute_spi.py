@@ -63,7 +63,8 @@ def classify_spi(value: float) -> str:
     return "humedad_extrema"
 
 
-def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series:
+def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW, *,
+                calibration_period: tuple[int, int] | None = None) -> pd.Series:
     """Compute SPI for a single region's monthly precipitation series.
 
     Uses rolling 3-month accumulation, then fits gamma distribution
@@ -94,12 +95,14 @@ def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series
     for m in range(1, 13):
         mask = months == m
         vals = rolling[mask].dropna()
-        if len(vals) < 10:
+        reference = vals if calibration_period is None else vals[
+            (vals.index.year >= calibration_period[0]) & (vals.index.year <= calibration_period[1])]
+        if len(reference) < 10:
             continue
 
         # Remove zeros for gamma fitting (gamma is defined for x > 0)
-        nonzero = vals[vals > 0]
-        q_zero = 1.0 - len(nonzero) / len(vals)
+        nonzero = reference[reference > 0]
+        q_zero = 1.0 - len(nonzero) / len(reference)
 
         if len(nonzero) < 5:
             continue
@@ -130,7 +133,8 @@ def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series
     return spi
 
 
-def compute_all_spi(pairs_df: pd.DataFrame) -> tuple[dict, dict]:
+def compute_all_spi(pairs_df: pd.DataFrame, *,
+                    calibration_period: tuple[int, int] | None = None) -> tuple[dict, dict]:
     """Compute SPI-3 for all regions.
 
     Args:
@@ -155,7 +159,7 @@ def compute_all_spi(pairs_df: pd.DataFrame) -> tuple[dict, dict]:
         if len(precip) < 36:  # Need at least 3 years
             continue
 
-        spi_vals = compute_spi(precip)
+        spi_vals = compute_spi(precip, calibration_period=calibration_period)
         valid = spi_vals.dropna()
 
         if len(valid) == 0:

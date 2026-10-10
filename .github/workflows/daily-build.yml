@@ -12,6 +12,10 @@ on:
 permissions:
   contents: write              # needed to commit enso.json back to the repo
 
+concurrency:
+  group: enso-data-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Fetch ENSO data and update site/data/enso.json
@@ -38,13 +42,13 @@ jobs:
 
       - name: Scientific regression checks
         run: |
-          python -m pytest -q tests/test_scientific_validity.py
+          python -m pytest -q tests/test_scientific_validity.py tests/test_observation_refresh.py
           node tests/scientific-ui.mjs
 
       # ── Run pipeline ──────────────────────────────────────────────────────
       # The correlations Parquet (data/processed/correlations.parquet) is
       # committed to the repo and read by build.py directly.
-      # CHIRPS re-computation only runs via compute_correlations.py when needed.
+      # Climate observations are extended by the separate weekly refresh.
       - name: Run build.py
         run: python build.py
 
@@ -64,7 +68,7 @@ jobs:
                       'smn_outlook', 'notable_events', 'composite_analysis',
                       'spi_series', 'spi_current', 'parana_enso',
                       'operational_reference', 'precipitation_metadata',
-                      'scientific_methodology']
+                      'scientific_methodology', 'temperature_metadata']
           missing = [k for k in required if k not in d]
           if missing:
               print(f'FAIL: missing keys: {missing}', file=sys.stderr)

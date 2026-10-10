@@ -22,7 +22,7 @@ build/
 # can commit the three small NOAA ASCII index files directly.
 data/cache/
 data/raw/chirps/
-data/processed/
+data/processed/*
 *.nc
 *.nc4
 *.h5
@@ -34,6 +34,7 @@ data/processed/
 !data/processed/oni_precip_pairs.parquet
 !data/processed/temp_correlations.parquet
 !data/processed/oni_temp_pairs.parquet
+!data/processed/observations_refresh.json
 
 # Streamlit
 .streamlit/secrets.toml

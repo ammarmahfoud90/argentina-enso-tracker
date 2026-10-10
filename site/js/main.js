@@ -1650,7 +1650,17 @@ async function main() {
   officialEl.innerHTML = `<strong>${roniText}</strong><br>${advisoryText} <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">NOAA CPC ↗</a><br><small>${t('roni_note')}</small>`;
   if (advisory && (Date.now() - Date.parse(advisory.issued)) / 86400000 > 45) officialEl.innerHTML += `<br>${t('advisory_stale')}`;
   const pm = data.precipitation_metadata;
-  document.getElementById('observations-asof').textContent = pm ? t('observations_asof', {start: pm.observations_start.slice(0,7), end: pm.observations_end.slice(0,7)}) : t('observations_unavailable');
+  const tm = data.temperature_metadata;
+  let observationsText = pm ? t('observations_asof', {start: pm.observations_start.slice(0,7), end: pm.observations_end.slice(0,7)}) : t('observations_unavailable');
+  if (tm) observationsText += ' ' + t('temperature_asof', {date: tm.observations_end.slice(0,7)});
+  const refresh = data.observation_refresh;
+  if (refresh) {
+    observationsText += ' ' + t('climate_checked', {date: refresh.checked_at.slice(0,10)});
+    for (const [variable, source] of Object.entries(refresh.sources || {})) {
+      if (source.status === 'retained_after_error') observationsText += ' ' + t('climate_retained', {variable: t(variable === 'temperature' ? 'regional_temperature' : 'src_precipitation')});
+    }
+  }
+  document.getElementById('observations-asof').textContent = observationsText;
 
   /* ── Masthead date ── */
   try {
@@ -2265,7 +2275,8 @@ async function main() {
 
     buildCompositeChart('DEF');
     document.getElementById('composite-season-select').addEventListener('change', e => buildCompositeChart(e.target.value));
-    document.getElementById('composite-meta').textContent = I18N.getLang() === 'en' ? 'CHIRPS v2.0 (1981–2025) · anomaly vs climatology' : 'CHIRPS v2.0 (1981–2025) · anomalía vs climatología';
+    const period = data.precipitation_metadata ? `${data.precipitation_metadata.observations_start.slice(0,7)} → ${data.precipitation_metadata.observations_end.slice(0,7)}` : '';
+    document.getElementById('composite-meta').textContent = I18N.getLang() === 'en' ? `CHIRPS v2.0 (${period}) · fixed reference 1981–2025` : `CHIRPS v2.0 (${period}) · referencia fija 1981–2025`;
   }
   } catch (e) { console.error('[composite]', e); }
 
@@ -2336,7 +2347,7 @@ async function main() {
         hovermode: 'x unified',
       }, { responsive: true, displayModeBar: false });
     }
-    document.getElementById('spi-meta').textContent = I18N.getLang() === 'en' ? 'SPI-3 · CHIRPS v2.0 (1981–2025) · last 5 years' : 'SPI-3 · CHIRPS v2.0 (1981–2025) · últimos 5 años';
+    document.getElementById('spi-meta').textContent = I18N.getLang() === 'en' ? 'SPI-3 · CHIRPS v2.0 · calibration 1981–2025 · last 5 available years' : 'SPI-3 · CHIRPS v2.0 · calibración 1981–2025 · últimos 5 años disponibles';
   }
   } catch (e) { console.error('[spi]', e); }
 
@@ -2646,7 +2657,7 @@ async function main() {
   const twTitle = document.querySelector('meta[name="twitter:title"]');
   if (twTitle) twTitle.content = document.title;
   const ogDesc = document.querySelector('meta[property="og:description"]');
-  if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${canonicalPhase}. Correlaciones CHIRPS 1981-2025 para 5 regiones argentinas.`;
+  if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${canonicalPhase}. Lluvia CHIRPS hasta ${data.precipitation_metadata?.observations_end.slice(0,7) || 'fecha no disponible'} para 5 muestras regionales.`;
 
   /* ── Scroll reveal (IntersectionObserver) ── */
   if (!prefersReducedMotion) {

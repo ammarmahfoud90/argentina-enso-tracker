@@ -12,6 +12,7 @@ import numpy as np
 from src.config import ENSO_EL_NINO_THRESHOLD, ENSO_LA_NINA_THRESHOLD, REGION_ORDER
 from src.utils import get_logger
 from src.scientific import complete_seasons
+from src.climatology import reference_frame
 
 logger = get_logger(__name__)
 
@@ -56,7 +57,8 @@ def _classify_intensity(oni: float) -> tuple[str | None, str | None]:
     return (None, None)
 
 
-def compute_composites(pairs_df: pd.DataFrame, oni_df: pd.DataFrame | None = None) -> dict:
+def compute_composites(pairs_df: pd.DataFrame, oni_df: pd.DataFrame | None = None, *,
+                       calibration_period: tuple[int, int] | None = None) -> dict:
     """Compute mean precip anomaly by region x season x intensity x phase.
 
     Args:
@@ -73,7 +75,8 @@ def compute_composites(pairs_df: pd.DataFrame, oni_df: pd.DataFrame | None = Non
     oni_mean = seasonal["oni"]
 
     # Climatological mean per season per region
-    clim = precip_total.groupby(level="season").mean()
+    reference = complete_seasons(reference_frame(pairs_df, calibration_period), oni_df)
+    clim = reference.groupby("season")[region_cols].mean()
 
     result = {}
     for region in region_cols:

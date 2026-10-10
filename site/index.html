@@ -729,7 +729,7 @@
   <!-- 7. Regional risk -->
   <section class="section reveal" id="risk-section" style="border-top:1px solid var(--color-border);margin-top:36px;">
     <h2 style="margin-bottom:6px;" data-i18n="risk_title">¿Qué significa para cada región?</h2>
-    <p class="section-desc section-desc-wide" data-i18n="risk_desc">Los colores reflejan la dirección de lluvia que se observó históricamente durante fases similares a la actual (1981–2025). Son promedios regionales basados en datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones.">CHIRPS</span>. No reemplazan un pronóstico ni aplican a escala provincial sin validación local.</p>
+    <p class="section-desc section-desc-wide" data-i18n="risk_desc">Los colores reflejan la dirección de lluvia que se observó históricamente durante fases similares a la actual. Son promedios regionales basados en datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones.">CHIRPS</span>. No reemplazan un pronóstico ni aplican a escala provincial sin validación local.</p>
     <div class="risk-grid">
       <div class="risk-map-container" id="risk-map-container">
         <svg id="argentina-map" role="img" aria-label="Mapa de señal ENSO por región en Argentina" data-i18n-aria="risk_map_aria"></svg>
@@ -816,7 +816,13 @@
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_precipitation">Precipitación</td>
               <td style="padding:8px 12px;">CHIRPS v2.0 (UCSB, 1981–present)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
-              <td style="padding:8px 12px;" data-i18n-text="latency_cache">Cache (no tiempo real)</td>
+              <td style="padding:8px 12px;" data-i18n-text="latency_cache">Producto mensual final; revisión semanal</td>
+            </tr>
+            <tr style="border-bottom:1px solid #E4E7EC;">
+              <td style="padding:8px 12px;font-weight:600;" data-i18n-text="regional_temperature">Temperatura regional</td>
+              <td style="padding:8px 12px;">NOAA CPC Global Temperature (tmax+tmin)/2</td>
+              <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
+              <td style="padding:8px 12px;" data-i18n-text="latency_cache">Meses completos; revisión semanal</td>
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_forecast">Pronóstico ENSO</td>
@@ -826,12 +832,12 @@
             </tr>
           </tbody>
         </table>
-        <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes del período disponible. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub>eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
+        <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes de la referencia fija 1981–2025. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub>eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
         <p style="margin-top:8px;" data-i18n="method_oni"><strong>ONI y RONI.</strong> NOAA usa RONI para monitoreo desde el 1 de febrero de 2026. RONI resta la anomalía tropical al Niño 3.4 y reescala la varianza; la serie actual usa ERSSTv6 y base 1991–2020. El ONI histórico sigue disponible con bases de 30 años centradas. Las asociaciones del tracker usan ONI; su clasificación no sustituye el aviso operativo de NOAA, que también considera la atmósfera.</p>
         <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Dominio y cobertura.</strong> CHIRPS v2.0 cubre 50°S–50°N. La caja de lluvia de Patagonia solo aporta datos entre 37 y 50°S: excluye Tierra del Fuego y el extremo sur de Santa Cruz. Son medias aritméticas de píxeles válidos en cajas, sin ponderación de área ni máscara nacional; incluyen terreno fuera de Argentina y dominios solapados. No equivalen a promedios administrativos. La nieve y el relieve limitan su precisión. El período disponible se muestra en el encabezado.</p>
         <p style="margin-top:8px;" data-i18n="method_neff"><strong>Incertidumbre.</strong> n<sub>eff</sub> estima el efecto de la autocorrelación; los p son aproximados. La corrección FDR ajusta comparaciones dependientes, pero no prueba causalidad ni elimina toda incertidumbre. Las frecuencias usan un binomial aproximado, una única familia exploratoria y q corregido. Correlaciones y frecuencias proceden de los mismos datos: no constituyen validaciones independientes.</p>
         <p style="margin-top:8px;" data-i18n="method_episodes"><strong>Episodios históricos por ONI.</strong> Se requieren cinco estaciones solapadas consecutivas con ONI ≥+0.5 o ≤−0.5. Es la regla histórica del ONI, no una declaración operativa actual. El encabezado muestra por separado el RONI y el aviso oficial de NOAA.</p>
-        <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Actualización diaria del sitio. Cada serie conserva su propia fecha de observación; el archivo de lluvia y SPI puede terminar antes que los índices ENSO.</p>
+        <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Los índices ENSO y el sitio se actualizan diariamente. Los meses completos de lluvia y temperatura regional se incorporan mediante una revisión semanal. Cada variable muestra su fecha por separado.</p>
       </div>
     </details>
   </section>
@@ -846,7 +852,7 @@
     <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span data-i18n="footer_auto">Índices automáticos. No constituyen declaración oficial.</span>
-      <span data-i18n="footer_corr">Correlaciones anuales y estacionales (1981–2025) · CHIRPS v2.0</span>
+      <span data-i18n="footer_corr">Correlaciones anuales y estacionales · CHIRPS v2.0</span>
     </div>
   </footer>
 
