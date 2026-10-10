@@ -3,8 +3,8 @@
     "oni_value": 2.16,
     "oni_season": "JAS",
     "oni_date": "2026-08-15",
-    "nino34_value": 2.98,
-    "nino34_date": "2026-09-15",
+    "nino34_value": 1.44,
+    "nino34_date": "2026-06-15",
     "soi_value": -2.0,
     "soi_date": "2026-09-15",
     "conditions": "El Niño",
@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "3.0.0",
-    "computed_at": "2026-10-10T21:49:25.809404+00:00",
+    "computed_at": "2026-10-10T22:31:57.747809+00:00",
     "calibration_period": [
       1981,
       2025
@@ -18453,7 +18453,7 @@
     "version": "3.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-10-10T21:49:00.719868+00:00",
+    "computed_at": "2026-10-10T22:31:51.411124+00:00",
     "legacy_end_year": 2026,
     "analysis_version": "3.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
@@ -40777,9 +40777,9 @@
   },
   "data_sources": {
     "oni": "CPC",
-    "nino34": "ERDDAP",
+    "nino34": "CPC",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-10T21:49:25Z",
+  "last_updated": "2026-10-10T22:31:57Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
