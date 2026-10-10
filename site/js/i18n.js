@@ -224,7 +224,7 @@ window.I18N = {
 
     /* ── Risk Section ── */
     risk_title:       { es: '\u00bfQu\u00e9 significa para cada regi\u00f3n?', en: 'What does it mean for each region?' },
-    risk_desc:        { es: 'Los colores reflejan la direcci\u00f3n de lluvia que se observ\u00f3 hist\u00f3ricamente durante fases similares a la actual . Son promedios regionales basados en datos de <span class="glossary" data-i18n-tip="tip_chirps" data-tip="">CHIRPS</span>. No reemplazan un pron\u00f3stico ni aplican a escala provincial sin validaci\u00f3n local.', en: 'Colors reflect the rainfall direction historically observed during phases similar to the current one . These are regional averages based on <span class="glossary" data-i18n-tip="tip_chirps" data-tip="">CHIRPS</span> data. They do not replace a forecast nor apply at the provincial scale without local validation.' },
+    risk_desc:        { es: 'Los colores reflejan la direcci\u00f3n de lluvia que se observ\u00f3 hist\u00f3ricamente durante fases similares a la actual. Son promedios regionales basados en datos de <span class="glossary" data-i18n-tip="tip_chirps" data-tip="">CHIRPS</span>. No reemplazan un pron\u00f3stico ni aplican a escala provincial sin validaci\u00f3n local.', en: 'Colors reflect the rainfall direction historically observed during phases similar to the current one. These are regional averages based on <span class="glossary" data-i18n-tip="tip_chirps" data-tip="">CHIRPS</span> data. They do not replace a forecast nor apply at the provincial scale without local validation.' },
     risk_map_aria:    { es: 'Mapa de se\u00f1al ENSO por regi\u00f3n en Argentina', en: 'ENSO signal map by region in Argentina' },
     risk_accordion:   { es: 'Detalle hist\u00f3rico por regi\u00f3n', en: 'Historical detail by region' },
     map_malvinas:     { es: 'Islas Malvinas (Arg.)', en: 'Falkland Islands (Arg.)' },
@@ -309,7 +309,7 @@ window.I18N = {
     summary_active_l2_other:{ es: ' Con {otherPhase}, {onlyStr}{ocM} de {ocN}.', en: ' With {otherPhase}, {onlyStr}{ocM} of {ocN}.' },
     summary_only:          { es: 'solo ', en: 'only ' },
     summary_active_l2_dev: {"es": " El promedio de lluvia fue {s}{dev}% respecto de la media climatológica de esos {seasonName}.", "en": " Mean rainfall was {s}{dev}% relative to the climatological mean for those {seasonName}."},
-    summary_no_signal:     { es: 'La tabla de frecuencias estacionales de {region} no muestra resultados significativos para {phase} tras el ajuste .', en: 'The seasonal frequency table for {region} shows no significant results for {phase} after adjustment .' },
+    summary_no_signal:     { es: 'La tabla de frecuencias estacionales de {region} no muestra resultados significativos para {phase} tras el ajuste.', en: 'The seasonal frequency table for {region} shows no significant results for {phase} after adjustment.' },
     summary_l3: {"es": "Asociaciones históricas exploratorias: no predicen lluvia local ni niveles de río. Consultá SMN e INA.", "en": "Exploratory historical associations: they do not predict local rainfall or river levels. Consult SMN and INA."},
     only:                  { es: 'solo ', en: 'only ' },
 
