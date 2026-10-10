@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "2.1.0",
-    "computed_at": "2026-10-10T20:01:29.515239+00:00",
+    "computed_at": "2026-10-10T20:08:18.184420+00:00",
     "calibration_period": [
       1981,
       2025
@@ -5809,7 +5809,7 @@
   },
   "observation_refresh": {
     "schema_version": "1.0.0",
-    "checked_at": "2026-10-10T16:26:14.764211+00:00",
+    "checked_at": "2026-10-10T20:00:02.931324+00:00",
     "check_frequency": "weekly",
     "calibration_period": [
       1981,
@@ -18436,7 +18436,7 @@
     "version": "1.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-10-10T20:01:23.287610+00:00",
+    "computed_at": "2026-10-10T20:08:12.499169+00:00",
     "legacy_end_year": 2025,
     "analysis_version": "2.1.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
@@ -40763,6 +40763,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-10T20:01:29Z",
+  "last_updated": "2026-10-10T20:08:18Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v2.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
