@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-10-10T15:36:32.910023+00:00",
+  "build_id": "2026-10-10T20:00:17.613329+00:00",
   "status": "success",
-  "duration_seconds": 12.73,
-  "last_updated": "2026-10-10T15:36:45.644750+00:00",
+  "duration_seconds": 10.1,
+  "last_updated": "2026-10-10T20:00:27.713427+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 1505.1,
+      "latency_ms": 2135.9,
       "freshness_days": 56
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 13.2,
+      "latency_ms": 9.9,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 3.0,
+      "latency_ms": 2.5,
       "freshness_days": null
     },
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 660.4,
+      "latency_ms": 890.0,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
       "status": "success",
-      "latency_ms": 467.9,
+      "latency_ms": 400.9,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 350.3,
+      "latency_ms": 406.0,
       "freshness_days": 25
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 5061.7,
+      "latency_ms": 2963.9,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 1893.2,
+      "latency_ms": 1789.3,
       "freshness_days": null
     }
   ],
@@ -60,14 +60,14 @@
       "range_violations": 0
     },
     "precipitation_pairs": {
-      "rows": 540,
-      "null_rate": 0.0,
+      "rows": 548,
+      "null_rate": 0.0018,
       "range_violations": 0
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 829.3,
-    "site/data/enso-history.json": 414.3,
+    "site/data/enso.json": 839.5,
+    "site/data/enso-history.json": 418.0,
     "site/data/sst_map.json": 131.8
   },
   "warnings": [],
