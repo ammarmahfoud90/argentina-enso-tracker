@@ -12,8 +12,8 @@
     "episode_confirmed": false,
     "phase": "Neutral",
     "phase_source": "ONI (NOAA CPC)",
-    "sam_value": -1.14,
-    "sam_date": "2025-12-15"
+    "sam_value": 0.26,
+    "sam_date": "2026-09-15"
   },
   "oni_series": [
     {
@@ -31358,6 +31358,42 @@
     {
       "date": "2025-12-15",
       "sam": -1.14
+    },
+    {
+      "date": "2026-01-15",
+      "sam": 0.85
+    },
+    {
+      "date": "2026-02-15",
+      "sam": 0.49
+    },
+    {
+      "date": "2026-03-15",
+      "sam": 0.49
+    },
+    {
+      "date": "2026-04-15",
+      "sam": -0.12
+    },
+    {
+      "date": "2026-05-15",
+      "sam": 0.54
+    },
+    {
+      "date": "2026-06-15",
+      "sam": 2.51
+    },
+    {
+      "date": "2026-07-15",
+      "sam": 0.39
+    },
+    {
+      "date": "2026-08-15",
+      "sam": -0.62
+    },
+    {
+      "date": "2026-09-15",
+      "sam": 0.26
     }
   ],
   "parana_enso": {
@@ -32806,6 +32842,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-09T14:53:29Z",
+  "last_updated": "2026-10-10T14:02:20Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }

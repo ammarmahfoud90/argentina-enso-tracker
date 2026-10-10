@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-10-09T14:53:21.091717+00:00",
+  "build_id": "2026-10-10T14:02:11.208059+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -88,7 +88,7 @@
       "status": "success",
       "date_range_start": null,
       "date_range_end": null,
-      "row_count": 564,
+      "row_count": 573,
       "feeds_sections": [
         "sam_monthly",
         "current.sam_value"
@@ -190,21 +190,21 @@
   "artifacts": [
     {
       "path": "site/data/enso.json",
-      "size_bytes": 675126,
+      "size_bytes": 675658,
       "format": "json",
       "key_count": 28,
       "row_count": null
     },
     {
       "path": "site/data/enso-history.json",
-      "size_bytes": 360081,
+      "size_bytes": 360416,
       "format": "json",
       "key_count": 4,
       "row_count": null
     },
     {
       "path": "site/data/sst_map.json",
-      "size_bytes": 134732,
+      "size_bytes": 134802,
       "format": "json",
       "key_count": null,
       "row_count": null
