@@ -3,8 +3,8 @@
     "oni_value": 2.16,
     "oni_season": "JAS",
     "oni_date": "2026-08-15",
-    "nino34_value": 2.98,
-    "nino34_date": "2026-09-15",
+    "nino34_value": 1.44,
+    "nino34_date": "2026-06-15",
     "soi_value": -2.0,
     "soi_date": "2026-09-15",
     "conditions": "El Niño",
@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "2.0.0",
-    "computed_at": "2026-10-10T15:22:00.608826+00:00",
+    "computed_at": "2026-10-10T15:29:46.922154+00:00",
     "correlations": "Anomalías mensuales respecto de la climatología de cada mes; estaciones completas independientes en el calendario (sumas de lluvia, medias de temperatura). ONI del mes central publicado por NOAA, desplazado por lag en meses.",
     "inference": "p aproximado con n_eff por autocorrelación, también para rangos Spearman. q Benjamini-Yekutieli para cada familia de 100 pruebas región × lag × anual/estación, separada por variable y coeficiente. Los asteriscos usan q, no p nominal.",
     "limitations": "Estudio exploratorio sin validación fuera de muestra; temperatura sin detrendado. Tendencias, dependencia residual y revisión de índices pueden influir. Lag no equivale a anticipación operativa: ONI incluye tres meses y se publica después de cerrar la estación. No es un modelo de pronóstico ni una atribución causal."
@@ -18343,7 +18343,7 @@
     "version": "1.0.0",
     "start_year": 1981,
     "end_year": 2025,
-    "computed_at": "2026-10-10T15:21:54.548229+00:00",
+    "computed_at": "2026-10-10T15:29:15.984745+00:00",
     "analysis_version": "2.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
   },
@@ -40381,9 +40381,9 @@
   },
   "data_sources": {
     "oni": "CPC",
-    "nino34": "ERDDAP",
+    "nino34": "CPC",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-10T15:22:00Z",
+  "last_updated": "2026-10-10T15:29:46Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v2.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
