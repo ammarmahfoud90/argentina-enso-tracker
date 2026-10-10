@@ -211,6 +211,16 @@ jobs:
             echo "No changes in data files — nothing to commit."
           else
             git commit -m "data: daily ENSO update $(date -u +%Y-%m-%d)"
-            git pull --rebase -X theirs
-            git push
+            for attempt in 1 2 3; do
+              git pull --rebase -X theirs
+              if git push; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                echo "::error::Failed to publish data after 3 attempts."
+                exit 1
+              fi
+              echo "::warning::Data push failed (attempt $attempt/3). Retrying."
+              sleep "$((attempt * 10))"
+            done
           fi

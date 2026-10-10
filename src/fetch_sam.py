@@ -11,7 +11,6 @@ Format: fixed-width ASCII table with year + 12 monthly values.
 
 from __future__ import annotations
 
-import io
 from datetime import date
 
 import pandas as pd
@@ -25,8 +24,9 @@ logger = get_logger(__name__)
 def parse_aao(raw_text: str) -> pd.DataFrame:
     """Parse the NOAA CPC AAO monthly ASCII table.
 
-    The format has one row per year with the year followed by 12 monthly
-    values separated by whitespace. Missing values are typically very
+    The format has one row per year with the year followed by up to 12 monthly
+    values separated by whitespace. The current year can have fewer months.
+    Missing values are typically very
     large negative numbers (e.g., -99.99 or -999).
 
     Returns:
@@ -35,7 +35,7 @@ def parse_aao(raw_text: str) -> pd.DataFrame:
     records = []
     for line in raw_text.strip().splitlines():
         parts = line.split()
-        if len(parts) < 13:
+        if len(parts) < 2:
             continue
         try:
             year = int(parts[0])
