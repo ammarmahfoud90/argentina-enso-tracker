@@ -2276,7 +2276,7 @@ async function main() {
     buildCompositeChart('DEF');
     document.getElementById('composite-season-select').addEventListener('change', e => buildCompositeChart(e.target.value));
     const period = data.precipitation_metadata ? `${data.precipitation_metadata.observations_start.slice(0,7)} → ${data.precipitation_metadata.observations_end.slice(0,7)}` : '';
-    document.getElementById('composite-meta').textContent = I18N.getLang() === 'en' ? `CHIRPS v2.0 (${period}) · fixed reference 1981–2025` : `CHIRPS v2.0 (${period}) · referencia fija 1981–2025`;
+    document.getElementById('composite-meta').textContent = I18N.getLang() === 'en' ? `CHIRPS v3.0 (${period}) · fixed reference 1981–2025` : `CHIRPS v3.0 (${period}) · referencia fija 1981–2025`;
   }
   } catch (e) { console.error('[composite]', e); }
 
@@ -2347,7 +2347,7 @@ async function main() {
         hovermode: 'x unified',
       }, { responsive: true, displayModeBar: false });
     }
-    document.getElementById('spi-meta').textContent = I18N.getLang() === 'en' ? 'SPI-3 · CHIRPS v2.0 · calibration 1981–2025 · last 5 available years' : 'SPI-3 · CHIRPS v2.0 · calibración 1981–2025 · últimos 5 años disponibles';
+    document.getElementById('spi-meta').textContent = I18N.getLang() === 'en' ? 'SPI-3 · CHIRPS v3.0 · calibration 1981–2025 · last 5 available years' : 'SPI-3 · CHIRPS v3.0 · calibración 1981–2025 · últimos 5 años disponibles';
   }
   } catch (e) { console.error('[spi]', e); }
 

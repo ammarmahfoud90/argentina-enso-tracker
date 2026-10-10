@@ -43,6 +43,7 @@ jobs:
           node tests/smoke-lint.mjs
           node tests/scientific-ui.mjs
           node tests/service-worker-freshness.mjs
+          node tests/publication-data.mjs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

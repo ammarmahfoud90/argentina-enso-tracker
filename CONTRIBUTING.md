@@ -13,16 +13,19 @@ git clone https://github.com/ammarmahfoud90/argentina-enso-tracker.git
 cd argentina-enso-tracker
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -r requirements-data.txt
 ```
 
-## Generate Correlation Cache (one-time, ~20 min)
+## Rebuild the Correlation Cache
 
 ```bash
 python -m src.compute_correlations
 ```
 
-This downloads the CHIRPS subset (~486 MB) and computes correlations.
+This reads validated CHIRPS v3 observations and computes correlations using
+the site's corrected method. It does not overwrite or truncate rainfall.
+For a v2 checkout, run `python -m src.migrate_chirps_v3` first; this archives
+v2 and recalibrates the full v3 history.
 Result: `data/processed/correlations.parquet` (versioned in repo).
 
 ## Build the Site
@@ -37,7 +40,8 @@ python -m src.refresh_observations
 The refresh validates each source independently and retains its previous
 series on failure. Only complete months are accepted. The daily build does
 not download climate observations; the weekly workflow does that separately.
-Calibration stays fixed at 1981–2025. Read `observations_refresh.json` for
+Calibration stays fixed at 1981–2025 within CHIRPS v3. Product and spatial
+support metadata prevent mixing versions or domains. Read `observations_refresh.json` for
 the source cutoffs and the status of the last attempt.
 
 ```bash

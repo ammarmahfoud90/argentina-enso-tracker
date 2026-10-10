@@ -14,7 +14,7 @@ import pandas as pd
 from scipy import stats
 
 from src.compute_correlations import compute_n_eff
-from src.config import CORRELATION_LAGS, REGION_ORDER
+from src.config import CHIRPS_DATASET_ID, CHIRPS_SOURCE, CORRELATION_LAGS, PRECIPITATION_REGIONS, REGION_ORDER
 from src.climatology import reference_frame
 
 SEASONS = {"SON": (9, 10, 11), "DEF": (12, 1, 2),
@@ -196,8 +196,8 @@ def frequencies(frame: pd.DataFrame, oni: pd.DataFrame, *,
         "interpretation": "Frecuencias históricas descriptivas. Sin validación fuera de muestra ni independencia respecto de las correlaciones. No son probabilidades de pronóstico.",
         "units": {"mean_deviation_monthly_mm": "mm/mes (total estacional / 3)",
                   "mean_deviation_seasonal_mm": "mm/estación", "deviation_pct_of_climatology": "% de la media estacional"},
-        "data_source": "CHIRPS v2.0, cajas rectangulares y período documentados en precipitation_metadata; ONI NOAA CPC",
-        "chirps_caveat": "CHIRPS v2 termina en 50°S; no mide toda Patagonia. La nieve y el relieve limitan su precisión."}
+        "data_source": f"{frame.attrs.get('source', 'CHIRPS')}, cajas rectangulares y período documentados en precipitation_metadata; ONI NOAA CPC",
+        "chirps_caveat": "La muestra de lluvia de Patagonia conserva el límite de 50°S. La nieve y el relieve limitan su precisión."}
     return result, metadata
 
 
@@ -253,8 +253,19 @@ def validate_publication(payload: dict, sst: dict | None = None) -> None:
     if pd.Timestamp(metadata["observations_end"]) < pd.Timestamp(metadata["observations_start"]):
         raise ValueError("Invalid observation dates")
     if metadata["regional_coverage"]["Patagonia"]["lat_min"] < -50:
-        raise ValueError("CHIRPS v2 cannot cover southern Patagonia")
-    if payload.get("scientific_methodology", {}).get("version") == "2.1.0":
+        raise ValueError("The calibrated project rainfall domain ends at 50°S")
+    version = payload.get("scientific_methodology", {}).get("version")
+    if version == "3.0.0":
+        if (metadata.get("dataset_id") != CHIRPS_DATASET_ID or metadata.get("source") != CHIRPS_SOURCE
+                or metadata.get("product_status") != "final"
+                or metadata.get("regional_coverage") != PRECIPITATION_REGIONS
+                or metadata.get("global_latitude_coverage") != [-60, 60]
+                or CHIRPS_SOURCE not in payload["frequency_methodology"]["data_source"]):
+            raise ValueError("Inconsistent CHIRPS v3 publication metadata")
+        refreshed = payload.get("observation_refresh", {}).get("sources", {}).get("precipitation", {})
+        if refreshed and (refreshed.get("dataset_id") != CHIRPS_DATASET_ID or refreshed.get("source") != CHIRPS_SOURCE):
+            raise ValueError("Weekly rainfall manifest refers to another product")
+    if version in ("2.1.0", "3.0.0"):
         for entry in (metadata, payload.get("temperature_metadata")):
             if not entry:
                 raise ValueError("Missing climate observation metadata")

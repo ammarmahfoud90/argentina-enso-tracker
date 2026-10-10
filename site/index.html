@@ -4,9 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Argentina ENSO Impact Tracker</title>
-  <meta name="description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v2.0 e IRI Columbia.">
+  <meta name="description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v3.0 e IRI Columbia.">
   <meta property="og:title" content="Argentina ENSO Impact Tracker">
-  <meta property="og:description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v2.0 e IRI Columbia.">
+  <meta property="og:description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v3.0 e IRI Columbia.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://ammarmahfoud90.github.io/argentina-enso-tracker/">
   <meta property="og:image" content="https://ammarmahfoud90.github.io/argentina-enso-tracker/data/og-image.png">
@@ -15,7 +15,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://ammarmahfoud90.github.io/argentina-enso-tracker/data/og-image.png">
   <meta name="twitter:title" content="Argentina ENSO Impact Tracker">
-  <meta name="twitter:description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v2.0 e IRI Columbia.">
+  <meta name="twitter:description" content="Monitoreo diario del ENSO y su correlación histórica con precipitación en cinco regiones argentinas. Fuentes: NOAA CPC, CHIRPS v3.0 e IRI Columbia.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#1E3FAE">
@@ -408,7 +408,7 @@
   <!-- 1. Masthead -->
   <header class="masthead">
     <div>
-      <div class="masthead-kicker" data-i18n-text="masthead_kicker">Boletín climático · NOAA CPC · CHIRPS v2.0</div>
+      <div class="masthead-kicker" data-i18n-text="masthead_kicker">Boletín climático · NOAA CPC · CHIRPS v3.0</div>
       <h1>Argentina ENSO<br>Impact Tracker</h1>
     </div>
     <div class="masthead-meta">
@@ -645,7 +645,7 @@
   <!-- 6. Correlation heatmap -->
   <section class="section reveal" id="corr-section">
     <h2 style="margin-bottom:6px;" data-i18n="corr_title">¿Cómo se relaciona el ENSO con la lluvia?</h2>
-    <p class="section-desc section-desc-wide" data-i18n="corr_desc">Asociaciones históricas entre ONI y lluvia en cinco cajas rectangulares CHIRPS v2.0. La comparación anual usa anomalías por mes calendario; la estacional, acumulados de tres meses completos. La altura de una barra indica asociación, no causalidad ni capacidad de pronóstico.</p>
+    <p class="section-desc section-desc-wide" data-i18n="corr_desc">Asociaciones históricas entre ONI y lluvia en cinco cajas rectangulares CHIRPS v3.0. La comparación anual usa anomalías por mes calendario; la estacional, acumulados de tres meses completos. La altura de una barra indica asociación, no causalidad ni capacidad de pronóstico.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
       <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -814,7 +814,7 @@
             </tr>
             <tr style="border-bottom:1px solid #E4E7EC;">
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_precipitation">Precipitación</td>
-              <td style="padding:8px 12px;">CHIRPS v2.0 (UCSB, 1981–present)</td>
+              <td style="padding:8px 12px;">CHIRPS v3.0 (UCSB, 1981–present)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_cache">Producto mensual final; revisión semanal</td>
             </tr>
@@ -834,7 +834,7 @@
         </table>
         <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes de la referencia fija 1981–2025. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub>eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
         <p style="margin-top:8px;" data-i18n="method_oni"><strong>ONI y RONI.</strong> NOAA usa RONI para monitoreo desde el 1 de febrero de 2026. RONI resta la anomalía tropical al Niño 3.4 y reescala la varianza; la serie actual usa ERSSTv6 y base 1991–2020. El ONI histórico sigue disponible con bases de 30 años centradas. Las asociaciones del tracker usan ONI; su clasificación no sustituye el aviso operativo de NOAA, que también considera la atmósfera.</p>
-        <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Dominio y cobertura.</strong> CHIRPS v2.0 cubre 50°S–50°N. La caja de lluvia de Patagonia solo aporta datos entre 37 y 50°S: excluye Tierra del Fuego y el extremo sur de Santa Cruz. Son medias aritméticas de píxeles válidos en cajas, sin ponderación de área ni máscara nacional; incluyen terreno fuera de Argentina y dominios solapados. No equivalen a promedios administrativos. La nieve y el relieve limitan su precisión. El período disponible se muestra en el encabezado.</p>
+        <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Dominio y cobertura.</strong> CHIRPS v3.0 cubre 60°S–60°N. La serie y el SPI se recalcularon desde 1981 con v3; se conservó la referencia 1981–2025 y las mismas cajas. El proyecto conserva la caja de lluvia de Patagonia entre 37 y 50°S: excluye Tierra del Fuego y el extremo sur de Santa Cruz. Son medias aritméticas de píxeles válidos en cajas, sin ponderación de área ni máscara nacional; incluyen terreno fuera de Argentina y dominios solapados. No equivalen a promedios administrativos. La nieve y el relieve limitan su precisión. El período disponible se muestra en el encabezado.</p>
         <p style="margin-top:8px;" data-i18n="method_neff"><strong>Incertidumbre.</strong> n<sub>eff</sub> estima el efecto de la autocorrelación; los p son aproximados. La corrección FDR ajusta comparaciones dependientes, pero no prueba causalidad ni elimina toda incertidumbre. Las frecuencias usan un binomial aproximado, una única familia exploratoria y q corregido. Correlaciones y frecuencias proceden de los mismos datos: no constituyen validaciones independientes.</p>
         <p style="margin-top:8px;" data-i18n="method_episodes"><strong>Episodios históricos por ONI.</strong> Se requieren cinco estaciones solapadas consecutivas con ONI ≥+0.5 o ≤−0.5. Es la regla histórica del ONI, no una declaración operativa actual. El encabezado muestra por separado el RONI y el aviso oficial de NOAA.</p>
         <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Los índices ENSO y el sitio se actualizan diariamente. Los meses completos de lluvia y temperatura regional se incorporan mediante una revisión semanal. Cada variable muestra su fecha por separado.</p>
@@ -845,14 +845,14 @@
   <!-- 9. Footer -->
   <footer class="footer" role="contentinfo">
     <div style="width:100%;margin-bottom:12px;line-height:1.6;">
-      <p style="margin-bottom:6px;" data-i18n="footer_sources">Fuentes: NOAA CPC · IRI Columbia · CHIRPS v2.0 (UCSB) · TAO/TRITON (NOAA PMEL)</p>
+      <p style="margin-bottom:6px;" data-i18n="footer_sources">Fuentes: NOAA CPC · IRI Columbia · CHIRPS v3.0 (UCSB) · TAO/TRITON (NOAA PMEL)</p>
       <p style="margin-bottom:6px;" data-i18n="footer_disclaimer">El ENSO explica solo una parte de la variabilidad de precipitación en Argentina. El SAM (Modo Anular del Sur), la variabilidad interna atmosférica y factores regionales también influyen significativamente.</p>
       <p style="margin-bottom:6px;" data-i18n="footer_latency">Cada indicador muestra su fecha. ONI y RONI son medias trimestrales fechadas en el mes central; no observaciones instantáneas. El mapa OISST usa instantáneas diarias con latencia propia. La lluvia y el SPI conservan el período del archivo histórico.</p>
     </div>
     <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span data-i18n="footer_auto">Índices automáticos. No constituyen declaración oficial.</span>
-      <span data-i18n="footer_corr">Correlaciones anuales y estacionales · CHIRPS v2.0</span>
+      <span data-i18n="footer_corr">Correlaciones anuales y estacionales · CHIRPS v3.0</span>
     </div>
   </footer>
 

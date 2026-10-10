@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0.0",
-  "checked_at": "2026-10-10T20:09:18.479127+00:00",
+  "schema_version": "1.1.0",
+  "checked_at": "2026-10-10T21:47:41.789982+00:00",
   "check_frequency": "weekly",
   "calibration_period": [
     1981,
@@ -9,17 +9,19 @@
   "complete_months_only": true,
   "sources": {
     "precipitation": {
-      "source": "CHIRPS v2.0",
-      "url": "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/",
+      "source": "CHIRPS v3.0",
+      "dataset_id": "CHIRPS-v3.0-final-monthly",
+      "product_status": "final",
+      "url": "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/",
       "units": "mm/month",
-      "status": "unchanged",
+      "status": "migrated",
       "observations_start": "1981-01-15",
       "observations_end": "2026-08-15",
       "months_before": 548,
       "months_after": 548,
       "months_added": 0,
       "source_latest_month": "2026-08",
-      "sha256": "491b62d05f9eeedec5c7857ba6b2093218482639d8a00a5884ae2e49bfd12ecf"
+      "sha256": "a0a9ff23b47a2228a6ab36563738300279d0f52ff8fe466e965b468cdac2f925"
     },
     "temperature": {
       "source": "NOAA CPC Global Temperature",

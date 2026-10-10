@@ -6,8 +6,8 @@
  * Serves cached data when offline.
  */
 
-const CACHE_NAME = 'enso-tracker-climate-v4';
-const DATA_CACHE = 'enso-data-climate-v4';
+const CACHE_NAME = 'enso-tracker-climate-v5';
+const DATA_CACHE = 'enso-data-climate-v5';
 
 const STATIC_ASSETS = [
   './',

@@ -44,7 +44,7 @@ jobs:
 
       - name: Scientific regression checks
         run: |
-          python -m pytest -q tests/test_scientific_validity.py tests/test_observation_refresh.py
+          python -m pytest -q tests/test_chirps_v3.py tests/test_scientific_validity.py tests/test_observation_refresh.py
           node tests/scientific-ui.mjs
 
       # ── Run pipeline ──────────────────────────────────────────────────────
@@ -52,7 +52,9 @@ jobs:
       # committed to the repo and read by build.py directly.
       # Climate observations are extended by the separate weekly refresh.
       - name: Run build.py
-        run: python build.py
+        run: |
+          python build.py
+          node tests/publication-data.mjs
 
       # ── Validate JSON output ──────────────────────────────────────────────
       - name: Validate enso.json structure

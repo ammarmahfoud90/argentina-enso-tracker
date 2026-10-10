@@ -25,6 +25,9 @@ for (const lang of ['es','en']) {
   assert.ok(context.t('sst_desc').includes('1971–2000'));
   assert.ok(context.t('roni_note').includes('RONI'));
   assert.ok(context.t('observations_asof',{start:'1981-01',end:'2025-12'}).includes('2025-12'));
+  assert.ok(context.t('observations_asof',{start:'1981-01',end:'2025-12'}).includes('CHIRPS v3.0'));
+  assert.ok(context.t('method_chirps').includes('60°S–60°N'));
+  assert.ok(context.t('method_chirps').includes('37–50°S') || context.t('method_chirps').includes('37 y 50°S'));
 }
 assert.equal(context._precipSummary([rain[0], {...rain[1], date:'2025-09-15'}, rain[2]]), null);
 assert.equal(context.correlationQ({...raw, pearson_q:undefined}),1);

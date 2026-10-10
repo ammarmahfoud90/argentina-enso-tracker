@@ -35,6 +35,8 @@ data/processed/*
 !data/processed/temp_correlations.parquet
 !data/processed/oni_temp_pairs.parquet
 !data/processed/observations_refresh.json
+!data/processed/oni_precip_pairs_v2.parquet
+!data/processed/chirps_v3_migration.json
 
 # Streamlit
 .streamlit/secrets.toml

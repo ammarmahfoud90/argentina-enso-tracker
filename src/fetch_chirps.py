@@ -1,239 +1,196 @@
-"""Download and process CHIRPS v2.0 monthly precipitation data.
+"""Final CHIRPS v3 monthly rainfall, read at native resolution from CHC COGs.
 
-CHIRPS (Climate Hazards Group InfraRed Precipitation with Station data) v2.0:
-- Resolution: 0.05°
-- Coverage: 50°S–50°N, global, 1981–present
-
-Access strategy:
-    Primary: IRI Data Library OPeNDAP endpoint (lazy remote access).
-    The OPeNDAP protocol lets xarray request only the Argentina subset,
-    avoiding the download of the 7.1 GB consolidated global NetCDF.
-
-    IRI endpoint (OPeNDAP, no auth required):
-    dap2://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/dods
-
-    If IRI is unavailable, raise RuntimeError — no silent fallbacks.
-
-Notes:
-    - The time axis uses 360-day calendar ("months since 1960-01-01"),
-      so we decode manually with cftime / raw month offsets.
-    - Latitude runs from south to north (not reversed) in CHIRPS.
-    - Missing data coded as ~-9999; filtered before averaging.
+HTTP range reads transfer only the Argentina window. Values are unweighted
+means of valid pixel centres inside the original rectangular sampling boxes.
+There is no fallback to v2 or to preliminary rainfall.
 """
-
 from __future__ import annotations
 
-import datetime
-import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import date, datetime, timezone
+import hashlib
+import json
+import os
 from pathlib import Path
-from typing import Optional
+import re
+import tempfile
+import time
 
 import numpy as np
 import pandas as pd
+import requests
 
-from src.config import (
-    CHIRPS_START_YEAR,
-    REGIONS,
-)
+from src.config import (CHIRPS_BASE_URL, CHIRPS_DATASET_ID, CHIRPS_SOURCE,
+                        CHIRPS_START_YEAR, PRECIPITATION_REGIONS, REGION_ORDER)
 from src.utils import get_logger
 
 logger = get_logger(__name__)
-
-# IRI OPeNDAP endpoint — DAP2 protocol, no authentication required
-IRI_OPENDAP_URL = (
-    "dap2://iridl.ldeo.columbia.edu"
-    "/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/dods"
-)
-
-# Cftime epoch: "months since 1960-01-01"
-_EPOCH = datetime.date(1960, 1, 1)
-_MISSING_THRESHOLD = -9990.0
+USGS_MONTHLY_URL = "https://dmsdata.cr.usgs.gov/cogs/fews/chirps_global_month_data/"
+PRODUCT_METADATA = {
+    "dataset_id": CHIRPS_DATASET_ID, "source": CHIRPS_SOURCE,
+    "product_status": "final", "timestep": "monthly", "units": "mm/month",
+    "resolution_degrees": 0.05, "sampling_bounds": PRECIPITATION_REGIONS,
+    "extraction_method": "native_pixel_centres_unweighted_mean_v1",
+}
 
 
-def _months_since_epoch_to_date(months_offset: float) -> datetime.date:
-    """Convert a fractional 'months since 1960-01-01' offset to a date.
-
-    The CHIRPS 360-day calendar assigns 0.5, 1.5, 2.5, … to the middle of
-    each month.  We interpret the integer part as full months elapsed.
-
-    Args:
-        months_offset: Value from the T coordinate (e.g. 252.5 → Jan 1981).
-
-    Returns:
-        :class:`datetime.date` for the 15th of the corresponding month.
-    """
-    total_months = int(months_offset)  # floor
-    year = _EPOCH.year + total_months // 12
-    month = _EPOCH.month + total_months % 12
-    if month > 12:
-        month -= 12
-        year += 1
-    return datetime.date(year, month, 15)
+def validate_product(frame: pd.DataFrame) -> None:
+    """Prevent mixing a different product, grid or sampling method into v3."""
+    if any(frame.attrs.get(key) != value for key, value in PRODUCT_METADATA.items()):
+        raise ValueError("Rainfall product metadata mismatch: run the full CHIRPS v3 migration; versions cannot be mixed")
+    support = frame.attrs.get("land_mask_sha256", "")
+    counts = frame.attrs.get("valid_pixel_counts", {})
+    if not re.fullmatch(r"[0-9a-f]{64}", support) or set(counts) != set(REGION_ORDER) or any(not isinstance(n, int) or n <= 0 for n in counts.values()):
+        raise ValueError("Missing CHIRPS spatial support metadata")
 
 
-def _build_date_index(t_values: np.ndarray) -> pd.DatetimeIndex:
-    """Convert raw T coordinate array to a pandas DatetimeIndex.
+def final_months(through: date, start_year: int, end_year: int, *, source: str = "chc") -> list[pd.Period]:
+    if source not in ("chc", "usgs"):
+        raise ValueError("Unknown CHIRPS distribution source")
+    response = requests.get(CHIRPS_BASE_URL if source == "chc" else USGS_MONTHLY_URL, timeout=(10, 90))
+    response.raise_for_status()
+    if source == "chc":
+        available = {pd.Period(f"{y}-{m}", freq="M") for y, m in
+                     re.findall(r"chirps-v3\.0\.(\d{4})\.(0[1-9]|1[0-2])\.cog", response.text)}
+    else:
+        # Use only the final monthly data directory, never prelim or anomalies.
+        available = set()
+        for start, end in re.findall(r"data_(\d{8})_(\d{8})\.tif", response.text):
+            p = pd.Timestamp(start).to_period("M")
+            if start != p.start_time.strftime("%Y%m%d") or end != p.end_time.strftime("%Y%m%d"):
+                raise ValueError("Unexpected USGS CHIRPS monthly interval")
+            available.add(p)
+    cutoff = pd.Period(through, freq="M") - 1
+    months = sorted(p for p in available if start_year <= p.year <= end_year and p <= cutoff)
+    if not months:
+        raise ValueError("No complete final CHIRPS v3 months available")
+    expected = list(pd.period_range(f"{start_year}-01", months[-1], freq="M"))
+    if months != expected:
+        raise ValueError("Missing calendar month in final CHIRPS v3 archive")
+    return months
 
-    Args:
-        t_values: 1-D array of 'months since 1960-01-01' floats.
 
-    Returns:
-        :class:`pandas.DatetimeIndex` with monthly frequency, day=15.
-    """
-    dates = [_months_since_epoch_to_date(v) for v in t_values]
-    return pd.DatetimeIndex([pd.Timestamp(d) for d in dates])
+def regional_means(values: np.ma.MaskedArray, transform) -> tuple[dict, dict]:
+    """Include valid zero rainfall; exclude only the source's missing pixels."""
+    lat = transform.f + (np.arange(values.shape[0]) + 0.5) * transform.e
+    lon = transform.c + (np.arange(values.shape[1]) + 0.5) * transform.a
+    means, counts = {}, {}
+    for region, box in PRECIPITATION_REGIONS.items():
+        rows = (lat >= box["lat_min"]) & (lat <= box["lat_max"])
+        cols = (lon >= box["lon_min"]) & (lon <= box["lon_max"])
+        pixels = values[np.ix_(rows, cols)].compressed()
+        if not len(pixels) or not np.isfinite(pixels).all() or (pixels < 0).any():
+            raise ValueError(f"Missing or invalid CHIRPS pixels in {region}")
+        means[region] = float(np.mean(pixels, dtype=np.float64))
+        counts[region] = len(pixels)
+    return means, counts
 
 
-def build_chirps_monthly_series(
-    start_year: int = CHIRPS_START_YEAR,
-    end_year: Optional[int] = None,
-    *,
-    through: datetime.date | None = None,
-) -> pd.DataFrame:
-    """Fetch CHIRPS monthly precipitation series for all Argentine regions.
+def validate_grid(dataset) -> None:
+    if (dataset.count != 1 or dataset.shape != (2400, 7200)
+            or dataset.crs is None or dataset.crs.to_epsg() != 4326
+            or not np.allclose(tuple(dataset.bounds), (-180, -60, 180, 60), atol=1e-5, rtol=0)
+            or not np.allclose(dataset.res, (0.05, 0.05), atol=1e-8, rtol=0)
+            or dataset.transform.e >= 0 or dataset.transform.b != 0 or dataset.transform.d != 0):
+        raise ValueError("Unexpected CHIRPS v3 native grid")
 
-    Uses IRI Data Library OPeNDAP to retrieve only the Argentina spatial
-    subset (lat −55 to −22, lon −73 to −53).  Data is loaded lazily; only
-    the slice is transferred over the network.
 
-    Args:
-        start_year: First year to include (default: 1981).
-        end_year: Last year to include (default: current year).
-        through: Date used to exclude the open current month.
+def read_month(period: pd.Period, *, source: str = "chc") -> dict:
+    import rasterio
+    from rasterio.windows import from_bounds
 
-    Returns:
-        DataFrame with column ``date`` (datetime64) and one column per
-        region name (mm/month spatial mean), sorted chronologically.
+    url = f"{CHIRPS_BASE_URL}chirps-v3.0.{period.year:04d}.{period.month:02d}.cog"
+    if source == "usgs":
+        url = f"{USGS_MONTHLY_URL}data_{period.start_time:%Y%m%d}_{period.end_time:%Y%m%d}.tif"
+    elif source != "chc":
+        raise ValueError("Unknown CHIRPS distribution source")
+    options = {"GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+               "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".cog,.tif",
+               "GDAL_HTTP_CONNECTTIMEOUT": "10", "GDAL_HTTP_TIMEOUT": "90",
+               "GDAL_HTTP_MAX_RETRY": "2", "GDAL_HTTP_RETRY_DELAY": "1",
+               "GDAL_HTTP_VERSION": "1.1"}
+    # Reuse an explicitly configured trusted CA bundle; TLS verification stays on.
+    ca_bundle = os.environ.get("GDAL_CURL_CA_BUNDLE") or os.environ.get("REQUESTS_CA_BUNDLE") or os.environ.get("SSL_CERT_FILE")
+    if ca_bundle:
+        os.environ.setdefault("GDAL_CURL_CA_BUNDLE", ca_bundle)
+        options["GDAL_CURL_CA_BUNDLE"] = ca_bundle
+    with rasterio.Env(**options), rasterio.open(url) as dataset:
+        validate_grid(dataset)
+        window = from_bounds(-73, -50, -53, -22, dataset.transform).round_offsets().round_lengths()
+        values = dataset.read(1, window=window, masked=True)
+        if values.shape != (560, 400):
+            raise ValueError("Unexpected CHIRPS extraction window")
+        raw = np.asarray(values.data)
+        if not np.isfinite(raw).all() or ((raw < 0) & (raw != -9999)).any():
+            raise ValueError("Invalid CHIRPS source pixels")
+        # Official COGs encode ocean as -9999, including files without a nodata tag.
+        values = np.ma.array(raw, mask=np.ma.getmaskarray(values) | (raw == -9999))
+        means, counts = regional_means(values, dataset.window_transform(window))
+        mask = np.ma.getmaskarray(values).astype("uint8").tobytes()
+        digest = hashlib.sha256(values.filled(np.nan).astype("<f4").tobytes() + mask).hexdigest()
+    return {"date": str(period), "source_url": url, "product_metadata": PRODUCT_METADATA,
+            "values": means, "valid_pixel_counts": counts, "window_sha256": digest,
+            "land_mask_sha256": hashlib.sha256(mask).hexdigest(),
+            "retrieved_at": datetime.now(timezone.utc).isoformat()}
 
-    Raises:
-        RuntimeError: If the IRI OPeNDAP endpoint is unreachable or the
-            data cannot be loaded.
-        ImportError: If ``xarray`` or ``pydap`` is not installed.
-    """
+
+def _month(period: pd.Period, cache_dir: Path, refresh: bool, source: str = "chc") -> dict:
+    path = cache_dir / f"{period}.json"
+    if path.exists() and not refresh:
+        try:
+            saved = json.loads(path.read_text())
+            if (saved["date"] == str(period) and saved["product_metadata"] == PRODUCT_METADATA
+                    and set(saved["values"]) == set(REGION_ORDER)
+                    and all(np.isfinite(v) and 0 <= v <= 3000 for v in saved["values"].values())
+                    and all(saved["valid_pixel_counts"][r] > 0 for r in REGION_ORDER)
+                    and len(saved["land_mask_sha256"]) == 64 and len(saved["window_sha256"]) == 64):
+                return saved
+        except (ValueError, KeyError, TypeError):
+            pass
+    time.sleep(2)  # Keep native range reads modest; bulk transfers prefer rsync/FTP.
+    result = read_month(period) if source == "chc" else read_month(period, source=source)
+    fd, temporary = tempfile.mkstemp(dir=cache_dir, suffix=".json")
     try:
-        import xarray as xr
-    except ImportError as exc:
-        raise ImportError(
-            "xarray es necesario: pip install xarray pydap"
-        ) from exc
-
-    if end_year is None:
-        end_year = datetime.date.today().year
-
-    logger.info(
-        "Cargando CHIRPS v2.0 via IRI OPeNDAP (%d–%d, 5 regiones Argentina)…",
-        start_year, end_year,
-    )
-
-    try:
-        ds = xr.open_dataset(IRI_OPENDAP_URL, engine="pydap", decode_times=False,
-                             backend_kwargs={"timeout": 90})
-    except Exception as exc:
-        raise RuntimeError(
-            f"No se pudo conectar al endpoint IRI OPeNDAP: {exc}\n"
-            "Verifique su conexión o consulte https://iridl.ldeo.columbia.edu/"
-        ) from exc
-
-    # Compute Argentina bounding box (union of all regions)
-    all_lat_min = max(-50.0, min(r["lat_min"] for r in REGIONS.values()))
-    all_lat_max = max(r["lat_max"] for r in REGIONS.values())
-    all_lon_min = min(r["lon_min"] for r in REGIONS.values())
-    all_lon_max = max(r["lon_max"] for r in REGIONS.values())
-
-    logger.info(
-        "Argentina bbox: lat [%.1f, %.1f] × lon [%.1f, %.1f]",
-        all_lat_min, all_lat_max, all_lon_min, all_lon_max,
-    )
-
-    # Build date index and filter time range
-    t_vals = ds["T"].values
-    date_idx = _build_date_index(t_vals)
-    cutoff = pd.Timestamp(through or datetime.date.today()).to_period("M") - 1
-    time_mask = ((date_idx.year >= start_year) & (date_idx.year <= end_year)
-                 & (date_idx.to_period("M") <= cutoff))
-    if date_idx.to_period("M").has_duplicates:
-        ds.close()
-        raise ValueError("Duplicate calendar months in CHIRPS source")
-    t_indices = np.where(time_mask)[0]
-
-    if len(t_indices) == 0:
-        raise RuntimeError(
-            f"No hay datos CHIRPS disponibles para el período {start_year}–{end_year}"
-        )
-
-    logger.info("Períodos seleccionados: %d meses (%s a %s)",
-                len(t_indices),
-                date_idx[t_indices[0]].date(),
-                date_idx[t_indices[-1]].date())
-
-    # Spatial subset: select Argentina bbox
-    lat_vals = ds["Y"].values
-    lon_vals = ds["X"].values
-
-    lat_mask = (lat_vals >= all_lat_min) & (lat_vals <= all_lat_max)
-    lon_mask = (lon_vals >= all_lon_min) & (lon_vals <= all_lon_max)
-    lat_indices = np.where(lat_mask)[0]
-    lon_indices = np.where(lon_mask)[0]
-
-    logger.info(
-        "Descargando subconjunto: %d lats × %d lons × %d meses…",
-        len(lat_indices), len(lon_indices), len(t_indices),
-    )
-
-    # Slice dataset — OPeNDAP fetches only this slice from the server
-    precip_var = ds["precipitation"]
-
-    # Determine dimension order (IRI uses T, Y, X)
-    t_slice = slice(int(t_indices[0]), int(t_indices[-1]) + 1)
-    lat_slice = slice(int(lat_indices[0]), int(lat_indices[-1]) + 1)
-    lon_slice = slice(int(lon_indices[0]), int(lon_indices[-1]) + 1)
-
-    logger.info("Solicitando datos vía OPeNDAP (puede tardar varios minutos)…")
-    try:
-        subset = precip_var.isel(T=t_slice, Y=lat_slice, X=lon_slice).values
+        with os.fdopen(fd, "w") as stream:
+            json.dump(result, stream, allow_nan=False)
+        os.replace(temporary, path)
     finally:
-        ds.close()
-    # subset shape: (n_time, n_lat, n_lon)
+        Path(temporary).unlink(missing_ok=True)
+    return result
 
-    sub_lats = lat_vals[lat_slice]
-    sub_lons = lon_vals[lon_slice]
-    sub_dates = date_idx[t_indices]
 
-    logger.info("Datos recibidos: shape=%s", subset.shape)
-
-    # Compute regional spatial means
+def build_chirps_monthly_series(start_year: int = CHIRPS_START_YEAR, end_year: int | None = None,
+                               *, through: date | None = None,
+                               cache_dir: Path = Path("data/cache/chirps_v3"),
+                               workers: int = 1, source: str = "chc") -> pd.DataFrame:
+    today = through or date.today()
+    months = (final_months(today, start_year, end_year or today.year) if source == "chc" else
+              final_months(today, start_year, end_year or today.year, source=source))
+    cache_dir = Path(cache_dir)
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    logger.info("CHIRPS v3 final: %d months, %s to %s", len(months), months[0], months[-1])
     records = []
-    for t_idx, ts in enumerate(sub_dates):
-        row: dict = {"date": pd.Timestamp(ts)}
-        month_data = subset[t_idx, :, :]  # (n_lat, n_lon)
-
-        for region_name, bbox in REGIONS.items():
-            lat_m = (sub_lats >= max(-50.0, bbox["lat_min"])) & (sub_lats <= bbox["lat_max"])
-            lon_m = (sub_lons >= bbox["lon_min"]) & (sub_lons <= bbox["lon_max"])
-
-            # 2D boolean mask
-            mask_2d = np.outer(lat_m, lon_m)
-            valid_pixels = month_data[mask_2d]
-            valid_pixels = valid_pixels[np.isfinite(valid_pixels) & (valid_pixels >= 0)]
-
-            if len(valid_pixels) == 0:
-                logger.warning("Sin píxeles válidos para %s en %s", region_name, ts.date())
-                row[region_name] = float("nan")
-            else:
-                row[region_name] = float(np.nanmean(valid_pixels))
-
-        records.append(row)
-
-    combined = (
-        pd.DataFrame(records)
-        .sort_values("date")
-        .reset_index(drop=True)
-    )
-
-    logger.info(
-        "Serie CHIRPS completa: %d meses (%s — %s)",
-        len(combined),
-        combined["date"].iloc[0].date(),
-        combined["date"].iloc[-1].date(),
-    )
-    return combined
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        pending = {pool.submit(_month, p, cache_dir, p.year >= today.year - 1, source): p for p in months}
+        try:
+            for future in as_completed(pending):
+                try:
+                    records.append(future.result())
+                except Exception as exc:
+                    raise RuntimeError(f"Final CHIRPS v3 month {pending[future]} failed: {exc}") from exc
+                if len(records) % 24 == 0:
+                    logger.info("CHIRPS v3 regional months read: %d/%d", len(records), len(months))
+        except Exception:
+            for future in pending:
+                future.cancel()
+            raise
+    records.sort(key=lambda r: r["date"])
+    if len({r["land_mask_sha256"] for r in records}) != 1:
+        raise ValueError("CHIRPS land support changed between months; refusing inconsistent regional means")
+    frame = pd.DataFrame([{"date": pd.Timestamp(r["date"]) + pd.Timedelta(days=14), **r["values"]} for r in records])
+    frame.attrs = {**PRODUCT_METADATA, "land_mask_sha256": records[0]["land_mask_sha256"],
+                   "valid_pixel_counts": records[0]["valid_pixel_counts"], "extraction_records": [
+        {key: r[key] for key in ("date", "source_url", "valid_pixel_counts", "window_sha256", "land_mask_sha256")}
+        for r in records]}
+    validate_product(frame)
+    return frame

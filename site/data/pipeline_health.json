@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-10-10T20:09:29.922078+00:00",
+  "build_id": "2026-10-10T21:48:59.754309+00:00",
   "status": "success",
-  "duration_seconds": 8.95,
-  "last_updated": "2026-10-10T20:09:38.867699+00:00",
+  "duration_seconds": 33.73,
+  "last_updated": "2026-10-10T21:49:33.483962+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 1782.3,
+      "latency_ms": 52.4,
       "freshness_days": 56
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 12.7,
+      "latency_ms": 49.8,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 3.0,
+      "latency_ms": 6.9,
       "freshness_days": null
     },
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 786.5,
+      "latency_ms": 10794.2,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
       "status": "success",
-      "latency_ms": 280.2,
+      "latency_ms": 5851.1,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 405.2,
+      "latency_ms": 5372.7,
       "freshness_days": 25
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 688.0,
+      "latency_ms": 2.3,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 1817.8,
+      "latency_ms": 7581.6,
       "freshness_days": null
     }
   ],
@@ -61,13 +61,13 @@
     },
     "precipitation_pairs": {
       "rows": 548,
-      "null_rate": 0.0018,
+      "null_rate": 0.0,
       "range_violations": 0
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 839.5,
-    "site/data/enso-history.json": 418.0,
+    "site/data/enso.json": 840.7,
+    "site/data/enso-history.json": 417.8,
     "site/data/sst_map.json": 131.8
   },
   "warnings": [],
