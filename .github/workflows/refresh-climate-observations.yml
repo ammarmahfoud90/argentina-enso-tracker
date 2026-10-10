@@ -13,6 +13,9 @@ on:
       - 'src/fetch_chirps.py'
       - 'src/fetch_temperature.py'
       - 'src/climatology.py'
+      - 'src/config.py'
+      - 'src/migrate_chirps_v3.py'
+      - 'requirements-data.txt'
   pull_request:
     paths:
       - '.github/workflows/refresh-climate-observations.yml'
@@ -20,7 +23,11 @@ on:
       - 'src/fetch_chirps.py'
       - 'src/fetch_temperature.py'
       - 'src/climatology.py'
+      - 'src/config.py'
+      - 'src/migrate_chirps_v3.py'
+      - 'requirements-data.txt'
       - 'tests/test_observation_refresh.py'
+      - 'tests/test_chirps_v3.py'
 
 permissions:
   contents: write
@@ -46,7 +53,7 @@ jobs:
         run: pip install -r requirements-data.txt pytest
       - name: Validate update and scientific contracts
         run: |
-          python -m pytest -q tests/test_observation_refresh.py tests/test_scientific_validity.py
+          python -m pytest -q tests/test_chirps_v3.py tests/test_observation_refresh.py tests/test_scientific_validity.py
           node tests/scientific-ui.mjs
       - name: Cache CPC annual files
         if: github.event_name != 'pull_request'
@@ -55,12 +62,21 @@ jobs:
           path: data/cache/cpc_temp
           key: cpc-climate-${{ github.run_id }}
           restore-keys: cpc-climate-
+      - name: Cache CHIRPS v3 regional extractions
+        if: github.event_name != 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: data/cache/chirps_v3
+          key: chirps-v3-native-boxes-${{ github.run_id }}
+          restore-keys: chirps-v3-native-boxes-
       - name: Incorporate complete published months
         if: github.event_name != 'pull_request'
         run: python -m src.refresh_observations
       - name: Recompute and validate the site
         if: github.event_name != 'pull_request'
-        run: python build.py
+        run: |
+          python build.py
+          node tests/publication-data.mjs
       - name: Publish validated observations and site data
         if: github.event_name != 'pull_request'
         run: |

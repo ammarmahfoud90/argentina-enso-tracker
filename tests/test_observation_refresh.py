@@ -13,6 +13,7 @@ from src.compute_spi import compute_spi
 from src.fetch_temperature import compute_regional_temp_monthly
 from src.refresh_observations import SOURCES, merge_observations, refresh, validate_monthly
 from src.config import REGION_ORDER
+from src.fetch_chirps import PRODUCT_METADATA
 
 TODAY = date(2026, 10, 10)
 
@@ -20,8 +21,12 @@ TODAY = date(2026, 10, 10)
 def observations(start, end, *, temperature=False):
     periods = pd.period_range(start, end, freq="M")
     values = np.linspace(12, 20, len(periods)) if temperature else np.linspace(20, 140, len(periods))
-    return pd.DataFrame({"date": periods.to_timestamp() + pd.Timedelta(days=14),
-                         **{region: values for region in REGION_ORDER}})
+    frame = pd.DataFrame({"date": periods.to_timestamp() + pd.Timedelta(days=14),
+                          **{region: values for region in REGION_ORDER}})
+    if not temperature:
+        frame.attrs = {**PRODUCT_METADATA, "land_mask_sha256": "0" * 64,
+                       "valid_pixel_counts": {r: 100 for r in REGION_ORDER}}
+    return frame
 
 
 def install_history(tmp_path):

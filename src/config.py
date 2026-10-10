@@ -3,7 +3,7 @@
 All geographic bounds are defined as (lat_min, lat_max, lon_min, lon_max)
 in decimal degrees, WGS-84. These are approximate rectangular sampling
 domains, not administrative polygons or national area-weighted means.
-CHIRPS v2 rainfall only covers latitudes north of 50 degrees south.
+Rainfall keeps the project domain north of 50 degrees south across versions.
 """
 
 from __future__ import annotations
@@ -108,10 +108,11 @@ NOAA_CPC_ADVISORY_URL = (
 # ---------------------------------------------------------------------------
 
 CHIRPS_BASE_URL = (
-    "https://data.chc.ucsb.edu/products/CHIRPS-2.0/global_monthly/netcdf/"
+    "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/"
 )
-"""CHIRPS v2.0 global monthly NetCDF files (0.05° resolution, 1981-present).
-File naming: chirps-v2.0.YYYY.months_p05.nc"""
+"""Final CHIRPS v3.0 monthly COGs; chirps-v3.0.YYYY.MM.cog."""
+CHIRPS_DATASET_ID = "CHIRPS-v3.0-final-monthly"
+CHIRPS_SOURCE = "CHIRPS v3.0"
 
 CPC_TEMP_BASE_URL = (
     "https://downloads.psl.noaa.gov/Datasets/cpc_global_temp/"
@@ -129,8 +130,8 @@ IRI_CHIRPS_BASE_URL = (
 # lat/lon in decimal degrees (south latitudes are negative)
 # Format: (lat_min, lat_max, lon_min, lon_max)
 #
-# Rectangular sampling domains. Precipitation is clipped to CHIRPS v2
-# coverage (-50..50 latitude); temperature uses the full requested box.
+# Rectangular sampling domains. Rainfall retains the original -50°S limit
+# for a comparable v2→v3 migration; temperature uses the full requested box.
 # Provincial lists provide approximate context, not a coverage guarantee.
 # ---------------------------------------------------------------------------
 
@@ -192,6 +193,12 @@ REGIONS: dict[str, dict] = {
 
 REGION_ORDER: list[str] = ["Pampa Húmeda", "NEA", "NOA", "Cuyo", "Patagonia"]
 
+PRECIPITATION_REGIONS = {
+    region: {key: max(-50.0, bounds[key]) if key == "lat_min" else bounds[key]
+             for key in ("lat_min", "lat_max", "lon_min", "lon_max")}
+    for region, bounds in REGIONS.items()
+}
+
 # ---------------------------------------------------------------------------
 # ENSO phase classification thresholds (NOAA CPC criteria)
 # ---------------------------------------------------------------------------
@@ -216,7 +223,7 @@ SIGNIFICANCE_THRESHOLD: float = 0.05  # p-value cutoff for "significant"
 # ---------------------------------------------------------------------------
 
 CORRELATIONS_CACHE_PATH: str = "data/processed/correlations.parquet"
-CORRELATIONS_CACHE_VERSION: str = "1.0.0"
+CORRELATIONS_CACHE_VERSION: str = "3.0.0"
 PAIRS_CACHE_PATH: str = "data/processed/oni_precip_pairs.parquet"
 
 # ---------------------------------------------------------------------------

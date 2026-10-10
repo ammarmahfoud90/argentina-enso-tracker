@@ -19,16 +19,15 @@ import numpy as np
 import pandas as pd
 
 from src.climatology import CALIBRATION_PERIOD
-from src.config import REGION_ORDER
-from src.fetch_chirps import build_chirps_monthly_series
+from src.config import CHIRPS_BASE_URL, CHIRPS_SOURCE, REGION_ORDER
+from src.fetch_chirps import build_chirps_monthly_series, validate_product
 from src.fetch_temperature import build_temp_monthly_series
 from src.utils import get_logger
 
 logger = get_logger(__name__)
 REPORT_NAME = "observations_refresh.json"
 SOURCES = {
-    "precipitation": ("oni_precip_pairs.parquet", "CHIRPS v2.0", "mm/month",
-                      "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.monthly/.global/.precipitation/"),
+    "precipitation": ("oni_precip_pairs.parquet", CHIRPS_SOURCE, "mm/month", CHIRPS_BASE_URL),
     "temperature": ("oni_temp_pairs.parquet", "NOAA CPC Global Temperature", "degC",
                     "https://downloads.psl.noaa.gov/Datasets/cpc_global_temp/"),
 }
@@ -62,6 +61,14 @@ def merge_observations(old: pd.DataFrame, incoming: pd.DataFrame, variable: str,
                        through: date) -> pd.DataFrame:
     old = validate_monthly(old, variable, through)
     incoming = validate_monthly(incoming, variable, through)
+    if variable == "precipitation":
+        validate_product(old)
+        validate_product(incoming)
+        if (incoming.attrs["land_mask_sha256"] != old.attrs["land_mask_sha256"]
+                or incoming.attrs["valid_pixel_counts"] != old.attrs["valid_pixel_counts"]):
+            raise ValueError("CHIRPS spatial support differs from the calibrated history")
+    if incoming.date.max().to_period("M") < old.date.max().to_period("M"):
+        raise ValueError("Source would move observations backwards")
     incoming = incoming.loc[incoming.date.dt.year > CALIBRATION_PERIOD[1]].copy()
     if incoming.empty:
         return old
@@ -77,6 +84,7 @@ def merge_observations(old: pd.DataFrame, incoming: pd.DataFrame, variable: str,
     incoming["date"] = (periods.dt.to_timestamp() + pd.Timedelta(days=14)
                         if variable == "precipitation" else periods.dt.to_timestamp(how="end").dt.normalize())
     combined = pd.concat([old.loc[~old.date.dt.to_period("M").isin(periods)], incoming], ignore_index=True)
+    combined.attrs = old.attrs.copy()
     combined = validate_monthly(combined, variable, through)
     if combined.date.max().to_period("M") < old.date.max().to_period("M"):
         raise ValueError("Source would move observations backwards")
@@ -88,7 +96,10 @@ def _atomic_parquet(frame: pd.DataFrame, path: Path) -> None:
     os.close(fd)
     try:
         frame.to_parquet(name, index=False)
-        pd.testing.assert_frame_equal(frame, pd.read_parquet(name))
+        restored = pd.read_parquet(name)
+        pd.testing.assert_frame_equal(frame, restored)
+        if restored.attrs != frame.attrs:
+            raise ValueError("Parquet product metadata did not round-trip")
         os.replace(name, path)
     finally:
         Path(name).unlink(missing_ok=True)
@@ -111,11 +122,12 @@ def refresh(*, directory: Path = Path("data/processed"), through: date | None = 
     fetchers = fetchers or {"precipitation": build_chirps_monthly_series,
                             "temperature": build_temp_monthly_series}
     checked_at = datetime.now(timezone.utc).isoformat()
-    report = {"schema_version": "1.0.0", "checked_at": checked_at,
+    report = {"schema_version": "1.1.0", "checked_at": checked_at,
               "check_frequency": "weekly", "calibration_period": list(CALIBRATION_PERIOD),
               "complete_months_only": True, "sources": {}}
     previous = {variable: validate_monthly(pd.read_parquet(directory / spec[0]), variable, today)
                 for variable, spec in SOURCES.items()}
+    validate_product(previous["precipitation"])
     for variable, (name, source, units, url) in SOURCES.items():
         path = directory / name
         # Corrupt existing data is a hard error, before any source mutation.
@@ -124,6 +136,9 @@ def refresh(*, directory: Path = Path("data/processed"), through: date | None = 
                 "observations_start": old.date.min().date().isoformat(),
                 "observations_end": old.date.max().date().isoformat(),
                 "months_before": len(old), "months_after": len(old), "months_added": 0}
+        if variable == "precipitation":
+            info["dataset_id"] = old.attrs["dataset_id"]
+            info["product_status"] = old.attrs["product_status"]
         try:
             start_year = max(CALIBRATION_PERIOD[1] + 1, int(old.date.max().year))
             new = fetchers[variable](start_year=start_year, end_year=today.year)

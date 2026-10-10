@@ -82,7 +82,7 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 | SOI (standardized CPC scale) | NOAA CPC | ERDDAP (different normalization, explicitly labeled) | Monthly |
 | Subsurface temperature | ERDDAP (pmelTaoMonT) | — | Monthly |
 | SST anomaly map | OISST v2.1 final (ERDDAP ncdcOisst21Agg), native anom relative to 1971–2000 | Last dated grids labeled stale if fetch fails | Daily snapshots every 30 days; final product has its own latency |
-| Precipitation observations | CHIRPS v2.0 final monthly (UCSB via IRI) | Last validated monthly series | Checked weekly; only complete published months |
+| Precipitation observations | CHIRPS v3.0 final monthly (UCSB CHC) | Last validated monthly series | Checked weekly; only complete published months |
 | Regional temperature observations | NOAA PSL CPC Global Temperature, (tmax+tmin)/2 | Last validated monthly series | Checked weekly; only months with all calendar days |
 | ENSO forecast | IRI Columbia (ensoforecast2 SVG) | NOAA CPC | Monthly |
 
@@ -98,7 +98,7 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 | **Cuyo** | -36/-28S, -70/-65W | Mendoza, San Juan, La Rioja, San Luis |
 | **Patagonia rainfall sample** | -50/-37S, -73/-62W | Partial Patagonia; excludes Tierra del Fuego and southernmost Santa Cruz |
 
-These are approximate rectangular sampling domains, not verified administrative boundaries. CHIRPS v2 spans 50°S–50°N. Regional observations are arithmetic means of valid pixels, without national masks or area weighting; they include land outside Argentina and overlapping boxes. Temperature retains the requested full Patagonia box (-55/-37S), so rainfall and temperature do not share identical southern coverage.
+These are approximate rectangular sampling domains, not verified administrative boundaries. CHIRPS v3 spans 60°S–60°N; the project retains its original rainfall boxes, including the 50°S Patagonia limit. Regional observations are arithmetic means of valid pixels, without national masks or area weighting; they include land outside Argentina and overlapping boxes. Temperature retains the requested full Patagonia box (-55/-37S), so rainfall and temperature do not share identical southern coverage.
 
 ---
 
@@ -121,7 +121,7 @@ Monthly climate observations start in 1981 and extend to each source's latest va
 
 `Refresh regional climate observations` runs every Monday at 09:00 UTC (06:00 Argentina), on relevant code changes and on manual dispatch. It performs the following steps:
 
-1. Read and validate both existing monthly series. Download CHIRPS v2 final monthly subsets and refresh CPC annual tmax/tmin files, including the growing current year.
+1. Read and validate both existing monthly series. Verify the rainfall product metadata and read CHIRPS v3 final monthly native-resolution windows; refresh CPC annual tmax/tmin files, including the growing current year.
 2. Exclude the open current month. Temperature also requires every calendar day, matching tmax/tmin dates and no duplicate daily dates. Each day must retain at least 90% of the month's maximum valid regional pixel count; permanently missing ocean cells are excluded. Monthly regional inputs must have finite, bounded values, all five regions, unique dates and no calendar gaps.
 3. Merge by calendar month. The 1981–2025 observations remain fixed. Later months may be refreshed for source revisions. Validate and round-trip a temporary Parquet before atomic replacement; unchanged data files are not rewritten.
 4. On a download or candidate-validation failure, retain that variable's last valid Parquet byte-for-byte. The other variable can still update. `observations_refresh.json` records the checked date, status, source, units, cutoffs, row counts and file SHA-256. The site displays separate dates and reports retained data after an error.
@@ -129,11 +129,11 @@ Monthly climate observations start in 1981 and extend to each source's latest va
 
 Run locally with `python -m src.refresh_observations`, followed by `python build.py`. Raw CPC NetCDF caches are excluded from git. Tests cover real calendar continuity, repeat-run idempotency, independent source failures, invalid candidates, leap-month completeness, interrupted downloads, and the invariance of historical SPI when new extremes are appended.
 
-This update retains the CHIRPS v2 product and original sampling domains. CHIRPS v3 migration, national masks, area weighting and station validation remain separate tasks. The updater cannot invent a month that the source has not published.
+The series was fully migrated to CHIRPS v3, including its 1981–2025 calibration; no v2 months are merged into v3. National masks, area weighting and station validation remain separate tasks. The updater cannot invent a month that the source has not published.
 
 This is an exploratory association dashboard. No out-of-sample hindcast, causal attribution, temperature detrending, local flood model or river-level prediction is implemented. Autocorrelation correction and binomial p values remain approximate; FDR adjustment does not remove those assumptions. Composites with N<10 are explicitly small samples. Historical event peaks and years are derived from NOAA’s ONI series. Manual Paraná levels and impact amounts were removed because no per-observation traceable sources were available; the INA monitoring link remains.
 
-Full-Patagonia rainfall would require a separately validated wider-coverage dataset and a new historical calibration. A CHIRPS v3 migration, country polygons or area weighting must not be silently mixed into the current CHIRPS v2 historical sample.
+Expanding rainfall to southern Patagonia is now possible within v3's global coverage, but requires a separate domain change and recalibration. Country polygons or area weighting also change the sample and must be evaluated separately.
 
 ---
 
@@ -146,11 +146,11 @@ pip install -r requirements-data.txt   # for build.py
 pip install -r requirements.txt        # for everything
 ```
 
-### Generate correlation cache (one-time, ~20 min)
+### Rebuild the correlation cache
 ```bash
 python -m src.compute_correlations
 ```
-Downloads CHIRPS subset via IRI OPeNDAP (~486 MB, 1981-2025).
+Recomputes the annual correlation cache from validated v3 observations, using the same fixed reference, anomaly and FDR method as the site. It never truncates or overwrites monthly rainfall observations.
 Result saved to `data/processed/correlations.parquet` (versioned in repo).
 
 ### Build the site JSON
@@ -251,13 +251,50 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions and contribution g
 - **RONI definition / provisional values:** [NOAA CPC ERSSTv6](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/)
 - **Operational diagnosis:** [NOAA CPC dated ENSO advisory](https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml)
 - **OISST map native baseline:** [ERDDAP ncdcOisst21Agg anom metadata](https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg.html)
-- **CHIRPS geographic coverage:** [UCSB Climate Hazards Center](https://www.chc.ucsb.edu/data/chirps)
+- **CHIRPS geographic coverage:** [UCSB Climate Hazards Center](https://www.chc.ucsb.edu/data/chirps3)
 - **SPI boundaries and interpretation:** [WMO SPI User Guide (2012)](https://www.droughtmanagement.info/literature/WMO_standardized_precipitation_index_user_guide_en_2012.pdf)
 - **Dependent multiple comparisons:** [SciPy false_discovery_control, BY method and primary references](https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.false_discovery_control.html)
 - **ONI / SOI**: NOAA Climate Prediction Center — `https://www.cpc.ncep.noaa.gov/`
 - **Nino 3.4 SST**: NOAA ERSSTv5 / ERDDAP — `https://coastwatch.pfeg.noaa.gov/erddap/`
 - **TAO/TRITON**: NOAA PMEL — `https://www.pmel.noaa.gov/tao/`
-- **CHIRPS v2.0**: Funk, C. et al. (2015). *The climate hazards infrared precipitation with stations.* Scientific Data, 2, 150066. DOI: [10.1038/sdata.2015.66](https://doi.org/10.1038/sdata.2015.66)
+- **CHIRPS v2.0 archived comparison**: Funk, C. et al. (2015). *The climate hazards infrared precipitation with stations.* Scientific Data, 2, 150066. DOI: [10.1038/sdata.2015.66](https://doi.org/10.1038/sdata.2015.66)
+
+### CHIRPS v3 migration and audit
+
+The full rainfall record is recalculated from final CHIRPS v3, at 0.05° native resolution. The reference remains 1981–2025 but its rainfall values, SPI gamma fits, anomalies, composites, frequency tables and ENSO associations are recomputed with v3. Historical SPI values can therefore differ from the previous v2 publication. Extending the v3 series with 2026 observations does not refit that reference.
+
+The original v2 Parquet is retained byte-for-byte in `data/processed/oni_precip_pairs_v2.parquet`. `data/processed/chirps_v3_migration.json` records the archived SHA-256, the initial v3 SHA-256, monthly source URLs and native-window hashes, valid pixel counts, rainfall and SPI differences, and annual/seasonal Pearson and BY-q comparisons. Comparisons use common months, the same nominal boxes and the same statistical method. The legacy IRI v2 longitude coordinate starts at -180° and includes the box endpoints, adding one column per box. V3 reads native raster pixel centres (starting at -179.975° globally). Differences therefore include that coordinate convention change as well as the product change. They do not establish regional accuracy against independent stations or forecast skill.
+
+The official monthly COGs encode missing ocean cells as -9999, even without a nodata tag. They are excluded; valid zero rainfall is retained. The same land mask and pixel counts must hold for every monthly window and subsequent weekly update. Parquet metadata identifies the final v3 product, resolution and sampling method. Builds and updates reject missing or mismatched product metadata; there is no silent v2 or preliminary fallback.
+
+For an unmigrated checkout:
+
+```bash
+python -m src.migrate_chirps_v3
+python -m src.compute_correlations
+python build.py
+```
+
+The migration finishes extraction, comparison and Parquet round-trip checks before replacing the rainfall file. A failed download leaves the current rainfall file intact. Repeating a completed migration verifies the archive and returns the existing audit. The v2 reader is retained in `src/fetch_chirps_v2.py` for explicit historical comparisons only.
+
+CHC recommends rsync or FTP for historical bulk downloads; HTTP COG range reads suit the small weekly updates. See [CHC download guidance](https://data.chc.ucsb.edu/). Local regional JSON caches are excluded from git. Recent months are re-read for revisions; the updater freezes 1981–2025 after migration.
+
+The initial bulk extraction also uses the public [USGS FEWS COG distribution](https://dmsdata.cr.usgs.gov/cogs/fews/chirps_global_month_data/), documented in the [USGS API guide](https://earlywarning.usgs.gov/fews/api/). Five native monthly windows spanning 1981–2001 were verified pixel-for-pixel against CHC; their hashes and both URLs are recorded in the migration audit. Each monthly record states its actual download URL. This is an explicit bulk-source choice; the weekly updater uses CHC and does not silently switch products or distributions on failure.
+
+Initial comparison over the 548 common months, January 1981–August 2026:
+
+| Region | Mean rainfall change | August 2026 SPI v2 | August 2026 SPI v3 |
+|---|---:|---:|---:|
+| Pampa Húmeda | +9.71% | 2.13 | 1.31 |
+| NEA | +7.56% | 0.98 | 0.91 |
+| NOA | +8.30% | 3.00 | 1.03 |
+| Cuyo | +16.25% | 1.51 | 0.96 |
+| Patagonia sample | +19.72% | 0.85 | 0.43 |
+
+Rainfall changes compare full-period monthly means. SPI uses each product's 1981–2025 calibration; August represents June–August rainfall. This is a before/after publication comparison and includes the coordinate convention change described above. The audit compares all 100 annual/seasonal Pearson tests with the same canonical ONI; six change their BY-q < 0.05 flag.
+
+- **CHIRPS v3 data:** [CHC repository, DOI 10.15780/G2JQ0P](https://doi.org/10.15780/G2JQ0P)
+- **CHIRPS v3 methods:** Funk et al. (2026), *The Climate Hazards Center Infrared Precipitation with Stations, Version 3*, Scientific Data 13, 718. [DOI 10.1038/s41597-026-07096-4](https://doi.org/10.1038/s41597-026-07096-4)
 - **ENSO Forecast**: IRI Columbia University — `https://iri.columbia.edu/`
 
 ---

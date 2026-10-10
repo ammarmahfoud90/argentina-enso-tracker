@@ -33,6 +33,9 @@ from src.compute_spi import compute_all_spi
 from src.climatology import CALIBRATION_PERIOD, reference_frame
 from src.config import (
     CORRELATIONS_CACHE_PATH,
+    CHIRPS_BASE_URL,
+    CHIRPS_DATASET_ID,
+    CHIRPS_SOURCE,
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
@@ -50,6 +53,7 @@ from src.lineage import LineageTracker
 from src.parana_data import get_parana_data
 from src.pipeline_monitor import PipelineMonitor
 from src.refresh_observations import validate_monthly
+from src.fetch_chirps import validate_product
 from src.scientific import correlations as validated_correlations
 from src.scientific import frequencies, notable_events, validate_publication
 
@@ -287,6 +291,9 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     pairs_df = pd.read_parquet(pairs_path)
     pairs_df["date"] = pd.to_datetime(pairs_df["date"])
     validate_monthly(pairs_df, "precipitation", datetime.now(timezone.utc).date())
+    validate_product(pairs_df)
+    if len(reference_frame(pairs_df, CALIBRATION_PERIOD)) != 540:
+        raise ValueError("CHIRPS v3 requires the complete 1981–2025 calibration history")
     corr_records, seasonal_correlations = validated_correlations(
         pairs_df, snapshot.oni_series, calibration_period=CALIBRATION_PERIOD)
 
@@ -319,7 +326,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     cache_meta["legacy_end_year"] = cache_meta.get("end_year")
     cache_meta["start_year"] = int(pairs_df.date.dt.year.min())
     cache_meta["end_year"] = int(pairs_df.date.dt.year.max())
-    cache_meta["analysis_version"] = "2.1.0"
+    cache_meta["analysis_version"] = "3.0.0"
     cache_meta["computed_at"] = datetime.now(timezone.utc).isoformat()
     cache_meta["method"] = "Recomputed from dated climate observations and current canonical ONI; BY FDR"
 
@@ -561,22 +568,29 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "roni_series": roni_series,
         "roni_series_24m": roni_series[-24:],
         "scientific_methodology": {
-            "version": "2.1.0", "computed_at": datetime.now(timezone.utc).isoformat(),
+            "version": "3.0.0", "computed_at": datetime.now(timezone.utc).isoformat(),
             "calibration_period": list(CALIBRATION_PERIOD),
-            "calibration_note": "Referencia fija 1981–2025 para mantener continuidad con la publicación previa. Es calibración del proyecto, no una normal WMO. Los meses nuevos amplían la muestra analizada, no la referencia.",
+            "calibration_note": "Referencia fija 1981–2025 para cada variable; lluvia y SPI recalibrados con CHIRPS v3.0. Es calibración del proyecto, no una normal WMO. Los meses nuevos amplían la muestra analizada, no la referencia.",
             "correlations": "Anomalías mensuales respecto de la climatología de cada mes; estaciones completas independientes en el calendario (sumas de lluvia, medias de temperatura). ONI del mes central publicado por NOAA, desplazado por lag en meses.",
             "inference": "p aproximado con n_eff por autocorrelación, también para rangos Spearman. q Benjamini-Yekutieli para cada familia de 100 pruebas región × lag × anual/estación, separada por variable y coeficiente. Los asteriscos usan q, no p nominal.",
             "limitations": "Estudio exploratorio sin validación fuera de muestra; temperatura sin detrendado. Tendencias, dependencia residual y revisión de índices pueden influir. Lag no equivale a anticipación operativa: ONI incluye tres meses y se publica después de cerrar la estación. No es un modelo de pronóstico ni una atribución causal.",
         },
         "precipitation_metadata": {
-            "source": "CHIRPS v2.0", "observations_start": pairs_df.date.min().date().isoformat(),
+            "source": CHIRPS_SOURCE, "dataset_id": CHIRPS_DATASET_ID,
+            "source_url": CHIRPS_BASE_URL, "product_status": "final", "units": "mm/month",
+            "resolution_degrees": 0.05,
+            "land_mask_sha256": pairs_df.attrs["land_mask_sha256"],
+            "valid_pixel_counts": pairs_df.attrs["valid_pixel_counts"],
+            "extraction_method": pairs_df.attrs["extraction_method"],
+            "migration_note": "Serie completa recalculada con CHIRPS v3.0, incluida la referencia 1981–2025 y el SPI. Sus valores pueden diferir de los publicados con v2. Se conservaron las cajas y el límite de lluvia de Patagonia en 50°S.",
+            "observations_start": pairs_df.date.min().date().isoformat(),
             "observations_end": pairs_df.date.max().date().isoformat(),
             "latest_complete_month": str(pairs_df.date.max().to_period("M")),
             "last_month_end": pairs_df.date.max().to_period("M").end_time.date().isoformat(),
             "observation_age_days": (datetime.now(timezone.utc).date() - pairs_df.date.max().to_period("M").end_time.date()).days,
             "climatology_start_year": CALIBRATION_PERIOD[0],
             "climatology_end_year": CALIBRATION_PERIOD[1],
-            "global_latitude_coverage": [-50, 50],
+            "global_latitude_coverage": [-60, 60],
             "regional_coverage": {r: m["precipitation_bounds"] for r, m in region_meta.items()},
             "spatial_method": "Cajas rectangulares; media aritmética de píxeles válidos, sin máscara de Argentina ni ponderación de área",
             "limitations": "Patagonia: 37–50°S solamente. No incluye Tierra del Fuego ni todo Santa Cruz. La precipitación nival y orográfica tiene limitaciones. El SPI describe el último período observado, no la sequía actual si el archivo está atrasado.",
@@ -615,7 +629,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
             "Índice automático — no constituye declaración oficial de NOAA. "
-            "Análisis exploratorio de cajas rectangulares CHIRPS v2.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. "
+            "Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. "
             "el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
         ),
     }

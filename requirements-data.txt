@@ -7,3 +7,4 @@ netCDF4>=1.6.5
 pooch>=1.7.0
 pydap>=3.5.0
 duckdb>=1.0.0
+rasterio>=1.4,<2

@@ -1,8 +1,9 @@
 """Fixed reference used when the monthly observations are extended.
 
-1981–2025 reproduces the reference in the published dashboard before the
-2026 extension. It is a project calibration period, not a WMO normal.
-Changing the product or the spatial domain requires explicit recalibration.
+1981–2025 retains the previous dashboard's reference years. The full
+CHIRPS v3 migration recalculates the rainfall reference values; subsequent
+monthly extensions do not refit it. This is a project calibration period,
+not a WMO normal. Product or domain changes require explicit recalibration.
 """
 from __future__ import annotations
 

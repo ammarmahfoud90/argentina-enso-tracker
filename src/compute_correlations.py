@@ -5,7 +5,7 @@ Run this script once (or whenever you want to refresh the historical analysis):
     python -m src.compute_correlations
 
 It will:
-1. Download CHIRPS monthly precipitation for 1981–(current year - 1).
+1. Read the validated CHIRPS v3 monthly observations (migrate them first).
 2. Fetch ONI monthly time series from NOAA CPC.
 3. Compute Pearson and Spearman correlations for each region × lag combination.
 4. Save results to ``data/processed/correlations.parquet``.
@@ -47,7 +47,7 @@ from src.config import (
     REGIONS,
     SIGNIFICANCE_THRESHOLD,
 )
-from src.fetch_chirps import build_chirps_monthly_series
+from src.fetch_chirps import validate_product
 from src.fetch_enso import fetch_enso_snapshot
 from src.utils import get_logger
 
@@ -201,65 +201,50 @@ def compute_correlations(
 
 
 def run(start_year: int = CHIRPS_START_YEAR, end_year: int | None = None) -> None:
-    """Execute the full correlation pipeline and write the Parquet cache.
+    """Rebuild the annual cache with the same corrected method as the site.
 
-    Args:
-        start_year: First year of CHIRPS data to include.
-        end_year: Last year of CHIRPS data (default: current year - 1).
+    This command does not replace rainfall observations. Use the full
+    migration command once, then the weekly updater for new months.
     """
     import datetime as dt
+    from src.climatology import CALIBRATION_PERIOD
+    from src.refresh_observations import _atomic_parquet, validate_monthly
+    from src.scientific import correlations
 
     if end_year is None:
-        end_year = dt.date.today().year - 1
+        end_year = dt.date.today().year
 
     logger.info("=== compute_correlations: inicio (%d–%d) ===", start_year, end_year)
 
     # 1. Fetch ONI
     logger.info("Obteniendo ONI desde NOAA…")
     snapshot = fetch_enso_snapshot()
-    oni_monthly = align_oni_monthly(snapshot.oni_series)
-    logger.info("ONI mensual: %d registros", len(oni_monthly))
-
-    # 2. Build CHIRPS series
-    logger.info("Construyendo serie CHIRPS…")
-    chirps_df = build_chirps_monthly_series(start_year=start_year, end_year=end_year)
-    logger.info("CHIRPS: %d registros mensuales", len(chirps_df))
-
-    # 3. Compute correlations
-    logger.info("Calculando correlaciones…")
-    corr_df = compute_correlations(chirps_df, oni_monthly)
+    chirps_df = validate_monthly(pd.read_parquet(PAIRS_CACHE_PATH), "precipitation", dt.date.today())
+    validate_product(chirps_df)
+    chirps_df = chirps_df.loc[chirps_df.date.dt.year.between(start_year, end_year)].copy()
+    if start_year != CALIBRATION_PERIOD[0] or end_year < CALIBRATION_PERIOD[1]:
+        raise ValueError("The corrected cache requires the complete 1981–2025 calibration")
+    annual, _ = correlations(chirps_df, snapshot.oni_series, calibration_period=CALIBRATION_PERIOD)
+    corr_df = pd.DataFrame(annual)
+    corr_df.attrs = chirps_df.attrs.copy()
 
     # 4. Add metadata columns
     computed_at = datetime.now(timezone.utc).isoformat()
     corr_df["start_year"] = start_year
-    corr_df["end_year"] = end_year
+    corr_df["end_year"] = int(chirps_df.date.dt.year.max())
     corr_df["version"] = CORRELATIONS_CACHE_VERSION
     corr_df["computed_at"] = computed_at
 
     # 5. Save correlations to Parquet
     out_path = Path(CORRELATIONS_CACHE_PATH)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    corr_df.to_parquet(out_path, index=False)
+    _atomic_parquet(corr_df, out_path)
     logger.info("Parquet guardado en %s (%d filas)", out_path, len(corr_df))
 
-    # 6. Save raw monthly ONI–precipitation pairs (used by UI scatter charts)
-    chirps_ym = chirps_df.copy()
-    chirps_ym["ym"] = chirps_ym["date"].dt.to_period("M")
-    oni_ym = oni_monthly.copy()
-    oni_ym["ym"] = oni_monthly["date"].dt.to_period("M")
-    pairs = (
-        chirps_ym
-        .merge(oni_ym[["ym", "oni"]], on="ym", how="inner")
-        .drop(columns=["ym"])
-    )
-    pairs_path = Path(PAIRS_CACHE_PATH)
-    pairs.to_parquet(pairs_path, index=False)
-    logger.info("Pairs Parquet guardado en %s (%d filas)", pairs_path, len(pairs))
-
     # Summary
-    sig_mask = corr_df["pearson_p"] < SIGNIFICANCE_THRESHOLD
+    sig_mask = corr_df["pearson_q"] < SIGNIFICANCE_THRESHOLD
     logger.info(
-        "=== Resumen: %d/%d correlaciones significativas (p<%.2f) ===",
+        "=== Resumen: %d/%d correlaciones significativas (q<%.2f) ===",
         sig_mask.sum(), len(corr_df), SIGNIFICANCE_THRESHOLD,
     )
     print(corr_df.to_string())
