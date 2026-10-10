@@ -377,7 +377,7 @@
   <div class="sticky-nav-inner">
     <a href="#estado-section" data-i18n-text="nav_status">¿Qué pasa ahora?</a>
     <a href="#oni-section" data-i18n-text="nav_oni">¿Cómo evolucionó?</a>
-    <a href="#soi-section" data-i18n-text="nav_soi">¿Hay alerta temprana?</a>
+    <a href="#soi-section" data-i18n-text="nav_soi">Indicador atmosférico (SOI)</a>
     <a href="#sam-section" data-i18n-text="nav_sam">SAM</a>
     <a href="#subsurface-section" data-i18n-text="nav_ocean">¿Qué pasa en el océano?</a>
     <a href="#sst-map-section" data-i18n-text="nav_heat">¿Dónde está el calor?</a>
@@ -387,9 +387,9 @@
     <a href="#corr-section" data-i18n-text="nav_rain">¿Cómo afecta la lluvia?</a>
     <a href="#temp-section" data-i18n-text="nav_temp">¿Y la temperatura?</a>
     <a href="#composite-section" data-i18n-text="nav_intensity">¿Importa la intensidad?</a>
-    <a href="#spi-section" data-i18n-text="nav_drought">¿Hay sequía?</a>
+    <a href="#spi-section" data-i18n-text="nav_drought">Sequía histórica (SPI)</a>
     <a href="#risk-section" data-i18n-text="nav_region">¿Qué significa para mi región?</a>
-    <a href="#parana-section" data-i18n-text="nav_parana">Río Paraná</a>
+    <a href="#parana-section" data-i18n-text="nav_parana">Monitoreo del Paraná</a>
     <a href="#data-sources-section" data-i18n-text="nav_sources">Fuentes y método</a>
   </div>
 </nav>
@@ -412,7 +412,7 @@
       <h1>Argentina ENSO<br>Impact Tracker</h1>
     </div>
     <div class="masthead-meta">
-      <div class="label"><span data-i18n-text="updated_label">Actualizado</span> <span id="freshness-dot" title="Estado de los datos" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;"></span></div>
+      <div class="label"><span data-i18n-text="updated_label">Sitio generado</span> <span id="freshness-dot" title="Estado de los datos" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;"></span></div>
       <div class="date" id="updated-date">—</div>
       <div class="desc" data-i18n="masthead_desc">Estado <span class="glossary" data-tip="El Niño–Oscilación del Sur: ciclo climático del Pacífico ecuatorial que influye en la precipitación de Argentina." style="color:inherit;">ENSO</span> y su relación histórica con<br>la lluvia en 5 regiones argentinas</div>
       <button id="lang-toggle" onclick="I18N.toggleLang()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);cursor:pointer;margin-top:8px;letter-spacing:0.08em;font-weight:600;transition:all .2s;" data-i18n-text="lang_toggle" data-i18n-aria="lang_toggle_aria"></button>
@@ -422,6 +422,7 @@
   <!-- 2. Status hero -->
   <section class="hero" id="estado-section">
     <div>
+      <p id="operational-reference" style="font-size:14px;line-height:1.6;margin:0 0 16px;"></p>
       <div class="hero-status">
         <span class="status-dot" id="status-dot"></span>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;" id="status-label"></span>
@@ -433,6 +434,7 @@
         <p id="summary-line3" class="summary-line summary-caveat"></p>
       </div>
       <p class="summary-trajectory" id="hero-desc"></p>
+      <p id="observations-asof" style="font-size:12px;line-height:1.6;color:rgba(255,255,255,0.8);"></p>
       <div class="region-selector-label" data-i18n-text="region_selector">Qué significa para mi región</div>
       <div class="region-pills" id="region-pills"></div>
       <div class="advice-panel" id="advice-panel"></div>
@@ -477,7 +479,7 @@
       <h2 data-i18n="oni_title">¿Cómo evolucionó el ENSO?</h2>
       <div class="section-meta" id="chart-range-label"></div>
     </div>
-    <p class="section-desc" data-i18n="oni_desc">El <span class="glossary" data-tip="Oceanic Niño Index: media móvil de 3 meses de la anomalía de temperatura en la región Niño 3.4 del Pacífico. Fuente: NOAA CPC.">ONI</span> resume cuánto se desvía la temperatura del Pacífico central respecto de lo normal. Es el índice principal para determinar si estamos en <span class="glossary" data-tip="Calentamiento anómalo del Pacífico ecuatorial. Se declara cuando el ONI supera +0.5 °C durante 5 trimestres consecutivos.">El Niño</span>, <span class="glossary" data-tip="Enfriamiento anómalo del Pacífico ecuatorial. Se declara cuando el ONI baja de −0.5 °C durante 5 trimestres consecutivos.">La Niña</span> o fase Neutral. Fuente: NOAA CPC.</p>
+    <p class="section-desc" data-i18n="oni_desc">ONI: media trimestral de anomalías del Niño 3.4, conservada aquí como referencia histórica. NOAA usa RONI para el monitoreo operativo desde febrero de 2026; el aviso oficial y RONI se muestran en el encabezado.</p>
     <div class="range-switcher">
       <button class="range-btn active" data-desde="1970" data-i18n-text="oni_range_1970">1970–hoy</button>
       <button class="range-btn" data-desde="2000" data-i18n-text="oni_range_2000">2000–hoy</button>
@@ -497,10 +499,10 @@
   <!-- 4b. SOI Tracker — early warning indicator -->
   <section class="section reveal" id="soi-section">
     <div class="section-header">
-      <h2 data-i18n="soi_title">¿Hay señales tempranas de cambio?</h2>
+      <h2 data-i18n="soi_title">El componente atmosférico del ENSO</h2>
       <div class="section-meta" id="soi-range-label"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="soi_desc">La presión atmosférica entre Tahití y Darwin anticipa los cambios en la temperatura del Pacífico. El <span class="glossary" data-tip="Southern Oscillation Index: diferencia estandarizada de presión entre Tahití y Darwin. Indicador atmosférico complementario del ONI.">SOI</span> suele adelantarse 2 a 4 semanas al ONI. Valores negativos sostenidos acompañan El Niño; valores positivos sostenidos, La Niña.</p>
+    <p class="section-desc section-desc-wide" data-i18n="soi_desc">El SOI resume diferencias de presión entre Tahití y Darwin. Valores negativos sostenidos suelen acompañar El Niño; positivos, La Niña. Es un indicador complementario, no una alerta temprana calibrada por este tracker.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:16px;">
       <div>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="soi_current">SOI actual</span>
@@ -519,7 +521,7 @@
       <h2 data-i18n="sam_title">¿Qué dice el Modo Anular del Sur?</h2>
       <div class="section-meta" id="sam-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="sam_desc">El <span class="glossary" data-tip="Southern Annular Mode / Antarctic Oscillation. Patrón de circulación dominante en el hemisferio sur. SAM positivo: vientos del oeste se contraen hacia la Antártida, menos lluvia en Patagonia. SAM negativo: vientos se expanden hacia el norte, más lluvia en Patagonia.">SAM</span> (Modo Anular del Sur) es el patrón de circulación dominante en latitudes medias y altas del hemisferio sur. Compite con el ENSO como forzante de precipitación en Patagonia y el sur argentino. Fuente: NOAA CPC.</p>
+    <p class="section-desc section-desc-wide" data-i18n="sam_desc">El SAM (Modo Anular del Sur) resume cambios de circulación en latitudes medias y altas del hemisferio sur. Complementa otros indicadores climáticos. Fuente: NOAA CPC AAO.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:16px;">
       <div>
         <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="sam_current">SAM actual</span>
@@ -529,7 +531,7 @@
       </div>
     </div>
     <div id="sam-plotly" style="width:100%;height:320px;" role="img" aria-label="Serie temporal del SAM/AAO" data-i18n-aria="sam_aria"></div>
-    <p style="margin:12px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="sam_note">SAM positivo → vientos del oeste se contraen hacia la Antártida → menos precipitación en Patagonia. SAM negativo → vientos se expanden hacia el norte → más lluvia en la zona. Este efecto puede reforzar o contrarrestar la señal ENSO en el sur argentino.</p>
+    <p style="margin:12px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="sam_note">El SAM modifica la posición y la intensidad de los vientos del oeste. Su asociación con la lluvia depende de la estación y del lugar; un valor positivo o negativo no determina por sí solo la lluvia en toda Patagonia. Puede interactuar con ENSO.</p>
   </section>
 
   <!-- 4c. Subsurface temperature cross-section -->
@@ -538,7 +540,7 @@
       <h2 data-i18n="subsurface_title">¿Qué pasa debajo de la superficie?</h2>
       <div class="section-meta" id="subsurface-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="subsurface_desc">El calor acumulado bajo la superficie anticipa lo que pasará en la temperatura de superficie meses después. Durante El Niño, el agua cálida se desplaza hacia el Pacífico oriental. Durante La Niña, asciende agua fría en esa zona. Este perfil muestra temperatura absoluta (°C) hasta 300 m de profundidad, medida por <span class="glossary" data-tip="Red de boyas ancladas en el Pacífico ecuatorial que miden temperatura, corrientes y vientos en tiempo casi real.">boyas TAO/TRITON</span> (NOAA PMEL).</p>
+    <p class="section-desc section-desc-wide" data-i18n="subsurface_desc">Perfil de temperatura absoluta del Pacífico ecuatorial hasta 300 m, medido por boyas TAO/TRITON. El contenido de calor subsuperficial aporta contexto físico, pero este perfil no está calibrado como pronóstico ni muestra anomalías respecto de una climatología.</p>
     <div id="subsurface-plotly" style="width:100%;height:400px;" role="img" aria-label="Heatmap de temperatura subsuperficial del Pacífico ecuatorial, profundidad vs longitud" data-i18n-aria="subsurface_aria"></div>
   </section>
 
@@ -548,7 +550,7 @@
       <h2 data-i18n="sst_title">¿Dónde se concentra el calor?</h2>
       <div class="section-meta" id="sst-map-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="sst_desc">La <span class="glossary" data-tip="Temperatura Superficial del Mar. El mapa muestra la anomalía: diferencia respecto del promedio 1991–2020.">TSM</span> en el Pacífico ecuatorial, comparada con el promedio 1991–2020. Los recuadros marcan las regiones Niño que se usan para monitoreo. Fuente: NOAA OISST v2.1.</p>
+    <p class="section-desc section-desc-wide" data-i18n="sst_desc">Anomalía diaria de temperatura superficial del Pacífico ecuatorial respecto de la climatología OI.v2 1971–2000. Son instantáneas cada 30 días, no promedios mensuales. Fuente: NOAA OISST v2.1, variable anom de ERDDAP.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:12px;">
       <button class="range-btn" id="sst-play-btn" aria-label="Reproducir animación del mapa" data-i18n-text="sst_play" data-i18n-aria="sst_play_aria">▶ Reproducir</button>
       <div id="sst-month-label" style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;letter-spacing:-0.01em;"></div>
@@ -556,7 +558,7 @@
     <div id="sst-map-plotly" style="width:100%;height:480px;" role="img" aria-label="Mapa interactivo de anomalía de temperatura superficial del mar en el Pacífico ecuatorial" data-i18n-aria="sst_aria"></div>
     <div id="sst-map-fallback" style="display:none;background:#F4F6F9;border-radius:4px;padding:24px;text-align:center;">
       <p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;" data-i18n-text="sst_fallback">No se pudo cargar el mapa satelital de TSM. Mostrando datos de ONI en su lugar.</p>
-      <p style="font-size:13px;color:#555C68;margin-top:8px;" data-i18n-text="sst_fallback2">Consulte la sección de Serie histórica ONI arriba para el estado actual del ENSO.</p>
+      <p style="font-size:13px;color:#555C68;margin-top:8px;" data-i18n-text="sst_fallback2">Consultá el aviso oficial de NOAA en el encabezado para el diagnóstico operativo.</p>
     </div>
   </section>
 
@@ -624,7 +626,7 @@
       <h2 data-i18n="compare_title">¿Se parece a algún episodio anterior?</h2>
       <div class="section-meta" data-i18n-text="compare_meta">Episodio actual vs históricos</div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="compare_desc">El episodio actual superpuesto a las trayectorias de episodios ENSO históricos notables. Cada curva arranca desde el mes en que el ONI cruzó el umbral ±0.5. Permite comparar ritmo e intensidad, no predecir que se repetirá un patrón.</p>
+    <p class="section-desc section-desc-wide" data-i18n="compare_desc">Trayectorias históricas de ONI en ventanas definidas alrededor de eventos destacados. Permiten comparar valores, no predecir que se repetirá un patrón. Las fechas son los meses centrales de las medias trimestrales.</p>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <button class="range-btn active" data-compare="nino" id="compare-btn-nino" data-i18n-text="compare_nino">El Niño históricos</button>
       <button class="range-btn" data-compare="nina" id="compare-btn-nina" data-i18n-text="compare_nina">La Niña históricos</button>
@@ -635,7 +637,7 @@
   <!-- 5c. ENSO episode timeline -->
   <section class="section reveal" id="timeline-section">
     <h2 style="margin-bottom:6px;" data-i18n="timeline_title">¿Cuándo ocurrieron El Niño y La Niña?</h2>
-    <p class="section-desc section-desc-wide" data-i18n="timeline_desc">Cada barra es un episodio ENSO formal (criterio NOAA CPC: ONI sobre el umbral ±0.5 durante al menos 5 trimestres consecutivos). El ancho refleja la duración.</p>
+    <p class="section-desc section-desc-wide" data-i18n="timeline_desc">Cada barra es un episodio histórico detectado con ONI: cinco estaciones solapadas sobre ±0.5 °C. No reemplaza el aviso operativo de NOAA basado en RONI y otros indicadores.</p>
     <div id="enso-timeline" style="width:100%;overflow-x:auto;"></div>
     <div id="notable-events-cards" style="margin-top:24px;"></div>
   </section>
@@ -643,7 +645,7 @@
   <!-- 6. Correlation heatmap -->
   <section class="section reveal" id="corr-section">
     <h2 style="margin-bottom:6px;" data-i18n="corr_title">¿Cómo se relaciona el ENSO con la lluvia?</h2>
-    <p class="section-desc section-desc-wide" data-i18n="corr_desc">Qué tan asociados están el estado del Pacífico (<span class="glossary" data-tip="Oceanic Niño Index: media móvil de 3 meses de la anomalía de temperatura en la región Niño 3.4.">ONI</span>) y la precipitación en cada región argentina, usando datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones, resolución 0.05°.">CHIRPS</span> v2.0 (1981–2025). Las barras más altas indican regiones donde el ENSO tiene más influencia sobre la lluvia. Use el selector de estación para ver cuándo es más fuerte la señal.</p>
+    <p class="section-desc section-desc-wide" data-i18n="corr_desc">Asociaciones históricas entre ONI y lluvia en cinco cajas rectangulares CHIRPS v2.0. La comparación anual usa anomalías por mes calendario; la estacional, acumulados de tres meses completos. La altura de una barra indica asociación, no causalidad ni capacidad de pronóstico.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
       <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -665,10 +667,10 @@
       <div class="heatmap-legend-bar"></div>
       <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 a +0.25</span>
     </div>
-    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="corr_note">NEA y Pampa Húmeda tienen la señal más clara: años El Niño tienden a ser más lluviosos, con 0 a 2 meses de retardo. NOA, Cuyo y Patagonia no muestran señal en el agregado anual, pero sí por estación. Cuyo en invierno y Patagonia en primavera responden al ENSO cuando se miran por separado.</p>
+    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="corr_note">Los colores y asteriscos requieren q < 0.05 después de corregir todas las comparaciones de la familia. Un resultado sin asterisco no demuestra ausencia de un vínculo físico. Las cajas no son promedios por provincia ni por cuenca; Patagonia solo cubre 37–50°S.</p>
     <details style="margin:10px 0 0;max-width:76ch;">
       <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;" data-i18n-text="corr_stat_toggle">Detalle estadístico ▸</summary>
-      <p style="margin:8px 0 0;font-size:12px;color:#79818E;line-height:1.55;font-family:'IBM Plex Mono',monospace;" data-i18n="corr_stat_detail">Correlación de Pearson ONI vs precipitación regional (CHIRPS v2.0, 1981–2025). Significancia: * p&lt;0.05, ** p&lt;0.01, *** p&lt;0.001 con <span class="glossary" data-tip="Grados de libertad efectivos. Corrige la autocorrelación del ONI para no sobreestimar la significancia.">n<sub>eff</sub></span> (Bretherton 1999). Señal estacional: NEA SON r=+0.32***, Pampa Húmeda DEF r=+0.39***, Cuyo JJA r=+0.25**, Patagonia SON r=+0.18*. El <span class="glossary" data-tip="Modo Anular del Sur. Patrón de circulación atmosférica que influye en la precipitación del sur de Sudamérica, independiente del ENSO.">SAM</span> compite con el ENSO como forzante dominante en el sur.</p>
+      <p style="margin:8px 0 0;font-size:12px;color:#79818E;line-height:1.55;font-family:'IBM Plex Mono',monospace;" data-i18n="corr_stat_detail">Pearson y Spearman con p aproximado por autocorrelación y q ajustado por Benjamini–Yekutieli. Familia: regiones × lags 0–3 × anual y cuatro estaciones, separada por variable y coeficiente. Asteriscos: * q<0.05, ** q<0.01, *** q<0.001. Resultados exploratorios sin validación fuera de muestra.</p>
     </details>
   </section>
 
@@ -678,7 +680,7 @@
       <h2 data-i18n="temp_title">¿El ENSO afecta la temperatura?</h2>
       <div class="section-meta" id="temp-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="temp_desc">Correlación entre el <span class="glossary" data-tip="Oceanic Niño Index: media móvil de 3 meses de la anomalía de temperatura en la región Niño 3.4.">ONI</span> y la temperatura media regional (CPC Global Temperature, 0.5°). Misma metodología que las correlaciones de precipitación: Pearson con corrección <span class="glossary" data-tip="Grados de libertad efectivos. Corrige la autocorrelación para no sobreestimar la significancia.">n<sub>eff</sub></span> (Bretherton 1999). Barras positivas = El Niño tiende a estar asociado con temperaturas más altas.</p>
+    <p class="section-desc section-desc-wide" data-i18n="temp_desc">Asociaciones históricas entre ONI y anomalías de temperatura media (CPC Global Temperature). Se usa el mismo calendario y ajuste estadístico que para lluvia. Sin eliminación de tendencias: son asociaciones exploratorias, no atribución causal ni pronóstico.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="temp-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
       <select id="temp-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -699,7 +701,7 @@
       <h2 data-i18n="composite_title">¿Importa la intensidad del ENSO?</h2>
       <div class="section-meta" id="composite-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="composite_desc">Precipitación acumulada estacional promedio según la intensidad del evento ENSO: débil (|ONI| 0.5–1.0), moderado (1.0–1.5), fuerte (1.5–2.0), muy fuerte (>2.0). Colores rojos = El Niño, azules = La Niña. N = número de estaciones en cada categoría.</p>
+    <p class="section-desc section-desc-wide" data-i18n="composite_desc">Promedios descriptivos de lluvia estacional según |ONI|: débil [0.5,1), moderado [1,1.5), fuerte [1.5,2), muy fuerte ≥2. N cuenta estaciones completas; con N<10 la muestra es pequeña. Estas medias no son pronósticos ni tienen intervalos predictivos.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
       <label for="composite-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
       <select id="composite-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
@@ -715,10 +717,11 @@
   <!-- 6c. SPI-3 Drought Index -->
   <section class="section reveal" id="spi-section" style="display:none;">
     <div class="section-header">
-      <h2 data-i18n="spi_title">¿Hay sequía o exceso de lluvia?</h2>
+      <h2 data-i18n="spi_title">Sequía y humedad en el período observado</h2>
       <div class="section-meta" id="spi-meta"></div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="spi_desc">El <span class="glossary" data-tip="Standardized Precipitation Index: índice estandarizado de precipitación acumulada en 3 meses. Valores negativos indican déficit; positivos, exceso.">SPI-3</span> mide el déficit o exceso de precipitación acumulada en 3 meses respecto de la climatología (1981–2025). Valores bajo −1.0 indican sequía; sobre +1.0, humedad anormal.</p>
+    <p class="section-desc section-desc-wide" data-i18n="spi_desc">El SPI-3 estandariza lluvia acumulada de tres meses mediante una distribución gamma por mes calendario, ajustada al período histórico disponible. SPI ≤−1 indica sequía meteorológica; ≥+1, humedad anormal. No mide sequía hidrológica o agrícola por sí solo.</p>
+    <p id="spi-asof" style="font-size:13px;color:var(--color-ink-3);"></p>
     <div id="spi-status-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
     <div id="spi-chart" style="width:100%;height:340px;" role="img" aria-label="Serie temporal del SPI-3 por región" data-i18n-aria="spi_aria"></div>
   </section>
@@ -744,10 +747,10 @@
   <!-- 7b. Rio Parana & ENSO -->
   <section class="section reveal" id="parana-section" style="display:none;">
     <div class="section-header">
-      <h2 data-i18n="parana_title">¿Cómo afecta el ENSO al Río Paraná?</h2>
+      <h2 data-i18n="parana_title">Monitoreo hidrológico del Paraná</h2>
       <div class="section-meta">Rosario (km 416) · INA BDHI</div>
     </div>
-    <p class="section-desc section-desc-wide" data-i18n="parana_desc">El nivel del Paraná en Rosario es un indicador clave del impacto hidrológico del ENSO en Argentina. Los eventos El Niño fuertes producen crecidas con 3–6 meses de retardo; las La Niña prolongadas causan bajantes. Los datos históricos muestran la relación entre la fase ENSO y los niveles del río.</p>
+    <p class="section-desc section-desc-wide" data-i18n="parana_desc">Para niveles fluviales y alertas consultá el INA. El ENSO es uno de varios factores de la cuenca y no determina por sí solo una crecida o bajante. La tabla manual de niveles se retiró porque no tenía fuentes verificables para cada observación; este tracker no ofrece un pronóstico de niveles.</p>
     <div id="parana-events" style="margin-bottom:20px;"></div>
     <div id="parana-chart" style="width:100%;height:280px;margin-bottom:16px;" role="img" aria-label="Niveles del Paraná durante eventos ENSO" data-i18n-aria="parana_aria"></div>
     <p id="parana-correlation-note" style="margin:0 0 16px;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;"></p>
@@ -823,12 +826,12 @@
             </tr>
           </tbody>
         </table>
-        <p data-i18n="method_corr"><strong>Metodología de correlación.</strong> Correlación de Pearson y Spearman entre ONI y precipitación mensual regional, lags 0 a 3 meses. Significancia: test bilateral con n<sub>eff</sub> (Bretherton et al. 1999), umbral p &lt; 0.05. Datos de precipitación: promedio espacial CHIRPS v2.0 (resolución 0.05°) sobre 5 cajas rectangulares lat/lon en Argentina (1981–2025). Las regiones son aproximaciones rectangulares, no polígonos administrativos ni de cuenca. Existe solapamiento menor entre Pampa Húmeda y Patagonia (~10% de celdas) y entre NOA y Cuyo (~9%). NEA y Pampa Húmeda no comparten dominio espacial; sus correlaciones son independientes en ese sentido, aunque la autocorrelación espacial de la precipitación limita la independencia estricta. Correlaciones calculadas sobre todos los meses del año y por trimestre (SON, DEF, MAM, JJA).</p>
-        <p style="margin-top:8px;" data-i18n="method_oni"><strong>Base del ONI.</strong> Media móvil de 3 meses de la anomalía SST en la región Niño 3.4, usando ERSSTv5 con períodos base de 30 años centrados (NOAA CPC). Base vigente: 1991–2020. Otros proveedores (IRI) pueden usar bases distintas, lo que produce valores ligeramente distintos para la misma temporada.</p>
-        <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Limitación CHIRPS en precipitación nival.</strong> CHIRPS v2.0 se basa en estimaciones infrarrojas satelitales calibradas con estaciones, y subrepresenta la precipitación sólida (nieve) en alta montaña. La señal ENSO en Cuyo y Patagonia cordillerana puede estar subestimada por esta limitación, no por ausencia física del fenómeno.</p>
-        <p style="margin-top:8px;" data-i18n="method_neff"><strong>Grados de libertad efectivos.</strong> El ONI está fuertemente autocorrelacionado por ser media móvil de 3 meses. Los p-values usan n<sub>eff</sub> (Bretherton et al. 1999), no n bruto, para evitar sobreestimar la significancia. Se reportan ambos valores en el detalle de cada correlación.</p>
-        <p style="margin-top:8px;" data-i18n="method_episodes"><strong>Detección de episodios.</strong> Criterio NOAA CPC: ONI ≥ +0.5 (El Niño) o ≤ −0.5 (La Niña) durante al menos 5 temporadas consecutivas superpuestas de 3 meses.</p>
-        <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Pipeline: Python (build.py), JSON, HTML/JS estático. Actualización diaria vía GitHub Actions.</p>
+        <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes del período disponible. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub>eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
+        <p style="margin-top:8px;" data-i18n="method_oni"><strong>ONI y RONI.</strong> NOAA usa RONI para monitoreo desde el 1 de febrero de 2026. RONI resta la anomalía tropical al Niño 3.4 y reescala la varianza; la serie actual usa ERSSTv6 y base 1991–2020. El ONI histórico sigue disponible con bases de 30 años centradas. Las asociaciones del tracker usan ONI; su clasificación no sustituye el aviso operativo de NOAA, que también considera la atmósfera.</p>
+        <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Dominio y cobertura.</strong> CHIRPS v2.0 cubre 50°S–50°N. La caja de lluvia de Patagonia solo aporta datos entre 37 y 50°S: excluye Tierra del Fuego y el extremo sur de Santa Cruz. Son medias aritméticas de píxeles válidos en cajas, sin ponderación de área ni máscara nacional; incluyen terreno fuera de Argentina y dominios solapados. No equivalen a promedios administrativos. La nieve y el relieve limitan su precisión. El período disponible se muestra en el encabezado.</p>
+        <p style="margin-top:8px;" data-i18n="method_neff"><strong>Incertidumbre.</strong> n<sub>eff</sub> estima el efecto de la autocorrelación; los p son aproximados. La corrección FDR ajusta comparaciones dependientes, pero no prueba causalidad ni elimina toda incertidumbre. Las frecuencias usan un binomial aproximado, una única familia exploratoria y q corregido. Correlaciones y frecuencias proceden de los mismos datos: no constituyen validaciones independientes.</p>
+        <p style="margin-top:8px;" data-i18n="method_episodes"><strong>Episodios históricos por ONI.</strong> Se requieren cinco estaciones solapadas consecutivas con ONI ≥+0.5 o ≤−0.5. Es la regla histórica del ONI, no una declaración operativa actual. El encabezado muestra por separado el RONI y el aviso oficial de NOAA.</p>
+        <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Actualización diaria del sitio. Cada serie conserva su propia fecha de observación; el archivo de lluvia y SPI puede terminar antes que los índices ENSO.</p>
       </div>
     </details>
   </section>
@@ -838,7 +841,7 @@
     <div style="width:100%;margin-bottom:12px;line-height:1.6;">
       <p style="margin-bottom:6px;" data-i18n="footer_sources">Fuentes: NOAA CPC · IRI Columbia · CHIRPS v2.0 (UCSB) · TAO/TRITON (NOAA PMEL)</p>
       <p style="margin-bottom:6px;" data-i18n="footer_disclaimer">El ENSO explica solo una parte de la variabilidad de precipitación en Argentina. El SAM (Modo Anular del Sur), la variabilidad interna atmosférica y factores regionales también influyen significativamente.</p>
-      <p style="margin-bottom:6px;" data-i18n="footer_latency">Latencia de datos: ONI ~2 meses (publicación CPC); Niño 3.4 SST ~1 semana (ERDDAP/OISST, composites semanales); SOI ~1 mes (CPC / ERDDAP fallback); temperatura subsuperficial ~1 mes (TAO/TRITON). Estas latencias son estándar para monitoreo climático operacional.</p>
+      <p style="margin-bottom:6px;" data-i18n="footer_latency">Cada indicador muestra su fecha. ONI y RONI son medias trimestrales fechadas en el mes central; no observaciones instantáneas. El mapa OISST usa instantáneas diarias con latencia propia. La lluvia y el SPI conservan el período del archivo histórico.</p>
     </div>
     <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
@@ -850,6 +853,7 @@
 </main>
 
 <script src="js/i18n.js"></script>
+<script src="js/scientific.js"></script>
 <script src="js/advice.js"></script>
 <script src="js/main.js" defer></script>
 </body>

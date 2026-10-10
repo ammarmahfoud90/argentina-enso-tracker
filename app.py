@@ -1,11 +1,12 @@
-# app.py — Render compatibility stub
-#
-# The Streamlit app was moved to legacy/app.py during the static-site
-# refactor. Render's startCommand still references this root-level file.
-# This stub runs the legacy app in the same Streamlit execution context.
-#
-# Streamlit executes this file as a script on every rerun, so exec() works:
-# all st.* calls inside legacy/app.py are captured by the running session.
+"""Render compatibility entry point for the maintained scientific dashboard.
 
-with open("legacy/app.py", encoding="utf-8") as _f:
-    exec(_f.read())  # noqa: S102
+The former Streamlit analysis read legacy uncorrected correlation caches.
+Expose the maintained static dashboard instead of a conflicting analysis.
+"""
+import streamlit as st
+import streamlit.components.v1 as components
+
+SITE_URL = "https://ammarmahfoud90.github.io/argentina-enso-tracker/"
+st.set_page_config(page_title="Argentina ENSO Tracker", layout="wide")
+st.link_button("Abrir Argentina ENSO Tracker", SITE_URL)
+components.iframe(SITE_URL, height=1400, scrolling=True)

@@ -41,6 +41,7 @@ jobs:
         run: |
           npm i --no-save eslint
           node tests/smoke-lint.mjs
+          node tests/scientific-ui.mjs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

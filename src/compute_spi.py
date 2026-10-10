@@ -45,11 +45,22 @@ SPI_LABELS_ES = {
 
 
 def classify_spi(value: float) -> str:
-    """Classify SPI into drought/wet category."""
-    for name, (lo, hi) in SPI_CLASSES.items():
-        if lo <= value < hi:
-            return name
-    return "normal"
+    """WMO boundaries: -1, -1.5 and -2 belong to the drier class."""
+    if not np.isfinite(value):
+        raise ValueError("SPI classification requires a finite value")
+    if value <= -2:
+        return "sequia_extrema"
+    if value <= -1.5:
+        return "sequia_severa"
+    if value <= -1:
+        return "sequia_moderada"
+    if value < 1:
+        return "normal"
+    if value < 1.5:
+        return "humedad_moderada"
+    if value < 2:
+        return "humedad_severa"
+    return "humedad_extrema"
 
 
 def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series:
@@ -65,6 +76,14 @@ def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series
     Returns:
         SPI values as pd.Series (same index as input, first window-1 values NaN).
     """
+    # Restore the calendar before rolling: missing months invalidate windows.
+    precip_series = precip_series.copy()
+    months_index = pd.DatetimeIndex(precip_series.index).to_period("M")
+    if months_index.has_duplicates:
+        raise ValueError("Duplicate calendar months in SPI input")
+    original_dates = dict(zip(months_index, precip_series.index))
+    precip_series.index = months_index
+    precip_series = precip_series.sort_index().reindex(pd.period_range(months_index.min(), months_index.max(), freq="M"))
     # Rolling sum
     rolling = precip_series.rolling(window=window, min_periods=window).sum()
 
@@ -107,6 +126,7 @@ def compute_spi(precip_series: pd.Series, window: int = SPI_WINDOW) -> pd.Series
             # Gamma fit failed for this month — leave as NaN
             continue
 
+    spi.index = pd.DatetimeIndex([original_dates.get(m, m.to_timestamp() + pd.Timedelta(days=14)) for m in spi.index])
     return spi
 
 
@@ -131,7 +151,7 @@ def compute_all_spi(pairs_df: pd.DataFrame) -> tuple[dict, dict]:
     spi_current = {}
 
     for region in region_cols:
-        precip = df[region].dropna()
+        precip = df[region]
         if len(precip) < 36:  # Need at least 3 years
             continue
 

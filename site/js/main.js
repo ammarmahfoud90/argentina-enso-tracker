@@ -58,7 +58,7 @@ function bestByRegion(correlations, regionOrder) {
   const result = {};
   for (const region of regionOrder) {
     const rows = correlations.filter(c => c.region === region);
-    const sig = rows.filter(c => c.pearson_p < SIG_THRESHOLD);
+    const sig = rows.filter(c => correlationQ(c) < SIG_THRESHOLD);
     const pool = sig.length ? sig : rows;
     if (!pool.length) { result[region] = null; continue; }
     result[region] = pool.reduce((a, b) => Math.abs(a.pearson_r) >= Math.abs(b.pearson_r) ? a : b);
@@ -215,7 +215,7 @@ function regionMagnitudeOpacity(region, phase, freqStats) {
   let bestDevPct = 0;
   for (const sn of ['DEF','SON','MAM','JJA']) {
     const cell = ((freqStats[sn] || {})[region] || {})[pk];
-    if (cell && cell.significant) {
+    if (cell && frequencySignificant(cell)) {
       bestDevPct = Math.max(bestDevPct, Math.abs(cell.deviation_pct_of_climatology || 0));
     }
   }
@@ -248,7 +248,7 @@ const REGION_BOUNDS = {
   'NEA':          { lat_min: -29, lat_max: -22, lon_min: -62, lon_max: -53 },
   'NOA':          { lat_min: -29, lat_max: -22, lon_min: -69, lon_max: -62 },
   'Cuyo':         { lat_min: -36, lat_max: -28, lon_min: -70, lon_max: -65 },
-  'Patagonia':    { lat_min: -55, lat_max: -37, lon_min: -73, lon_max: -62 },
+  'Patagonia':    { lat_min: -50, lat_max: -37, lon_min: -73, lon_max: -62 },
 };
 
 /* Convert bounding box to GeoJSON polygon */
@@ -316,7 +316,7 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
     .attr('fill', d => {
       const b = best[d.properties.name];
       if (!b) return '#a3a3a3';
-      return regionSignalColor(b.pearson_r, b.pearson_p, phase);
+      return regionSignalColor(b.pearson_r, correlationQ(b), phase);
     })
     .attr('fill-opacity', prefRM ? null : 0)
     .attr('stroke', '#14161A')
@@ -327,7 +327,7 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
   /* Staggered fade-in — opacity by magnitude when freq data available */
   function regionOpacity(d) {
     const b = best[d.properties.name];
-    if (!b || b.pearson_p >= SIG_THRESHOLD) return 0.35; /* grey is clearly visible */
+    if (!b || correlationQ(b) >= SIG_THRESHOLD) return 0.35; /* grey is clearly visible */
     if (freqStats) return regionMagnitudeOpacity(d.properties.name, phase, freqStats);
     return 0.4 + Math.min(0.35, Math.abs(b.pearson_r));
   }
@@ -346,8 +346,8 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
       const b = best[d.properties.name];
       const tt = document.getElementById('map-tooltip');
       if (tt && b) {
-        const rStr = (b.pearson_r >= 0 ? '+' : '') + b.pearson_r.toFixed(3) + (b.pearson_stars || '');
-        const sig = b.pearson_p < SIG_THRESHOLD ? t('significant') : t('not_significant');
+        const rStr = (b.pearson_r >= 0 ? '+' : '') + b.pearson_r.toFixed(3) + (correlationStars(b));
+        const sig = correlationQ(b) < SIG_THRESHOLD ? t('significant') : t('not_significant');
         tt.innerHTML = `<strong>${d.properties.name}</strong><br>r = ${rStr} · ${sig}<br>${t('historical_signal')}`;
         tt.style.opacity = '1';
         const rect = e.target.getBoundingClientRect();
@@ -427,19 +427,19 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
   /* Sort: significant first, then by |r| */
   const sorted = [...regionOrder].sort((a, b) => {
     const bA = best[a], bB = best[b];
-    const sigA = bA && bA.pearson_p < SIG_THRESHOLD;
-    const sigB = bB && bB.pearson_p < SIG_THRESHOLD;
+    const sigA = bA && correlationQ(bA) < SIG_THRESHOLD;
+    const sigB = bB && correlationQ(bB) < SIG_THRESHOLD;
     if (sigA !== sigB) return (sigB ? 1 : 0) - (sigA ? 1 : 0);
     return (bB ? Math.abs(bB.pearson_r) : 0) - (bA ? Math.abs(bA.pearson_r) : 0);
   });
 
   for (const region of sorted) {
     const b = best[region];
-    const isSig = b && b.pearson_p < SIG_THRESHOLD;
+    const isSig = b && correlationQ(b) < SIG_THRESHOLD;
     const meta = (regionMeta || {})[region] || {};
     const provinces = Array.isArray(meta.provinces) ? meta.provinces.join(', ') : '';
-    const badge = b ? badgeInfo(b.pearson_r, b.pearson_p, phase) : badgeInfo(0, 1, phase);
-    const tlColor = b ? trafficLightColor(b.pearson_r, b.pearson_p) : '#a3a3a3';
+    const badge = b ? badgeInfo(b.pearson_r, correlationQ(b), phase) : badgeInfo(0, 1, phase);
+    const tlColor = b ? trafficLightColor(b.pearson_r, correlationQ(b)) : '#a3a3a3';
 
     const card = document.createElement('div');
     card.className = 'risk-card';
@@ -455,7 +455,7 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
       let bestCell = null, bestSn = null;
       for (const sn of ['DEF','SON','MAM','JJA']) {
         const cell = ((freqStats[sn] || {})[region] || {})[pk];
-        if (cell && cell.significant && (!bestCell || cell.p_binomial < bestCell.p_binomial)) {
+        if (cell && frequencySignificant(cell) && (!bestCell || frequencyQ(cell) < frequencyQ(bestCell))) {
           bestCell = cell; bestSn = sn;
         }
       }
@@ -469,10 +469,10 @@ function buildRiskCards(containerId, regionOrder, best, phase, seasonalCorr, reg
         if (seasonalCorr) {
           const seasonLabels = { SON: 'SON', DEF: 'DEF', MAM: 'MAM', JJA: 'JJA' };
           for (const [sn, recs] of Object.entries(seasonalCorr)) {
-            const hits = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+            const hits = recs.filter(r => r.region === region && correlationQ(r) < SIG_THRESHOLD);
             if (hits.length > 0) {
               const topHit = hits.reduce((a, c) => Math.abs(a.pearson_r) > Math.abs(c.pearson_r) ? a : c);
-              freqHint = `${seasonLabels[sn]} r=${topHit.pearson_r >= 0 ? '+' : ''}${topHit.pearson_r.toFixed(2)}${topHit.pearson_stars || ''}`;
+              freqHint = `${seasonLabels[sn]} r=${topHit.pearson_r >= 0 ? '+' : ''}${topHit.pearson_r.toFixed(2)}${correlationStars(topHit)}`;
               break;
             }
           }
@@ -1200,14 +1200,14 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
     if (!b) continue;
     regions.push(region);
     rValues.push(b.pearson_r);
-    const isSig = b.pearson_p < SIG_THRESHOLD;
+    const isSig = correlationQ(b) < SIG_THRESHOLD;
     const a = isSig ? (0.5 + Math.min(0.5, Math.abs(b.pearson_r) * 2)) : 0.3;
     colors.push(isSig
       ? (b.pearson_r >= 0 ? `rgba(194,56,42,${a.toFixed(2)})` : `rgba(42,85,208,${a.toFixed(2)})`)
       : 'rgba(199,204,214,0.4)');
     const sign = b.pearson_r >= 0 ? '+' : '';
     const r2 = (b.pearson_r * b.pearson_r * 100).toFixed(1);
-    texts.push(`r=${sign}${b.pearson_r.toFixed(3)}${b.pearson_stars || ''}, R²=${r2}%`);
+    texts.push(`r=${sign}${b.pearson_r.toFixed(3)}${correlationStars(b)}, R²=${r2}%`);
   }
 
   const trace = {
@@ -1392,7 +1392,7 @@ function renderHeatmap(correlations, regionOrder) {
       }
 
       const r = c.pearson_r;
-      const sig = c.pearson_p < SIG_THRESHOLD;
+      const sig = correlationQ(c) < SIG_THRESHOLD;
       const bg = sig ? rToOklch(r) : 'rgba(200,204,210,0.15)';
       cell.style.cssText = `display:flex;align-items:center;justify-content:center;background:${bg};border-radius:3px;padding:16px 14px;min-height:26px;animation:omFadeUp .45s ease ${delay} backwards;`;
 
@@ -1401,10 +1401,10 @@ function renderHeatmap(correlations, regionOrder) {
       const sign = r >= 0 ? '+' : '−';
       span.textContent = sign + Math.abs(r).toFixed(3);
 
-      if (c.pearson_stars) {
+      if (correlationQ(c) < SIG_THRESHOLD && correlationStars(c)) {
         const stars = document.createElement('span');
         stars.style.cssText = 'color:#C2382A;font-weight:700;';
-        stars.textContent = c.pearson_stars;
+        stars.textContent = correlationStars(c);
         span.appendChild(stars);
       }
       cell.appendChild(span);
@@ -1465,7 +1465,7 @@ function regionDetailText(region, best, isSig, freqStats) {
     const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
     html += t('detail_nino_years', {signal, ninaEffect}) + chirpsCaveat +
       `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
-      `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${best.pearson_stars}, p&nbsp;=&nbsp;${best.pearson_p.toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
+      `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${correlationStars(best)}, q&nbsp;=&nbsp;${correlationQ(best).toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
   }
 
   /* Frequency table by season */
@@ -1480,7 +1480,7 @@ function regionDetailText(region, best, isSig, freqStats) {
         const c = entry[pk];
         if (!c) continue;
         hasData = true;
-        const sigMark = c.significant ? ' *' : '';
+        const sigMark = frequencySignificant(c) ? ' *' : '';
         const prelim = c.preliminary ? ` <span style="color:#b45309;font-size:10px;">${t('freq_preliminary')}</span>` : '';
         const devPct = c.deviation_pct_of_climatology != null
           ? `${c.deviation_pct_of_climatology > 0 ? '+' : ''}${c.deviation_pct_of_climatology}%`
@@ -1494,11 +1494,11 @@ function regionDetailText(region, best, isSig, freqStats) {
         rows += `<tr style="border-bottom:1px solid #eee;">` +
           `<td style="padding:3px 6px;">${SEASON_NAMES[sn]}</td>` +
           `<td style="padding:3px 6px;">${label}</td>` +
-          `<td style="padding:3px 6px;text-align:center;font-weight:${c.significant ? '700' : '400'};">${c.M_above_median}/${c.N}${sigMark}</td>` +
+          `<td style="padding:3px 6px;text-align:center;font-weight:${frequencySignificant(c) ? '700' : '400'};">${c.M_above_median}/${c.N}${sigMark}</td>` +
           `<td style="padding:3px 6px;text-align:right;">${devPct}</td>` +
           `<td style="padding:3px 6px;text-align:right;color:#79818E;">${devMm}</td>` +
           `<td style="padding:3px 6px;text-align:right;color:#79818E;">${range}</td>` +
-          `<td style="padding:3px 6px;text-align:right;">p=${c.p_binomial.toFixed(3)}${prelim}</td></tr>`;
+          `<td style="padding:3px 6px;text-align:right;">q=${frequencyQ(c).toFixed(3)}${prelim}</td></tr>`;
       }
     }
     if (hasData) {
@@ -1510,7 +1510,7 @@ function regionDetailText(region, best, isSig, freqStats) {
         `<th style="padding:3px 6px;text-align:right;">${t('freq_deviation')}</th>` +
         `<th style="padding:3px 6px;text-align:right;">${t('freq_mm_season')}</th>` +
         `<th style="padding:3px 6px;text-align:right;">${t('freq_range')}</th>` +
-        `<th style="padding:3px 6px;text-align:right;">p</th></tr></thead>` +
+        `<th style="padding:3px 6px;text-align:right;">q</th></tr></thead>` +
         `<tbody>${rows}</tbody></table>` +
         `<p style="font-size:10px;color:#79818E;margin-top:4px;">${t('freq_p_note')}</p>` +
         `</details>`;
@@ -1537,9 +1537,9 @@ function riskSummaryText(phase, freqStats) {
   if (freqStats) {
     const pDef = (freqStats['DEF'] || {})['Pampa Húmeda'] || {};
     const en = pDef['el_nino'], ln = pDef['la_nina'];
-    if (en && en.significant && ln && ln.significant) {
-      const enM = en.M_above_median, enN = en.N, enP = en.p_binomial.toFixed(3);
-      const lnM = ln.M_above_median, lnN = ln.N, lnP = ln.p_binomial.toFixed(3);
+    if (en && frequencySignificant(en) && ln && frequencySignificant(ln)) {
+      const enM = en.M_above_median, enN = en.N, enP = frequencyQ(en).toFixed(3);
+      const lnM = ln.M_above_median, lnN = ln.N, lnP = frequencyQ(ln).toFixed(3);
       text += ' ' + t('risk_pampa_detail', {enM, enN, enP, lnM, lnN, lnP});
     }
   }
@@ -1611,8 +1611,8 @@ async function main() {
       let bestSn = null, bestP = 1;
       for (const sn of ['DEF','SON','MAM','JJA']) {
         const cell = (freqStats[sn] || {})[region];
-        if (cell && cell[pk] && cell[pk].significant && cell[pk].p_binomial < bestP) {
-          bestP = cell[pk].p_binomial; bestSn = sn;
+        if (cell && cell[pk] && frequencySignificant(cell[pk]) && frequencyQ(cell[pk]) < bestP) {
+          bestP = frequencyQ(cell[pk]); bestSn = sn;
         }
       }
       if (bestSn) {
@@ -1624,7 +1624,7 @@ async function main() {
         const oc = (freqStats[bestSn][region] || {})[okn];
         let txt = t('summary_active_l2', {N, seasonName, phase, M, region});
         if (oc) {
-          txt += ' ' + t('summary_active_l2_other', {otherPhase, onlyStr: oc.significant ? t('summary_only') : '', ocM: oc.M_above_median, ocN: oc.N});
+          txt += ' ' + t('summary_active_l2_other', {otherPhase, onlyStr: frequencySignificant(oc) ? t('summary_only') : '', ocM: oc.M_above_median, ocN: oc.N});
         }
         if (cell.deviation_pct_of_climatology) {
           const s = cell.deviation_pct_of_climatology > 0 ? '+' : '';
@@ -1639,6 +1639,18 @@ async function main() {
     /* Line 3: what we don't know */
     el3.textContent = t('summary_l3');
   }
+
+  /* Operational reference and observation dates remain explicit. */
+  const reference = data.operational_reference || {};
+  const roni = reference.roni;
+  const advisory = reference.advisory;
+  const officialEl = document.getElementById('operational-reference');
+  const roniText = roni ? t('roni_reading', {value: (roni.value >= 0 ? '+' : '') + roni.value.toFixed(2), season: roni.season, year: roni.date.slice(0,4)}) : t('roni_unavailable');
+  const advisoryText = advisory ? t('advisory_reading', {status: advisory.status, date: advisory.issued}) : t('advisory_unavailable');
+  officialEl.innerHTML = `<strong>${roniText}</strong><br>${advisoryText} <a href="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;">NOAA CPC ↗</a><br><small>${t('roni_note')}</small>`;
+  if (advisory && (Date.now() - Date.parse(advisory.issued)) / 86400000 > 45) officialEl.innerHTML += `<br>${t('advisory_stale')}`;
+  const pm = data.precipitation_metadata;
+  document.getElementById('observations-asof').textContent = pm ? t('observations_asof', {start: pm.observations_start.slice(0,7), end: pm.observations_end.slice(0,7)}) : t('observations_unavailable');
 
   /* ── Masthead date ── */
   try {
@@ -1665,51 +1677,14 @@ async function main() {
   }
   const statusLabel = document.getElementById('status-label');
   if (phase === 'Neutral') {
-    statusLabel.textContent = t('status_neutral');
+    statusLabel.textContent = t('status_neutral') + ' · ' + t('legacy_oni_label');
   } else {
-    statusLabel.textContent = canonicalPhase + ' · NOAA CPC';
+    statusLabel.textContent = canonicalPhase + ' · ' + t('legacy_oni_label');
   }
   /* statusLabel inherits white from command-center */
 
-  /* Trajectory: ONI trend from last 3 values + gap vs Niño 3.4 */
-  let trajectoryNote = '';
-  if (phase !== 'Neutral' && data.oni_series.length >= 3) {
-    const last3 = data.oni_series.slice(-3);
-    const oniSlope = (last3[2].oni - last3[0].oni) / 2; /* avg change per month */
-    const oniDecel = (last3[2].oni - last3[1].oni) - (last3[1].oni - last3[0].oni);
-    const gap = cur.nino34_value - cur.oni_value; /* positive = SST ahead, negative = ONI ahead */
-    const nino34Str = `${cur.nino34_value >= 0 ? '+' : ''}${cur.nino34_value.toFixed(2)}`;
-
-    /* Guard: do NOT generate trend claims if the date gap between ONI and
-       Niño 3.4 exceeds 30 days. When one indicator is stale, comparing
-       them produces physically false statements (C2 regression). */
-    const oniDateMs = new Date(cur.oni_date + 'T12:00:00Z').getTime();
-    const n34DateMs = new Date(cur.nino34_date + 'T12:00:00Z').getTime();
-    const dateGapDays = Math.abs(n34DateMs - oniDateMs) / (1000 * 86400);
-    const canCompareTrend = dateGapDays <= 45;
-
-    if (canCompareTrend && phase === 'El Niño') {
-      if (gap < -0.15) {
-        trajectoryNote = ' ' + t('traj_nino_below', {n34: nino34Str, oni: oniSign + cur.oni_value.toFixed(2)});
-      } else if (gap > 0.5 && oniSlope > 0.15) {
-        trajectoryNote = ' ' + t('traj_nino_above', {n34: nino34Str});
-      } else if (Math.abs(gap) <= 0.15 && oniSlope > 0.1) {
-        trajectoryNote = ' ' + t('traj_nino_converge', {n34: nino34Str});
-      } else if (oniDecel < -0.15) {
-        trajectoryNote = ' ' + t('traj_nino_decel');
-      }
-    } else if (canCompareTrend && phase === 'La Niña') {
-      if (gap > 0.15) {
-        trajectoryNote = ' ' + t('traj_nina_above', {n34: nino34Str, oni: oniSign + cur.oni_value.toFixed(2)});
-      } else if (gap < -0.5 && oniSlope < -0.15) {
-        trajectoryNote = ' ' + t('traj_nina_below', {n34: nino34Str});
-      } else if (Math.abs(gap) <= 0.15 && oniSlope < -0.1) {
-        trajectoryNote = ' ' + t('traj_nina_converge', {n34: nino34Str});
-      } else if (oniDecel > 0.15) {
-        trajectoryNote = ' ' + t('traj_nina_decel');
-      }
-    }
-  }
+  /* Products and baselines differ: their numerical gap is not a trend. */
+  const trajectoryNote = '';
 
   /* Hero phase label — uses canonical label */
   document.getElementById('hero-phase').textContent = canonicalPhase;
@@ -1776,6 +1751,7 @@ async function main() {
       oni_value: cur.oni_value,
       soi_value: cur.soi_value,
       soi_trend: adviceSoiTrend,
+      soi_source: (data.data_sources || {}).soi,
       precip_anomaly: (data.precip_anomaly_12m || {})[region] || null,
     };
     const advice = (typeof getRegionAdvice === 'function')
@@ -1807,7 +1783,7 @@ async function main() {
     currentDesde = desde;
     const lastYear = new Date(data.oni_series[data.oni_series.length - 1].date + 'T12:00:00Z').getUTCFullYear();
     document.getElementById('chart-range-label').textContent = `${desde}–${lastYear} · mensual · NOAA CPC`;
-    if (plotlyReady) buildOniPlotly('oni-plotly', data.oni_series, data.episodes, desde, data.notable_events);
+    if (plotlyReady) buildOniPlotly('oni-plotly', data.oni_series, data.episodes, desde, (data.notable_events || []).filter(e => e.source));
   }
 
   document.querySelectorAll('.range-btn').forEach(btn => {
@@ -2123,7 +2099,7 @@ async function main() {
 
   /* ── Notable ENSO events cards ── */
   try {
-  const notableEvents = data.notable_events || [];
+  const notableEvents = (data.notable_events || []).filter(e => e.source);
   if (notableEvents.length > 0) {
     const nec = document.getElementById('notable-events-cards');
     const necTitle = document.createElement('h3');
@@ -2176,10 +2152,10 @@ async function main() {
       const lag0 = corrs.filter(c => c.lag === 0);
       const x = regions.filter(r => lag0.some(c => c.region === r));
       const y = x.map(r => { const c = lag0.find(c => c.region === r); return c ? c.pearson_r : 0; });
-      const colors = y.map(v => v >= 0 ? '#C2382A' : '#2A55D0');
+      const colors = x.map(region => { const c = lag0.find(c => c.region === region); return correlationQ(c) < SIG_THRESHOLD ? (c.pearson_r >= 0 ? '#C2382A' : '#2A55D0') : '#A7AEBB'; });
       const text = x.map(r => {
         const c = lag0.find(c => c.region === r);
-        return c ? `r=${c.pearson_r >= 0 ? '+' : ''}${c.pearson_r.toFixed(3)}${c.pearson_stars || ''}` : '';
+        return c ? `r=${c.pearson_r >= 0 ? '+' : ''}${c.pearson_r.toFixed(3)}${correlationStars(c)}` : '';
       });
       const cc = chartColors();
       Plotly.newPlot(divId, [{
@@ -2299,6 +2275,7 @@ async function main() {
   const spiSeries = data.spi_series;
   if (spiCurrent && Object.keys(spiCurrent).length > 0) {
     document.getElementById('spi-section').style.display = '';
+    document.getElementById('spi-asof').textContent = data.precipitation_metadata ? t('spi_asof', {date: data.precipitation_metadata.observations_end.slice(0,7)}) : t('observations_unavailable');
     const SPI_COLORS = {
       sequia_extrema: '#7f1d1d', sequia_severa: '#b91c1c', sequia_moderada: '#ea580c',
       normal: '#79818E',
@@ -2367,8 +2344,8 @@ async function main() {
   try {
   const sortedRegions = [...regionOrder].sort((a, b) => {
     const bA = best[a], bB = best[b];
-    const sigA = bA && bA.pearson_p < SIG_THRESHOLD;
-    const sigB = bB && bB.pearson_p < SIG_THRESHOLD;
+    const sigA = bA && correlationQ(bA) < SIG_THRESHOLD;
+    const sigB = bB && correlationQ(bB) < SIG_THRESHOLD;
     if (sigA !== sigB) return (sigB ? 1 : 0) - (sigA ? 1 : 0);
     return (bB ? Math.abs(bB.pearson_r) : 0) - (bA ? Math.abs(bA.pearson_r) : 0);
   });
@@ -2410,10 +2387,10 @@ async function main() {
   const accordionEl = document.getElementById('accordions');
   for (const region of sortedRegions) {
     const b = best[region];
-    const isSig = b && b.pearson_p < SIG_THRESHOLD;
+    const isSig = b && correlationQ(b) < SIG_THRESHOLD;
     const meta = (data.region_meta || {})[region] || {};
     const provinces = Array.isArray(meta.provinces) ? meta.provinces.join(', ') : (meta.provinces || '');
-    const rStr = b ? (b.pearson_r >= 0 ? '+' : '') + b.pearson_r.toFixed(3) + (b.pearson_stars || '') : '—';
+    const rStr = b ? (b.pearson_r >= 0 ? '+' : '') + b.pearson_r.toFixed(3) + (correlationStars(b)) : '—';
 
     const detail = document.createElement('details');
     detail.className = 'region-accordion';
@@ -2447,7 +2424,7 @@ async function main() {
       const seasonLabels = { SON: t('seasonal_spring'), DEF: t('seasonal_summer'), MAM: t('seasonal_autumn'), JJA: t('seasonal_winter') };
       const seasonalHits = [];
       for (const [sn, recs] of Object.entries(seasonalCorr)) {
-        const regRecs = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+        const regRecs = recs.filter(r => r.region === region && correlationQ(r) < SIG_THRESHOLD);
         if (regRecs.length > 0) {
           const best_s = regRecs.reduce((a, b) => Math.abs(a.pearson_r) > Math.abs(b.pearson_r) ? a : b);
           /* Cross-check with frequency stats for discrepancy */
@@ -2456,13 +2433,13 @@ async function main() {
           let freqNote = '';
           if (freqCell) {
             const M = freqCell.M_above_median, N = freqCell.N;
-            if (freqCell.significant) {
-              freqNote = ' ' + t('freq_both_agree', {M, N, p: freqCell.p_binomial.toFixed(3)});
+            if (frequencySignificant(freqCell)) {
+              freqNote = ' ' + t('freq_both_agree', {M, N, p: frequencyQ(freqCell).toFixed(3)});
             } else {
-              freqNote = ' ' + t('freq_disagree', {M, N, p: freqCell.p_binomial.toFixed(2)});
+              freqNote = ' ' + t('freq_disagree', {M, N, p: frequencyQ(freqCell).toFixed(2)});
             }
           }
-          seasonalHits.push({ season: sn, label: seasonLabels[sn] || sn, r: best_s.pearson_r, stars: best_s.pearson_stars, lag: best_s.lag, freqNote });
+          seasonalHits.push({ season: sn, label: seasonLabels[sn] || sn, r: best_s.pearson_r, stars: correlationStars(best_s), lag: best_s.lag, freqNote });
         }
       }
       if (seasonalHits.length > 0) {
@@ -2483,6 +2460,8 @@ async function main() {
 
   /* ── Parana River & ENSO ── */
   try {
+  document.getElementById('parana-section').style.display = '';
+  document.getElementById('parana-chart').style.display = 'none';
   const paranaData = data.parana_enso;
   if (paranaData && paranaData.summary) {
     document.getElementById('parana-section').style.display = '';

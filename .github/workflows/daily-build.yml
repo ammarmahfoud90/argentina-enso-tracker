@@ -34,7 +34,12 @@ jobs:
 
       # ── Dependencies (data layer only — no Streamlit/Plotly) ─────────────
       - name: Install data dependencies
-        run: pip install -r requirements-data.txt
+        run: pip install -r requirements-data.txt pytest
+
+      - name: Scientific regression checks
+        run: |
+          python -m pytest -q tests/test_scientific_validity.py
+          node tests/scientific-ui.mjs
 
       # ── Run pipeline ──────────────────────────────────────────────────────
       # The correlations Parquet (data/processed/correlations.parquet) is
@@ -57,7 +62,9 @@ jobs:
                       'seasonal_correlations', 'frequency_stats',
                       'frequency_methodology', 'iri_forecast', 'last_updated',
                       'smn_outlook', 'notable_events', 'composite_analysis',
-                      'spi_series', 'spi_current', 'parana_enso']
+                      'spi_series', 'spi_current', 'parana_enso',
+                      'operational_reference', 'precipitation_metadata',
+                      'scientific_methodology']
           missing = [k for k in required if k not in d]
           if missing:
               print(f'FAIL: missing keys: {missing}', file=sys.stderr)
@@ -97,6 +104,12 @@ jobs:
               else:
                   print(f'OK: {name} freshness: {age}d old (limit: {max_days}d)')
 
+          # Scientific contracts: corrected, complete and dated observations.
+          from src.scientific import validate_publication
+          with open('site/data/sst_map.json') as f:
+              sst = json.load(f)
+          validate_publication(d, sst)
+
           sc = d['seasonal_correlations']
           assert all(k in sc for k in ['SON','DEF','MAM','JJA']), 'missing seasonal keys'
           fs = d['frequency_stats']
@@ -122,7 +135,7 @@ jobs:
               print('FAIL: iri_forecast is None and no cached version available', file=sys.stderr)
               sys.exit(1)
 
-          # --- Cross-check: correlation vs frequency verdicts ---
+          # --- Describe different hypotheses; neither is independent validation ---
           # When one method says significant and the other does not, warn.
           # This happened with Patagonia SON (r=+0.18* but 9/14 p=0.42).
           discrepancies = []
@@ -131,7 +144,7 @@ jobs:
               s_freq = fs.get(sn, {})
               for corr_rec in s_corrs:
                   reg = corr_rec['region']
-                  corr_sig = corr_rec['pearson_p'] < 0.05
+                  corr_sig = corr_rec['pearson_q'] < 0.05
                   for pk in ['el_nino', 'la_nina']:
                       freq_cell = (s_freq.get(reg) or {}).get(pk)
                       if not freq_cell:
@@ -144,8 +157,8 @@ jobs:
                               f'M/N={freq_cell["M_above_median"]}/{freq_cell["N"]}, p_freq={freq_cell["p_binomial"]})')
           if discrepancies:
               for disc in discrepancies:
-                  print(f'::warning::Method discrepancy: {disc}')
-              print(f'WARN: {len(discrepancies)} correlation vs frequency discrepancies (see above)')
+                  print(f'INFO: Different descriptive tests: {disc}')
+              print(f'INFO: {len(discrepancies)} differences between correlation and frequency hypotheses; not independent validation')
 
           # --- New feature validations ---
           assert isinstance(d['notable_events'], list), 'notable_events must be list'

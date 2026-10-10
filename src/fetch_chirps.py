@@ -131,7 +131,7 @@ def build_chirps_monthly_series(
         ) from exc
 
     # Compute Argentina bounding box (union of all regions)
-    all_lat_min = min(r["lat_min"] for r in REGIONS.values())
+    all_lat_min = max(-50.0, min(r["lat_min"] for r in REGIONS.values()))
     all_lat_max = max(r["lat_max"] for r in REGIONS.values())
     all_lon_min = min(r["lon_min"] for r in REGIONS.values())
     all_lon_max = max(r["lon_max"] for r in REGIONS.values())
@@ -197,7 +197,7 @@ def build_chirps_monthly_series(
         month_data = subset[t_idx, :, :]  # (n_lat, n_lon)
 
         for region_name, bbox in REGIONS.items():
-            lat_m = (sub_lats >= bbox["lat_min"]) & (sub_lats <= bbox["lat_max"])
+            lat_m = (sub_lats >= max(-50.0, bbox["lat_min"])) & (sub_lats <= bbox["lat_max"])
             lon_m = (sub_lons >= bbox["lon_min"]) & (sub_lons <= bbox["lon_max"])
 
             # 2D boolean mask

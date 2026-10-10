@@ -1,9 +1,9 @@
 """Configuration: region bounding boxes, source URLs, ENSO thresholds.
 
 All geographic bounds are defined as (lat_min, lat_max, lon_min, lon_max)
-in decimal degrees, WGS-84.  Bounding boxes are derived from the
-provincial boundaries reported by IGN (Instituto Geográfico Nacional,
-Argentina) and cross-checked against GADM level-1 polygons.
+in decimal degrees, WGS-84. These are approximate rectangular sampling
+domains, not administrative polygons or national area-weighted means.
+CHIRPS v2 rainfall only covers latitudes north of 50 degrees south.
 """
 
 from __future__ import annotations
@@ -15,8 +15,12 @@ from __future__ import annotations
 NOAA_ONI_URL = (
     "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
 )
-"""ONI (Oceanic Niño Index) — 3-month running mean of ERSST.v5 Niño 3.4 SST
-anomalies, base period 1991-2020.  Updated monthly."""
+"""Legacy ONI; NOAA uses centered, changing 30-year base periods for history."""
+
+NOAA_RONI_URL = "https://www.cpc.ncep.noaa.gov/data/indices/RONI.ascii.txt"
+NOAA_ENSO_DISCUSSION_URL = (
+    "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso_advisory/ensodisc.shtml"
+)
 
 NOAA_NINO34_URL = (
     "https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii"
@@ -125,10 +129,9 @@ IRI_CHIRPS_BASE_URL = (
 # lat/lon in decimal degrees (south latitudes are negative)
 # Format: (lat_min, lat_max, lon_min, lon_max)
 #
-# Criterion: provincial administrative boundaries from IGN Argentina
-# (https://www.ign.gob.ar/NuestrasActividades/InformacionGeoespacial/CapasVectoriales)
-# then enlarged slightly (+0.1°) to ensure full coverage of border pixels
-# in CHIRPS 0.05° grid.
+# Rectangular sampling domains. Precipitation is clipped to CHIRPS v2
+# coverage (-50..50 latitude); temperature uses the full requested box.
+# Provincial lists provide approximate context, not a coverage guarantee.
 # ---------------------------------------------------------------------------
 
 REGIONS: dict[str, dict] = {

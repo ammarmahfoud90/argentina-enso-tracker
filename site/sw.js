@@ -6,13 +6,15 @@
  * Serves cached data when offline.
  */
 
-const CACHE_NAME = 'enso-tracker-v1';
-const DATA_CACHE = 'enso-data-v1';
+const CACHE_NAME = 'enso-tracker-science-v2';
+const DATA_CACHE = 'enso-data-science-v2';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
   './css/tokens.css',
+  './js/i18n.js',
+  './js/scientific.js',
   './js/advice.js',
   './js/main.js',
   './favicon.svg',
