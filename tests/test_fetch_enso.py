@@ -415,26 +415,18 @@ class TestComputeNeff:
 class TestNeffCodePathConsistency:
     """Verify annual and seasonal branches use the same n_eff function."""
 
-    def test_annual_and_seasonal_use_same_function(self):
-        """Both build.py branches must import compute_n_eff from the same module."""
-        import ast
-        from pathlib import Path
-
-        source = Path("build.py").read_text(encoding="utf-8")
-        tree = ast.parse(source)
-        # Find all imports of compute_n_eff
-        imports = []
-        for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                for alias in node.names:
-                    if alias.name == "compute_n_eff":
-                        imports.append(node.module)
-        assert len(imports) >= 2, (
-            f"Expected >=2 imports of compute_n_eff in build.py, found {len(imports)}"
-        )
-        assert len(set(imports)) == 1, (
-            f"Annual and seasonal branches import compute_n_eff from different modules: {imports}"
-        )
+    def test_annual_and_seasonal_use_same_function(self, monkeypatch):
+        """Both resolutions honor the effective sample size used in inference."""
+        from src.scientific import correlations
+        import numpy as np
+        rng = np.random.default_rng(1999)
+        dates = pd.date_range("1980-01-01", periods=540, freq="MS")
+        oni = pd.DataFrame({"date": dates, "oni": rng.normal(size=540)})
+        rain = pd.DataFrame({"date": dates, "NEA": rng.gamma(2, 50, 540)})
+        monkeypatch.setattr("src.scientific.compute_n_eff", lambda x, y: 3)
+        annual, seasonal = correlations(rain, oni)
+        assert all(r["n_eff"] == 3 and r["pearson_p"] > .05 for r in annual)
+        assert all(r["n_eff"] == 3 and r["pearson_p"] > .05 for rows in seasonal.values() for r in rows)
 
 
 class TestSeasonalCorrelationLag:

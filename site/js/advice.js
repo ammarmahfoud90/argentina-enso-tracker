@@ -43,10 +43,15 @@ function _lagStr(lag) {
 function _precipSummary(precipAnomaly) {
   if (!precipAnomaly || precipAnomaly.length < 3) return null;
   const recent = precipAnomaly.slice(-3);
+  const months = recent.map(d => new Date(d.date + 'T12:00:00Z'));
+  if (months.some(d => !Number.isFinite(d.getTime()))) return null;
+  const serial = months.map(d => d.getUTCFullYear() * 12 + d.getUTCMonth());
+  if (serial[1] - serial[0] !== 1 || serial[2] - serial[1] !== 1) return null;
+  if (recent.some(d => !Number.isFinite(d.anomaly_mm))) return null;
   const avgAnomaly = recent.reduce((sum, d) => sum + d.anomaly_mm, 0) / recent.length;
   if (Math.abs(avgAnomaly) < 5) return null;
   const dir = avgAnomaly > 0 ? t('adv_above') : t('adv_below');
-  return t('adv_precip_summary', {dir, val: (avgAnomaly > 0 ? '+' : '') + avgAnomaly.toFixed(0)});
+  return t('adv_precip_summary', {dir, start: recent[0].date.slice(0,7), end: recent[2].date.slice(0,7), val: (avgAnomaly > 0 ? '+' : '') + avgAnomaly.toFixed(0)});
 }
 
 function _soiContext(soiTrend, soiValue) {
@@ -72,11 +77,11 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   }
 
   const r     = bestCorr.pearson_r;
-  const p     = bestCorr.pearson_p;
+  const p     = correlationQ(bestCorr);
   const lag   = bestCorr.lag;
   const n     = bestCorr.n_obs;
   const nEff  = bestCorr.n_eff || n;
-  const stars = bestCorr.pearson_stars;
+  const stars = correlationStars(bestCorr);
   const isSig = p < SIG_THRESHOLD;
   const absR  = Math.abs(r);
   const oni   = ext.oni_value;
@@ -90,7 +95,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const statDetail =
     `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
     `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">` +
-    `r = ${r > 0 ? '+' : ''}${r.toFixed(3)}${stars}, p = ${p.toFixed(3)}, ` +
+    `r = ${r > 0 ? '+' : ''}${r.toFixed(3)}${stars || ''}, q = ${p.toFixed(3)}, p = ${bestCorr.pearson_p.toPrecision(3)}, ` +
     `n = ${n}, n<sub>eff</sub> = ${nEff}, ${_lagStr(lag)}` +
     `</span></details>`;
 
@@ -106,7 +111,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   /* ENSO Neutral */
   if (phase === 'Neutral') {
     let text = t('adv_neutral_text', {region: regionName, oni: oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : '?'});
-    const soi = _soiContext(ext.soi_trend, ext.soi_value);
+    const soi = ext.soi_source === 'CPC' ? _soiContext(ext.soi_trend, ext.soi_value) : null;
     if (soi) text += ' ' + soi;
     const precip = _precipSummary(ext.precip_anomaly);
     if (precip) text += ' ' + precip;
@@ -133,7 +138,7 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
   const oniStr = oni != null ? (oni >= 0 ? '+' : '') + oni.toFixed(2) : null;
   let text = t('adv_active_text', {region: regionName, phaseStr, oniStr, dirText, implication});
 
-  const soi = _soiContext(ext.soi_trend, ext.soi_value);
+  const soi = ext.soi_source === 'CPC' ? _soiContext(ext.soi_trend, ext.soi_value) : null;
   if (soi) text += ' ' + soi;
 
   const precip = _precipSummary(ext.precip_anomaly);

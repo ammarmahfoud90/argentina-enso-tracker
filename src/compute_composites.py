@@ -11,6 +11,7 @@ import numpy as np
 
 from src.config import ENSO_EL_NINO_THRESHOLD, ENSO_LA_NINA_THRESHOLD, REGION_ORDER
 from src.utils import get_logger
+from src.scientific import complete_seasons
 
 logger = get_logger(__name__)
 
@@ -55,7 +56,7 @@ def _classify_intensity(oni: float) -> tuple[str | None, str | None]:
     return (None, None)
 
 
-def compute_composites(pairs_df: pd.DataFrame) -> dict:
+def compute_composites(pairs_df: pd.DataFrame, oni_df: pd.DataFrame | None = None) -> dict:
     """Compute mean precip anomaly by region x season x intensity x phase.
 
     Args:
@@ -66,27 +67,10 @@ def compute_composites(pairs_df: pd.DataFrame) -> dict:
             mean_anomaly_mm, mean_anomaly_pct, n_seasons
         }}}}
     """
-    df = pairs_df.copy()
-    df["date"] = pd.to_datetime(df["date"])
-    df["month"] = df["date"].dt.month
-    df["season"] = df["month"].apply(_assign_season)
-    df["season_year"] = df["date"].dt.year
-    df.loc[df["month"] == 12, "season_year"] = (
-        df.loc[df["month"] == 12, "date"].dt.year + 1
-    )
-
-    region_cols = [c for c in REGION_ORDER if c in df.columns]
-
-    # Group by season-year and season, compute seasonal means
-    grouped = df.groupby(["season_year", "season"])
-    precip_total = grouped[region_cols].sum()
-    oni_mean = grouped["oni"].mean()
-    month_count = grouped["month"].count()
-
-    # Only keep complete seasons (3 months)
-    complete = month_count == 3
-    precip_total = precip_total[complete]
-    oni_mean = oni_mean[complete]
+    seasonal = complete_seasons(pairs_df, oni_df).set_index(["season_year", "season"])
+    region_cols = [c for c in REGION_ORDER if c in seasonal.columns]
+    precip_total = seasonal[region_cols]
+    oni_mean = seasonal["oni"]
 
     # Climatological mean per season per region
     clim = precip_total.groupby(level="season").mean()
@@ -116,7 +100,7 @@ def compute_composites(pairs_df: pd.DataFrame) -> dict:
                     else:
                         mask = (s_oni <= -lo) & (s_oni > -hi)
 
-                    subset = s_precip[mask]
+                    subset = s_precip[mask].dropna()
                     n = len(subset)
                     if n < 1:
                         continue
@@ -130,6 +114,8 @@ def compute_composites(pairs_df: pd.DataFrame) -> dict:
                         "mean_anomaly_mm": round(anomaly, 1),
                         "mean_anomaly_pct": pct,
                         "n_seasons": n,
+                        "low_n": n < 10,
+                        "interpretation": "Descripción histórica, no estimación predictiva; muestra pequeña si N < 10",
                         "mean_precip_mm": round(mean_val, 1),
                         "clim_precip_mm": round(s_clim, 1),
                     }

@@ -77,14 +77,12 @@ class TestSPI:
         assert classify_spi(2.5) == "humedad_extrema"
 
     def test_classify_spi_boundaries(self):
-        """Boundary values: lower bound is inclusive, upper exclusive."""
+        """WMO: negative boundary values belong to the drier category."""
         from src.compute_spi import classify_spi
-        # -2.0 is the upper bound of sequia_extrema (exclusive), so it falls into sequia_severa
-        # SPI_CLASSES uses [lo, hi) — first matching range wins
         assert classify_spi(-2.01) == "sequia_extrema"
-        assert classify_spi(-2.0) == "sequia_severa"   # -2.0 is lo of sequia_severa
-        assert classify_spi(-1.5) == "sequia_moderada"  # -1.5 is lo of sequia_moderada
-        assert classify_spi(-1.0) == "normal"           # -1.0 is lo of normal
+        assert classify_spi(-2.0) == "sequia_extrema"
+        assert classify_spi(-1.5) == "sequia_severa"
+        assert classify_spi(-1.0) == "sequia_moderada"
         assert classify_spi(1.0) == "humedad_moderada"
         assert classify_spi(1.5) == "humedad_severa"
         assert classify_spi(2.0) == "humedad_extrema"

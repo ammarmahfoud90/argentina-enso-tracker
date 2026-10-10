@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS fact_correlations (
     spearman_p  DOUBLE,
     n_obs       INTEGER,
     n_eff       INTEGER,
+    pearson_q   DOUBLE,
+    spearman_q  DOUBLE,
     PRIMARY KEY (region_id, season_id, lag, variable)
 );
 """
@@ -117,6 +119,8 @@ class ENSOWarehouse:
     def initialize(self) -> None:
         """Create schema and populate dimension tables."""
         self._create_schema()
+        self.con.execute("ALTER TABLE fact_correlations ADD COLUMN IF NOT EXISTS pearson_q DOUBLE")
+        self.con.execute("ALTER TABLE fact_correlations ADD COLUMN IF NOT EXISTS spearman_q DOUBLE")
         self._populate_dim_region()
         self._populate_dim_season()
         logger.info("Warehouse initialized at %s", self.db_path)
@@ -129,12 +133,11 @@ class ENSOWarehouse:
                 self.con.execute(stmt)
 
     def _populate_dim_region(self) -> None:
-        """Insert 5 regions from config (idempotent: deletes first)."""
-        self.con.execute("DELETE FROM dim_region")
+        """Insert 5 regions from config (idempotent: preserves referenced rows)."""
         for name, rid in _REGION_IDS.items():
             cfg = REGIONS[name]
             self.con.execute(
-                "INSERT INTO dim_region VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO dim_region VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 [
                     rid,
                     name,
@@ -148,11 +151,10 @@ class ENSOWarehouse:
             )
 
     def _populate_dim_season(self) -> None:
-        """Insert season dimension (idempotent: deletes first)."""
-        self.con.execute("DELETE FROM dim_season")
+        """Insert season dimension (idempotent: preserves referenced rows)."""
         for s in _SEASONS:
             self.con.execute(
-                "INSERT INTO dim_season VALUES (?, ?, ?, ?)",
+                "INSERT OR IGNORE INTO dim_season VALUES (?, ?, ?, ?)",
                 [s["season_id"], s["code"], s["name_es"], s["months"]],
             )
 
@@ -166,6 +168,8 @@ class ENSOWarehouse:
         Returns dict of {table_name: rows_loaded}.
         """
         loaded: dict[str, int] = {}
+        # This warehouse is derived from the committed monthly inputs.
+        self.con.execute("DELETE FROM fact_observations")
 
         # Correlations
         corr_path = Path(CORRELATIONS_CACHE_PATH)
@@ -214,11 +218,12 @@ class ENSOWarehouse:
                 continue
             lag = int(row.get("lag", 0))
             self.con.execute(
-                """INSERT INTO fact_correlations VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """INSERT INTO fact_correlations (region_id, season_id, lag, variable, pearson_r, pearson_p, spearman_r, spearman_p, n_obs, n_eff, pearson_q, spearman_q) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                    ON CONFLICT (region_id, season_id, lag, variable) DO UPDATE SET
                    pearson_r = EXCLUDED.pearson_r, pearson_p = EXCLUDED.pearson_p,
                    spearman_r = EXCLUDED.spearman_r, spearman_p = EXCLUDED.spearman_p,
-                   n_obs = EXCLUDED.n_obs, n_eff = EXCLUDED.n_eff""",
+                   n_obs = EXCLUDED.n_obs, n_eff = EXCLUDED.n_eff,
+                   pearson_q = EXCLUDED.pearson_q, spearman_q = EXCLUDED.spearman_q""",
                 [
                     rid,
                     season_id,
@@ -230,9 +235,26 @@ class ENSOWarehouse:
                     float(row.get("spearman_p", 1)) if "spearman_p" in row else None,
                     int(row.get("n_obs", 0)) if "n_obs" in row else None,
                     int(row.get("n_eff", 0)) if "n_eff" in row else None,
+                    float(row["pearson_q"]) if "pearson_q" in row else None,
+                    float(row["spearman_q"]) if "spearman_q" in row else None,
                 ],
             )
             count += 1
+        return count
+
+    def load_validated_correlations(self, payload: dict) -> int:
+        """Replace legacy cached statistics with the same dated UI analysis."""
+        self.con.execute("DELETE FROM fact_correlations")
+        for reading in payload.get("oni_series", []):
+            self.con.execute("UPDATE fact_observations SET oni = ? WHERE date_key = ?",
+                             [reading["oni"], reading["date"]])
+        count = 0
+        for variable, annual_key, seasonal_key in [
+            ("precip", "correlations", "seasonal_correlations"),
+            ("temp", "temp_correlations", "seasonal_temp_correlations")]:
+            count += self._load_correlations_df(pd.DataFrame(payload.get(annual_key) or []), variable, "ANN")
+            for season, rows in (payload.get(seasonal_key) or {}).items():
+                count += self._load_correlations_df(pd.DataFrame(rows), variable, season)
         return count
 
     def _load_observations_from_pairs(
@@ -245,7 +267,7 @@ class ENSOWarehouse:
         count = 0
         region_cols = [c for c in df.columns if c in _REGION_IDS]
         for _, row in df.iterrows():
-            date_key = str(row["date"])[:10]
+            date_key = (pd.Timestamp(row["date"]).to_period("M").to_timestamp() + pd.Timedelta(days=14)).date().isoformat()
             oni_val = float(row["oni"]) if pd.notna(row.get("oni")) else None
             for region_name in region_cols:
                 rid = _REGION_IDS[region_name]
@@ -305,13 +327,13 @@ class ENSOWarehouse:
         sid = _SEASON_CODE_TO_ID.get(season_code, 0)
         result = self.con.execute("""
             SELECT r.name AS region, c.lag, c.pearson_r, c.pearson_p,
-                   c.n_obs, c.n_eff
+                   c.n_obs, c.n_eff, c.pearson_q, c.spearman_q
             FROM fact_correlations c
             JOIN dim_region r ON c.region_id = r.region_id
             WHERE c.season_id = ? AND c.variable = ?
             ORDER BY ABS(c.pearson_r) DESC
         """, [sid, variable]).fetchall()
-        cols = ["region", "lag", "pearson_r", "pearson_p", "n_obs", "n_eff"]
+        cols = ["region", "lag", "pearson_r", "pearson_p", "n_obs", "n_eff", "pearson_q", "spearman_q"]
         return [dict(zip(cols, row)) for row in result]
 
     def region_correlations(self, region_name: str) -> list[dict]:
@@ -321,13 +343,13 @@ class ENSOWarehouse:
             return []
         result = self.con.execute("""
             SELECT s.code AS season, c.lag, c.variable,
-                   c.pearson_r, c.pearson_p, c.n_obs, c.n_eff
+                   c.pearson_r, c.pearson_p, c.n_obs, c.n_eff, c.pearson_q, c.spearman_q
             FROM fact_correlations c
             JOIN dim_season s ON c.season_id = s.season_id
             WHERE c.region_id = ?
             ORDER BY s.season_id, c.lag
         """, [rid]).fetchall()
-        cols = ["season", "lag", "variable", "pearson_r", "pearson_p", "n_obs", "n_eff"]
+        cols = ["season", "lag", "variable", "pearson_r", "pearson_p", "n_obs", "n_eff", "pearson_q", "spearman_q"]
         return [dict(zip(cols, row)) for row in result]
 
     def episode_summary(self) -> list[dict]:

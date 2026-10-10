@@ -28,30 +28,28 @@ import pandas as pd
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(Path(__file__).parent))
 
+from src.compute_composites import compute_composites
+from src.compute_spi import compute_all_spi
 from src.config import (
-    CHIRPS_START_YEAR,
-    CORRELATION_LAGS,
     CORRELATIONS_CACHE_PATH,
     ENSO_CONSECUTIVE_MONTHS,
     ENSO_EL_NINO_THRESHOLD,
     ENSO_LA_NINA_THRESHOLD,
     LINEAGE_PATH,
     PAIRS_CACHE_PATH,
-    PIPELINE_HEALTH_PATH,
     REGION_ORDER,
     REGIONS,
-    SIGNIFICANCE_THRESHOLD,
 )
-from src.compute_composites import compute_composites
-from src.compute_spi import compute_all_spi
-from src.fetch_enso import fetch_enso_snapshot
+from src.fetch_enso import fetch_enso_snapshot, fetch_operational_reference
+from src.fetch_iri_forecast import fetch_iri_forecast
 from src.fetch_sam import fetch_sam_series
+from src.fetch_sst_map import fetch_sst_map
+from src.fetch_subsurface import fetch_subsurface_cross_section
 from src.lineage import LineageTracker
 from src.parana_data import get_parana_data
 from src.pipeline_monitor import PipelineMonitor
-from src.fetch_iri_forecast import fetch_iri_forecast
-from src.fetch_sst_map import fetch_sst_map
-from src.fetch_subsurface import fetch_subsurface_cross_section
+from src.scientific import correlations as validated_correlations
+from src.scientific import frequencies, notable_events, validate_publication
 
 try:
     from src.warehouse import ENSOWarehouse
@@ -214,7 +212,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         snapshot.oni_value, snapshot.oni_season,
         snapshot.nino34_value, snapshot.soi_value, snapshot.phase,
     )
-    oni_src = lineage.register_source(
+    lineage.register_source(
         "NOAA ONI", url="https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
         access_method="live_fetch", status="success",
         row_count=len(snapshot.oni_series),
@@ -279,87 +277,31 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     soi_24m = soi_records[-24:] if soi_records else []
     logger.info("SOI series: %d total, %d last 24m", len(soi_records), len(soi_24m))
 
-    # 5. Correlation records (region × lag)
-    #    If the Parquet lacks n_eff (pre-Bretherton cache), compute on-the-fly
-    #    from the pairs Parquet.
-    _pairs_for_neff: pd.DataFrame | None = None
-    _need_neff = "n_eff" not in corr_df.columns
-    if _need_neff:
-        import numpy as _np_neff
-        from scipy import stats as _stats_neff
-        from src.compute_correlations import compute_n_eff as _compute_n_eff_annual
+    # Recompute from dated observations and the current canonical ONI series.
+    # The stored correlations Parquet is legacy provenance, not UI inference.
+    pairs_path = Path(PAIRS_CACHE_PATH)
+    if not pairs_path.exists():
+        raise RuntimeError("Dated precipitation pairs are required for scientific statistics")
+    pairs_df = pd.read_parquet(pairs_path)
+    pairs_df["date"] = pd.to_datetime(pairs_df["date"])
+    corr_records, seasonal_correlations = validated_correlations(pairs_df, snapshot.oni_series)
 
-        _pp = Path(PAIRS_CACHE_PATH)
-        if _pp.exists():
-            _pairs_for_neff = pd.read_parquet(_pp)
-            _pairs_for_neff["date"] = pd.to_datetime(_pairs_for_neff["date"])
-            _pairs_for_neff["ym"] = _pairs_for_neff["date"].dt.to_period("M")
-            logger.info("Computing n_eff on-the-fly for annual correlations (Parquet lacks column)")
-
-    corr_records: list[dict] = []
-    for _, row in corr_df.iterrows():
-        region = str(row["region"])
-        lag = int(row["lag"])
-        n_obs = int(row["n_obs"])
-        pr = float(row["pearson_r"])
-        pp_cached = float(row["pearson_p"])
-
-        # Compute n_eff and corrected p-value if not in cache
-        n_eff = None
-        pp_corrected = pp_cached
-        if "n_eff" in row.index:
-            n_eff = int(row["n_eff"])
-        elif _pairs_for_neff is not None and region in _pairs_for_neff.columns:
-            oni_col = _pairs_for_neff[["ym", "oni"]].copy()
-            oni_col["ym"] = oni_col["ym"] + lag
-            merged = _pairs_for_neff[["ym", region]].merge(oni_col, on="ym", how="inner").dropna()
-            if len(merged) >= 30:
-                x = merged["oni"].values
-                y = merged[region].values
-                n_eff = _compute_n_eff_annual(x, y)
-                if n_eff > 2 and abs(pr) < 1.0:
-                    t_stat = pr * _np_neff.sqrt((n_eff - 2) / (1 - pr ** 2))
-                    pp_corrected = float(2 * _stats_neff.t.sf(abs(t_stat), df=n_eff - 2))
-
-        rec = {
-            "region":         region,
-            "lag":            lag,
-            "pearson_r":      round(pr, 4),
-            "pearson_p":      round(pp_corrected, 4),
-            "pearson_stars":  _sig_stars(pp_corrected),
-            "spearman_r":     round(float(row["spearman_r"]), 4),
-            "spearman_p":     round(float(row["spearman_p"]), 4),
-            "n_obs":          n_obs,
-        }
-        if n_eff is not None:
-            rec["n_eff"] = n_eff
-        corr_records.append(rec)
-
-    # 6. Region metadata with signal_strength label
-    region_meta: dict[str, dict] = {}
+    region_meta = {}
     for region_name in REGION_ORDER:
-        reg_rows = corr_df[corr_df["region"] == region_name]
-        if reg_rows.empty:
-            best_abs_r, is_sig = 0.0, False
-        else:
-            sig_rows = reg_rows[reg_rows["pearson_p"] < SIGNIFICANCE_THRESHOLD]
-            if not sig_rows.empty:
-                best_row = sig_rows.loc[sig_rows["pearson_r"].abs().idxmax()]
-                best_abs_r = abs(float(best_row["pearson_r"]))
-                is_sig = True
-            else:
-                best_row = reg_rows.loc[reg_rows["pearson_r"].abs().idxmax()]
-                best_abs_r = abs(float(best_row["pearson_r"]))
-                is_sig = False
-
+        rows = [r for r in corr_records if r["region"] == region_name]
+        significant = [r for r in rows if r["significant"]]
+        best = max(significant or rows, key=lambda r: abs(r["pearson_r"]), default=None)
         cfg = REGIONS[region_name]
+        bounds = {key: cfg[key] for key in ("lat_min", "lat_max", "lon_min", "lon_max")}
+        bounds["lat_min"] = max(-50.0, bounds["lat_min"])
         region_meta[region_name] = {
-            "provinces":      cfg["provinces"],
-            "description":    cfg["description"],
-            "signal_strength": _signal_strength_label(best_abs_r, is_sig),
-            # Geographic center of bounding box (lat, lon) — for map positioning
-            "center_lat": round((cfg["lat_min"] + cfg["lat_max"]) / 2, 2),
-            "center_lon": round((cfg["lon_min"] + cfg["lon_max"]) / 2, 2),
+            "provinces": cfg["provinces"] if region_name != "Patagonia" else ["Patagonia en la caja 37–50°S; sin Tierra del Fuego ni extremo sur"],
+            "description": cfg["description"] if region_name != "Patagonia" else "Patagonia: muestra rectangular CHIRPS entre 37 y 50°S, no toda la región",
+            "signal_strength": _signal_strength_label(abs(best["pearson_r"]) if best else 0, bool(significant)),
+            "center_lat": round((bounds["lat_min"] + bounds["lat_max"]) / 2, 2),
+            "center_lon": round((bounds["lon_min"] + bounds["lon_max"]) / 2, 2),
+            "precipitation_bounds": bounds,
+            "spatial_method": "Media aritmética de píxeles válidos en caja rectangular; sin máscara nacional ni ponderación de área. Incluye áreas fuera de Argentina."
         }
 
     # 7. Correlation cache metadata (version, period)
@@ -369,6 +311,10 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         cache_meta["start_year"]  = int(corr_df["start_year"].iloc[0])
         cache_meta["end_year"]    = int(corr_df["end_year"].iloc[0])
         cache_meta["computed_at"] = str(corr_df["computed_at"].iloc[0])
+
+    cache_meta["analysis_version"] = "2.0.0"
+    cache_meta["computed_at"] = datetime.now(timezone.utc).isoformat()
+    cache_meta["method"] = "Recomputed from dated climate observations and current canonical ONI; BY FDR"
 
     # 8. 12-month precipitation anomaly per region (from pairs Parquet)
     precip_anomaly_12m: dict = {}
@@ -398,6 +344,8 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
             bars = []
             for _, row in recent.iterrows():
                 m = int(row["month"])
+                if pd.isna(row[region]):
+                    continue
                 obs = float(row[region])
                 mean_val = float(clim.loc[m, region])
                 bars.append({
@@ -410,275 +358,8 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     else:
         logger.warning("Pairs Parquet not found at %s — precip_anomaly_12m will be empty", pairs_path)
 
-    # 8b. Seasonal correlations (SON/DEF/MAM/JJA) from pairs Parquet
-    seasonal_correlations: dict = {}
-    if pairs_path.exists():
-        import numpy as _np
-        from scipy import stats as _stats
-        from src.compute_correlations import compute_n_eff as _compute_n_eff
-
-        pairs_df["ym"] = pairs_df["date"].dt.to_period("M")
-        _oni_col = pairs_df[["ym", "oni"]].copy()
-        _precip_cols = pairs_df.drop(columns=["oni"]).copy()
-
-        _season_months = {
-            "SON": [9, 10, 11],
-            "DEF": [12, 1, 2],
-            "MAM": [3, 4, 5],
-            "JJA": [6, 7, 8],
-        }
-        for season_name, months_list in _season_months.items():
-            season_precip = _precip_cols[_precip_cols["month"].isin(months_list)]
-            season_records = []
-            for lag in CORRELATION_LAGS:
-                # Shift ONI forward by lag months (ONI leads precipitation)
-                oni_shifted = _oni_col.copy()
-                oni_shifted["ym"] = oni_shifted["ym"] + lag
-                season_merged = season_precip.merge(oni_shifted, on="ym", how="inner")
-                for region in REGION_ORDER:
-                    if region not in season_merged.columns:
-                        continue
-                    paired = season_merged[["oni", region]].dropna()
-                    n = len(paired)
-                    if n < 20:
-                        continue
-                    x = paired["oni"].values
-                    y = paired[region].values
-                    pr, pp_naive = _stats.pearsonr(x, y)
-                    sr, sp = _stats.spearmanr(x, y)
-                    n_eff = _compute_n_eff(x, y)
-                    if n_eff > 2 and abs(pr) < 1.0:
-                        t_stat = pr * _np.sqrt((n_eff - 2) / (1 - pr ** 2))
-                        pp = float(2 * _stats.t.sf(abs(t_stat), df=n_eff - 2))
-                    else:
-                        pp = pp_naive
-                    season_records.append({
-                        "region": region,
-                        "lag": lag,
-                        "pearson_r": round(float(pr), 4),
-                        "pearson_p": round(float(pp), 4),
-                        "pearson_stars": _sig_stars(float(pp)),
-                        "spearman_r": round(float(sr), 4),
-                        "spearman_p": round(float(sp), 4),
-                        "n_obs": n,
-                        "n_eff": n_eff,
-                    })
-            seasonal_correlations[season_name] = season_records
-        logger.info(
-            "Seasonal correlations: %s",
-            {k: len(v) for k, v in seasonal_correlations.items()},
-        )
-    else:
-        logger.warning("Pairs Parquet not found — seasonal correlations skipped")
-
-    # 8c. Frequency stats: how often was rainfall above median during El Niño / La Niña?
-    frequency_stats: dict = {}
-    frequency_methodology: dict = {}
-    if pairs_path.exists():
-        import numpy as _np
-        from scipy import stats as _stats
-
-        def _assign_season(month: int) -> str:
-            if month in (9, 10, 11): return "SON"
-            if month in (12, 1, 2):  return "DEF"
-            if month in (3, 4, 5):   return "MAM"
-            return "JJA"
-
-        _fdf = pairs_df.copy()
-        _fdf["season"] = _fdf["month"].apply(_assign_season)
-        _fdf["season_year"] = _fdf["date"].dt.year
-        _fdf.loc[_fdf["month"] == 12, "season_year"] = _fdf.loc[_fdf["month"] == 12, "date"].dt.year + 1
-
-        _sg = _fdf.groupby(["season_year", "season"])
-        _precip_mean = _sg[region_cols].mean()
-        _precip_total = _sg[region_cols].sum()
-        _oni_mean = _sg["oni"].mean()
-        _mcounts = _sg["month"].count()
-
-        _sm = _precip_mean.copy()
-        _sm["oni_mean"] = _oni_mean
-        _sm = _sm[_mcounts == 3]
-
-        _st = _precip_total.copy()
-        _st["oni_mean"] = _oni_mean
-        _st = _st[_mcounts == 3]
-
-        _sm["phase"] = "Neutral"
-        _sm.loc[_sm["oni_mean"] >= ENSO_EL_NINO_THRESHOLD, "phase"] = "El Niño"
-        _sm.loc[_sm["oni_mean"] <= ENSO_LA_NINA_THRESHOLD, "phase"] = "La Niña"
-        _st["phase"] = _sm["phase"]
-
-        # Confirmatory cells: prior hypothesis backed by independent r analysis
-        _CONFIRMATORY = {
-            ("DEF", "Pampa Húmeda", "el_nino"),
-            ("DEF", "Pampa Húmeda", "la_nina"),
-            ("DEF", "NEA", "el_nino"),
-            ("SON", "NEA", "el_nino"),
-        }
-        _PRELIMINARY = {
-            ("MAM", "NEA", "el_nino"),
-            ("JJA", "Cuyo", "el_nino"),
-        }
-
-        _conf_sig = 0
-        _expl_sig = 0
-
-        for _sn in ["SON", "DEF", "MAM", "JJA"]:
-            _s_mean = _sm.xs(_sn, level="season")
-            _s_total = _st.xs(_sn, level="season")
-            _sr = {}
-
-            for _reg in REGION_ORDER:
-                if _reg not in region_cols:
-                    continue
-                _median_all = float(_s_mean[_reg].median())
-                _mean_monthly = float(_s_mean[_reg].mean())
-                _mean_seasonal = float(_s_total[_reg].mean())
-
-                _entry = {
-                    "climatological_median_monthly_mm": round(_median_all, 1),
-                    "climatological_mean_monthly_mm": round(_mean_monthly, 1),
-                    "climatological_mean_seasonal_mm": round(_mean_seasonal, 1),
-                    "total_seasons": len(_s_mean),
-                }
-
-                for _pk, _pl in [("el_nino", "El Niño"), ("la_nina", "La Niña")]:
-                    _sub_m = _s_mean[_s_mean["phase"] == _pl]
-                    _sub_t = _s_total[_s_total["phase"] == _pl]
-                    _N = len(_sub_m)
-                    if _N == 0:
-                        continue
-                    _M = int((_sub_m[_reg] > _median_all).sum())
-
-                    _bt = _stats.binomtest(_M, _N, 0.5, alternative="two-sided")
-                    _p = round(float(_bt.pvalue), 4)
-                    _is_sig = _p < SIGNIFICANCE_THRESHOLD
-
-                    _ck = (_sn, _reg, _pk)
-                    _family = "confirmatory" if _ck in _CONFIRMATORY else "exploratory"
-                    if _is_sig:
-                        if _family == "confirmatory":
-                            _conf_sig += 1
-                        else:
-                            _expl_sig += 1
-
-                    _pm = float(_sub_m[_reg].mean())
-                    _dev_m = round(_pm - _mean_monthly, 1)
-                    _ps = float(_sub_t[_reg].mean())
-                    _dev_s = round(_ps - _mean_seasonal, 1)
-                    _dev_pct = round((_dev_s / _mean_seasonal) * 100, 1) if _mean_seasonal > 0 else 0.0
-
-                    _devs_m = _sub_m[_reg] - _mean_monthly
-                    _devs_s = _sub_t[_reg] - _mean_seasonal
-
-                    _cell = {
-                        "N": _N,
-                        "M_above_median": _M,
-                        "p_binomial": _p,
-                        "significant": _is_sig,
-                        "family": _family,
-                        "low_n": _N < 10,
-                        "mean_deviation_monthly_mm": _dev_m,
-                        "mean_deviation_seasonal_mm": _dev_s,
-                        "deviation_pct_of_climatology": _dev_pct,
-                        "range_monthly_mm": [round(float(_devs_m.min()), 1), round(float(_devs_m.max()), 1)],
-                        "range_seasonal_mm": [round(float(_devs_s.min()), 1), round(float(_devs_s.max()), 1)],
-                    }
-
-                    if _ck in _PRELIMINARY:
-                        _cell["preliminary"] = True
-
-                    if _sn == "JJA" and _reg == "Cuyo" and _pk == "el_nino":
-                        _cell["note"] = (
-                            "Direccion consistente (7/7) pero magnitud posiblemente "
-                            "subestimada: CHIRPS no captura bien la precipitacion nival "
-                            "en Cuyo invernal, y N=7 es el minimo de la tabla."
-                        )
-
-                    _entry[_pk] = _cell
-                _sr[_reg] = _entry
-            frequency_stats[_sn] = _sr
-
-        frequency_methodology = {
-            "threshold_above_normal": "mediana climatologica (1981-2025) de la region y estacion",
-            "deviation_pct_denominator": (
-                "media climatologica (no mediana). La mediana se usa como umbral "
-                "para clasificar temporadas; la media se usa como referencia para "
-                "cuantificar la magnitud del desvio."
-            ),
-            "oni_classification": (
-                "El Nino: ONI estacional medio >= +0.5; "
-                "La Nina: ONI estacional medio <= -0.5"
-            ),
-            "test": "binomtest bilateral (scipy.stats.binomtest, H0: p=0.5)",
-            "families": {
-                "confirmatory": {
-                    "description": (
-                        "Hipotesis previa respaldada por el analisis de correlacion "
-                        "independiente (r=+0.39*** Pampa Humeda DEF, r=+0.32*** NEA SON) "
-                        "y consistente con la literatura de teleconexion ENSO en el "
-                        "sudeste de Sudamerica."
-                    ),
-                    "cells": [
-                        "DEF Pampa Humeda El Nino",
-                        "DEF Pampa Humeda La Nina",
-                        "DEF NEA El Nino",
-                        "SON NEA El Nino",
-                    ],
-                    "n_tests": 4,
-                    "significant": _conf_sig,
-                },
-                "exploratory": {
-                    "description": (
-                        "Surgieron de recorrer la tabla sin hipotesis previa. No "
-                        "sobreviven una correccion por comparaciones multiples dentro "
-                        "de su familia y requieren confirmacion con mas temporadas."
-                    ),
-                    "n_tests": 36,
-                    "significant": _expl_sig,
-                    "expected_by_chance": round(36 * 0.05, 1),
-                },
-            },
-            "n_variation_note": (
-                "N varia entre estaciones (DEF~15, SON~14, MAM~9, JJA~7) porque "
-                "los eventos ENSO alcanzan su pico en el verano austral (DEF). En "
-                "otono e invierno, menos temporadas cumplen el umbral ONI >= 0.5."
-            ),
-            "units": {
-                "mean_deviation_monthly_mm": (
-                    "Desviacion del promedio mensual dentro de la estacion (mm/mes). "
-                    "Es el promedio de los 3 desvios mensuales."
-                ),
-                "mean_deviation_seasonal_mm": (
-                    "Desviacion del acumulado estacional (mm/estacion). "
-                    "Igual a monthly x 3 porque es el promedio de los desvios "
-                    "de las sumas estacionales."
-                ),
-                "deviation_pct_of_climatology": (
-                    "Desviacion como porcentaje de la media climatologica estacional."
-                ),
-                "range_monthly_mm": (
-                    "Rango [min, max] de los desvios mensuales promedio "
-                    "por temporada individual."
-                ),
-                "range_seasonal_mm": (
-                    "Rango [min, max] de los desvios del acumulado estacional "
-                    "por temporada individual. Calculado directamente desde los "
-                    "acumulados, NO escalado desde el rango mensual."
-                ),
-            },
-            "data_source": "CHIRPS v2.0 (1981-2025) via IRI OPeNDAP, ONI de NOAA CPC",
-            "chirps_caveat": (
-                "CHIRPS es un producto basado en infrarrojo + estaciones. Subestima "
-                "la precipitacion nival, especialmente en Cuyo y Patagonia en invierno."
-            ),
-        }
-        logger.info(
-            "Frequency stats: confirmatory %d/%d sig, exploratory %d/%d sig (expected ~%.1f)",
-            _conf_sig, 4, _expl_sig, 36, 36 * 0.05,
-        )
-    else:
-        logger.warning("Pairs Parquet not found — frequency stats skipped")
+    # Seasonal correlations and frequency families share an explicit calendar.
+    frequency_stats, frequency_methodology = frequencies(pairs_df, snapshot.oni_series)
 
     lineage.register_transform(
         "seasonal_correlations", inputs=["CHIRPS precip pairs", "NOAA ONI"],
@@ -694,7 +375,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     composite_analysis: dict = {}
     if pairs_path.exists():
         try:
-            composite_analysis = compute_composites(pairs_df)
+            composite_analysis = compute_composites(pairs_df, snapshot.oni_series)
             logger.info("Composite analysis: %d regions", len(composite_analysis))
             lineage.register_transform(
                 "composite_analysis", inputs=["CHIRPS precip pairs"],
@@ -723,90 +404,25 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
     else:
         logger.warning("Pairs Parquet not found — SPI skipped")
 
-    # 8f. Temperature correlations (from pre-computed Parquet)
-    temp_correlations: list[dict] = []
-    seasonal_temp_correlations: dict = {}
-    temp_corr_path = Path("data/processed/temp_correlations.parquet")
+    # Temperature correlations use monthly anomalies and complete seasons too.
+    temp_correlations, seasonal_temp_correlations = [], {}
     temp_pairs_path = Path("data/processed/oni_temp_pairs.parquet")
-    if temp_corr_path.exists():
-        try:
-            with monitor.track_source("temp_correlations.parquet") as src:
-                temp_corr_df = pd.read_parquet(temp_corr_path)
-                src.row_count = len(temp_corr_df)
-                src.cache_hit = True
-                src.status = "cached"
-            lineage.register_source(
-                "CPC temperature correlations", access_method="parquet", status="success",
-                row_count=len(temp_corr_df),
-                feeds_sections=["temp_correlations", "seasonal_temp_correlations"],
-            )
-            for _, row in temp_corr_df.iterrows():
-                temp_correlations.append({
-                    "region": str(row["region"]),
-                    "lag": int(row["lag"]),
-                    "pearson_r": round(float(row["pearson_r"]), 4),
-                    "pearson_p": round(float(row["pearson_p"]), 4),
-                    "pearson_stars": _sig_stars(float(row["pearson_p"])),
-                    "spearman_r": round(float(row["spearman_r"]), 4),
-                    "spearman_p": round(float(row["spearman_p"]), 4),
-                    "n_obs": int(row["n_obs"]),
-                    "n_eff": int(row["n_eff"]) if "n_eff" in row.index else None,
-                })
-            logger.info("Temperature correlations: %d rows from %s", len(temp_correlations), temp_corr_path)
+    if temp_pairs_path.exists():
+        temp_pairs_df = pd.read_parquet(temp_pairs_path)
+        temp_correlations, seasonal_temp_correlations = validated_correlations(
+            temp_pairs_df, snapshot.oni_series, variable="temperature")
 
-            # Compute seasonal temp correlations if pairs available
-            if temp_pairs_path.exists():
-                import numpy as _np
-                from scipy import stats as _stats
-                from src.compute_correlations import compute_n_eff as _compute_n_eff
-
-                temp_pairs_df = pd.read_parquet(temp_pairs_path)
-                temp_pairs_df["date"] = pd.to_datetime(temp_pairs_df["date"])
-                temp_pairs_df["ym"] = temp_pairs_df["date"].dt.to_period("M")
-                temp_pairs_df["month"] = temp_pairs_df["date"].dt.month
-                _oni_t = temp_pairs_df[["ym", "oni"]].copy()
-                _temp_cols = [c for c in REGION_ORDER if c in temp_pairs_df.columns]
-                # Drop oni from temp_pairs to avoid suffix collision in merge
-                _temp_no_oni = temp_pairs_df.drop(columns=["oni"])
-
-                for season_name, months_list in [("SON",[9,10,11]),("DEF",[12,1,2]),("MAM",[3,4,5]),("JJA",[6,7,8])]:
-                    season_temp = _temp_no_oni[_temp_no_oni["month"].isin(months_list)]
-                    season_records = []
-                    for lag in CORRELATION_LAGS:
-                        oni_shifted = _oni_t.copy()
-                        oni_shifted["ym"] = oni_shifted["ym"] + lag
-                        merged = season_temp.merge(oni_shifted, on="ym", how="inner")
-                        for region in _temp_cols:
-                            paired = merged[["oni", region]].dropna()
-                            n = len(paired)
-                            if n < 20:
-                                continue
-                            x, y = paired["oni"].values, paired[region].values
-                            pr, pp_naive = _stats.pearsonr(x, y)
-                            sr, sp = _stats.spearmanr(x, y)
-                            n_eff = _compute_n_eff(x, y)
-                            if n_eff > 2 and abs(pr) < 1.0:
-                                t_stat = pr * _np.sqrt((n_eff - 2) / (1 - pr ** 2))
-                                pp = float(2 * _stats.t.sf(abs(t_stat), df=n_eff - 2))
-                            else:
-                                pp = pp_naive
-                            season_records.append({
-                                "region": region, "lag": lag,
-                                "pearson_r": round(float(pr), 4),
-                                "pearson_p": round(float(pp), 4),
-                                "pearson_stars": _sig_stars(float(pp)),
-                                "spearman_r": round(float(sr), 4),
-                                "spearman_p": round(float(sp), 4),
-                                "n_obs": n, "n_eff": n_eff,
-                            })
-                    seasonal_temp_correlations[season_name] = season_records
-                logger.info("Seasonal temp correlations: %s",
-                            {k: len(v) for k, v in seasonal_temp_correlations.items()})
-        except Exception as exc:
-            logger.warning("Temperature correlations failed: %s", exc)
-    else:
-        logger.info("Temperature correlations Parquet not found — section will be hidden. "
-                     "Run `python -m src.compute_temp_correlations` to generate.")
+    with monitor.track_source("NOAA operational ENSO reference") as src:
+        operational_reference = fetch_operational_reference()
+        if operational_reference["errors"]:
+            src.status = "failed"
+            src.error_message = "; ".join(operational_reference["errors"])
+    lineage.register_source(
+        "NOAA RONI and advisory", url="https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/",
+        access_method="live_fetch", status="partial" if operational_reference["errors"] else "success",
+        feeds_sections=["operational_reference", "roni_series"],
+    )
+    roni_series = operational_reference.pop("roni_series", [])
 
     # 9. Subsurface temperature cross-section (TAO/TRITON buoys)
     logger.info("Fetching subsurface temperature data…")
@@ -910,6 +526,26 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
             "sam_value":   sam_value,
             "sam_date":    sam_date_str,
         },
+        "operational_reference": operational_reference,
+        "roni_series": roni_series,
+        "roni_series_24m": roni_series[-24:],
+        "scientific_methodology": {
+            "version": "2.0.0", "computed_at": datetime.now(timezone.utc).isoformat(),
+            "correlations": "Anomalías mensuales respecto de la climatología de cada mes; estaciones completas independientes en el calendario (sumas de lluvia, medias de temperatura). ONI del mes central publicado por NOAA, desplazado por lag en meses.",
+            "inference": "p aproximado con n_eff por autocorrelación, también para rangos Spearman. q Benjamini-Yekutieli para cada familia de 100 pruebas región × lag × anual/estación, separada por variable y coeficiente. Los asteriscos usan q, no p nominal.",
+            "limitations": "Estudio exploratorio sin validación fuera de muestra; temperatura sin detrendado. Tendencias, dependencia residual y revisión de índices pueden influir. Lag no equivale a anticipación operativa: ONI incluye tres meses y se publica después de cerrar la estación. No es un modelo de pronóstico ni una atribución causal.",
+        },
+        "precipitation_metadata": {
+            "source": "CHIRPS v2.0", "observations_start": pairs_df.date.min().date().isoformat(),
+            "observations_end": pairs_df.date.max().date().isoformat(),
+            "observation_age_days": (datetime.now(timezone.utc).date() - pairs_df.date.max().date()).days,
+            "climatology_start_year": int(pairs_df.date.dt.year.min()),
+            "climatology_end_year": int(pairs_df.date.dt.year.max()),
+            "global_latitude_coverage": [-50, 50],
+            "regional_coverage": {r: m["precipitation_bounds"] for r, m in region_meta.items()},
+            "spatial_method": "Cajas rectangulares; media aritmética de píxeles válidos, sin máscara de Argentina ni ponderación de área",
+            "limitations": "Patagonia: 37–50°S solamente. No incluye Tierra del Fuego ni todo Santa Cruz. La precipitación nival y orográfica tiene limitaciones. El SPI describe el último período observado, no la sequía actual si el archivo está atrasado.",
+        },
         "oni_series":    oni_records,
         "oni_series_24m": oni_24m,
         "soi_series":    soi_records,
@@ -927,80 +563,12 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "spi_series":    spi_series,
         "spi_current":   spi_current,
         "sam_monthly":   sam_monthly_records,
-        "parana_enso":   get_parana_data(),
+        "parana_enso": get_parana_data(),
         "temp_correlations": temp_correlations if temp_correlations else None,
         "seasonal_temp_correlations": seasonal_temp_correlations if seasonal_temp_correlations else None,
         "subsurface":    subsurface,
         "iri_forecast":  iri_forecast,
-        "notable_events": [
-            {
-                "year_range": "1982–83", "name": "El Niño 1982–83",
-                "type": "El Niño", "oni_peak": 2.1, "peak_season": "DJF 1983",
-                "start_year": 1982, "start_month": 5,
-                "argentina_impact": (
-                    "Inundaciones extraordinarias en el Litoral y Pampa Húmeda. "
-                    "El Paraná alcanzó 7.52 m en Rosario (julio 1983). "
-                    "Pérdidas agrícolas masivas en la región pampeana."
-                ),
-                "category": "muy fuerte",
-            },
-            {
-                "year_range": "1997–98", "name": "El Niño 1997–98",
-                "type": "El Niño", "oni_peak": 2.4, "peak_season": "NDJ 1998",
-                "start_year": 1997, "start_month": 5,
-                "argentina_impact": (
-                    "El evento más intenso del siglo XX. Inundaciones severas "
-                    "en el NEA y Litoral. Crecidas del Paraná, Uruguay y afluentes. "
-                    "Lluvias récord en primavera y verano en la Pampa Húmeda."
-                ),
-                "category": "muy fuerte",
-            },
-            {
-                "year_range": "2008–09", "name": "La Niña 2008–09",
-                "type": "La Niña", "oni_peak": -0.8, "peak_season": "DJF 2009",
-                "start_year": 2008, "start_month": 11,
-                "argentina_impact": (
-                    "Sequía severa en la Pampa Húmeda y el NEA. "
-                    "Campaña agrícola 2008/09 con pérdidas de producción de soja y maíz "
-                    "estimadas en más de USD 5.000 millones."
-                ),
-                "category": "moderado",
-            },
-            {
-                "year_range": "2010–12", "name": "La Niña 2010–12",
-                "type": "La Niña", "oni_peak": -1.7, "peak_season": "DJF 2011",
-                "start_year": 2010, "start_month": 6,
-                "argentina_impact": (
-                    "Doble La Niña prolongada. Bajante significativa del Paraná. "
-                    "Déficit hídrico en la Pampa Húmeda y Litoral, afectando "
-                    "la navegación fluvial y la producción agrícola."
-                ),
-                "category": "fuerte",
-            },
-            {
-                "year_range": "2015–16", "name": "El Niño 2015–16",
-                "type": "El Niño", "oni_peak": 2.6, "peak_season": "NDJ 2016",
-                "start_year": 2015, "start_month": 3,
-                "argentina_impact": (
-                    "El más intenso registrado. Inundaciones graves en el Litoral "
-                    "y noreste de Buenos Aires. Evacuaciones masivas en Concordia, "
-                    "Concepción del Uruguay y zonas ribereñas del Paraná."
-                ),
-                "category": "muy fuerte",
-            },
-            {
-                "year_range": "2020–23", "name": "Triple La Niña 2020–23",
-                "type": "La Niña", "oni_peak": -1.1, "peak_season": "NDJ 2021",
-                "start_year": 2020, "start_month": 8,
-                "argentina_impact": (
-                    "Tres temporadas consecutivas de La Niña — evento inusual. "
-                    "Bajante histórica del Paraná en 2021 (mínimos en 77 años). "
-                    "Sequía persistente en la Pampa Húmeda, pérdidas agrícolas "
-                    "acumuladas superiores a USD 20.000 millones."
-                ),
-                "category": "moderado (persistente)",
-            },
-        ],
+        "notable_events": notable_events(snapshot.oni_series),
         "smn_outlook": {
             "url": "https://www.smn.gob.ar/clima/tendencias",
             "title": "Perspectiva Climática Trimestral — SMN Argentina",
@@ -1010,7 +578,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
             "Índice automático — no constituye declaración oficial de NOAA. "
-            "Las correlaciones son promedios espaciales regionales (CHIRPS v2.0, 1981-presente); "
+            "Análisis exploratorio de cajas rectangulares CHIRPS v2.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. "
             "el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
         ),
     }
@@ -1028,8 +596,9 @@ def main() -> None:
     args = parser.parse_args()
 
     if args.force_recompute:
-        from src.config import CACHE_DIR
         import shutil
+
+        from src.config import CACHE_DIR
         cache_dir = Path(CACHE_DIR)
         if cache_dir.exists():
             shutil.rmtree(cache_dir)
@@ -1040,21 +609,22 @@ def main() -> None:
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     payload, monitor, lineage = build_payload()
+    validate_publication(payload)
 
     # Split heavy series into a separate history file for lazy loading.
     # Core enso.json keeps 24-month slices; full series go to enso-history.json.
-    history_keys = ["oni_series", "soi_series", "sam_monthly", "spi_series"]
+    history_keys = ["oni_series", "roni_series", "soi_series", "sam_monthly", "spi_series"]
     history_payload = {}
     for k in history_keys:
         if k in payload and payload[k]:
             history_payload[k] = payload[k]
 
     with open(HISTORY_PATH, "w", encoding="utf-8") as fh:
-        json.dump(history_payload, fh, ensure_ascii=False)
+        json.dump(history_payload, fh, ensure_ascii=False, allow_nan=False)
     logger.info("Written %s (%.1f KB)", HISTORY_PATH, HISTORY_PATH.stat().st_size / 1024)
 
     with open(OUT_PATH, "w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2)
+        json.dump(payload, fh, ensure_ascii=False, indent=2, allow_nan=False)
 
     logger.info("Written %s (%.1f KB)", OUT_PATH, OUT_PATH.stat().st_size / 1024)
     logger.info(
@@ -1083,9 +653,13 @@ def main() -> None:
         else:
             src.status = "failed"
             src.error_message = "No data returned"
+    if not sst_map and SST_MAP_PATH.exists():
+        sst_map = json.loads(SST_MAP_PATH.read_text())
+        sst_map.update(baseline="1971-2000", temporal_aggregation="daily snapshots at 30-day intervals")
+        sst_map.setdefault("stale_since", datetime.now(timezone.utc).isoformat())
     if sst_map:
         with open(SST_MAP_PATH, "w", encoding="utf-8") as fh:
-            json.dump(sst_map, fh, ensure_ascii=False)
+            json.dump(sst_map, fh, ensure_ascii=False, allow_nan=False)
         logger.info(
             "Written %s (%.1f KB) — %d snapshots, %dx%d grid",
             SST_MAP_PATH,
@@ -1125,6 +699,7 @@ def main() -> None:
             warehouse = ENSOWarehouse()
             warehouse.initialize()
             loaded = warehouse.load_from_parquet()
+            loaded["validated_correlations"] = warehouse.load_validated_correlations(payload)
             warehouse.load_episodes(payload["episodes"])
             lineage.store_in_duckdb(warehouse)
             warehouse.close()

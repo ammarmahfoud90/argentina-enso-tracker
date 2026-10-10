@@ -17,8 +17,9 @@ Fallback sources (CPC ASCII text):
 
 from __future__ import annotations
 
+import html
 import io
-import logging
+import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Optional
@@ -31,8 +32,10 @@ from src.config import (
     ENSO_LA_NINA_THRESHOLD,
     ERDDAP_NINO34_URL,
     ERDDAP_SOI_URL,
+    NOAA_ENSO_DISCUSSION_URL,
     NOAA_NINO34_URL,
     NOAA_ONI_URL,
+    NOAA_RONI_URL,
     NOAA_SOI_URL,
 )
 from src.utils import fetch_text, get_logger
@@ -135,7 +138,7 @@ def parse_oni(raw_text: str) -> pd.DataFrame:
     Raises:
         ValueError: If the expected columns are not found.
     """
-    lines = [l for l in raw_text.strip().splitlines() if l.strip()]
+    lines = [line for line in raw_text.strip().splitlines() if line.strip()]
     if not lines:
         raise ValueError("ONI file is empty")
 
@@ -588,7 +591,7 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         conditions_intensity=conditions_intensity,
         episode_confirmed=episode_confirmed,
         phase=phase,
-        phase_source="ONI (NOAA CPC)",
+        phase_source="Clasificación histórica por ONI; no declaración operativa de NOAA",
         oni_series=oni_df,
         soi_series=soi_df,
         data_sources=data_sources,
@@ -604,3 +607,48 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     )
     logger.info("Data sources: %s", data_sources)
     return snapshot
+
+
+def parse_advisory(raw: str) -> dict:
+    """Extract the dated operational advisory; reject undated/unrecognized HTML."""
+    text = html.unescape(re.sub(r"<[^>]+>", " ", raw))
+    text = re.sub(r"\s+", " ", text)
+    match = re.search(r"(?:Issued:\s*|CLIMATE PREDICTION CENTER/NCEP/NWS\s+)(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})", text, re.I)
+    status = re.search(r"ENSO Alert System Status:\s*(El Ni[ñn]o Advisory|La Ni[ñn]a Advisory|El Ni[ñn]o Watch|La Ni[ñn]a Watch|Not Active)", text, re.I)
+    if not match or not status:
+        raise ValueError("Unrecognized or undated NOAA ENSO advisory")
+    issued = datetime.strptime(" ".join(match.groups()), "%d %B %Y").date()
+    label = status.group(1)
+    phase = "El Niño" if "advisory" in label.lower() and re.search("ni[ñn]o", label, re.I) else "La Niña" if "advisory" in label.lower() else None
+    return {"issued": issued.isoformat(), "status": label, "phase": phase,
+            "source_url": NOAA_ENSO_DISCUSSION_URL}
+
+
+def fetch_operational_reference() -> dict:
+    """RONI and NOAA's advisory are separate from legacy ONI-based statistics.
+
+    Source failures remain explicit; an ONI classification must never be
+    substituted for an unavailable official advisory or RONI observation.
+    """
+    result = {"monitoring_index": "RONI", "official_since": "2026-02-01",
+              "roni": None, "advisory": None, "errors": []}
+    try:
+        frame = parse_oni(fetch_text(NOAA_RONI_URL, label="NOAA RONI"))
+        latest = frame.iloc[-1]
+        result["roni"] = {"value": float(latest.oni), "season": str(latest.season),
+                          "date": latest.date.date().isoformat(),
+                          "source_url": NOAA_RONI_URL,
+                          "definition_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/",
+                          "baseline": "1991-2020", "dataset": "ERSSTv6",
+                          "provisional": True}
+        result["roni_series"] = [{"date": r.date.date().isoformat(), "season": str(r.season),
+                                  "year": int(r.year), "roni": float(r.oni)} for r in frame.itertuples()]
+    except Exception as exc:
+        logger.warning("RONI unavailable: %s", exc)
+        result["errors"].append("RONI unavailable")
+    try:
+        result["advisory"] = parse_advisory(fetch_text(NOAA_ENSO_DISCUSSION_URL, label="NOAA ENSO advisory"))
+    except Exception as exc:
+        logger.warning("NOAA advisory unavailable: %s", exc)
+        result["errors"].append("NOAA advisory unavailable")
+    return result

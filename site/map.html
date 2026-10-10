@@ -15,10 +15,11 @@
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<script src="js/scientific.js"></script>
 <script>
 /* ======================================================================
    Argentina ENSO signal map — v2
-   Circles sized r = 9 + |pearson_r| × 90, oklch fill, dashed when p ≥ 0.05.
+   Circles sized r = 9 + |pearson_r| × 90, oklch fill, dashed when corrected q ≥ 0.05.
    All correlation values loaded from data/enso.json — no hardcoded data.
    ====================================================================== */
 
@@ -50,7 +51,7 @@ function col(r, sig) {
   const regionOrder = data.region_order || Object.keys(data.region_meta || {});
   for (const region of regionOrder) {
     const rows = (data.correlations || []).filter(c => c.region === region);
-    const sig = rows.filter(c => c.pearson_p < SIG_THRESHOLD);
+    const sig = rows.filter(c => correlationQ(c) < SIG_THRESHOLD);
     const pool = sig.length ? sig : rows;
     if (!pool.length) { bestByRegion[region] = null; continue; }
     bestByRegion[region] = pool.reduce((a, b) => Math.abs(a.pearson_r) >= Math.abs(b.pearson_r) ? a : b);
@@ -110,10 +111,10 @@ function col(r, sig) {
 
   g.append('circle')
     .attr('r', 0)
-    .attr('fill', d => d.best ? col(d.best.pearson_r, d.best.pearson_p < SIG_THRESHOLD) : col(0, false))
+    .attr('fill', d => d.best ? col(d.best.pearson_r, correlationQ(d.best) < SIG_THRESHOLD) : col(0, false))
     .attr('stroke', '#14161A')
-    .attr('stroke-width', d => (d.best && d.best.pearson_p < SIG_THRESHOLD) ? 1.2 : 0.6)
-    .attr('stroke-dasharray', d => (d.best && d.best.pearson_p < SIG_THRESHOLD) ? null : '2 3')
+    .attr('stroke-width', d => (d.best && correlationQ(d.best) < SIG_THRESHOLD) ? 1.2 : 0.6)
+    .attr('stroke-dasharray', d => (d.best && correlationQ(d.best) < SIG_THRESHOLD) ? null : '2 3')
     .transition().duration(650)
     .delay((d, i) => 350 + i * 130)
     .ease(d3.easeCubicOut)
@@ -135,11 +136,11 @@ function col(r, sig) {
   for (const region of regionOrder) {
     let topHit = null;
     for (const [sn, recs] of Object.entries(seasonalCorr)) {
-      const sig = recs.filter(r => r.region === region && r.pearson_p < SIG_THRESHOLD);
+      const sig = recs.filter(r => r.region === region && correlationQ(r) < SIG_THRESHOLD);
       if (sig.length) {
         const best = sig.reduce((a, b) => Math.abs(a.pearson_r) > Math.abs(b.pearson_r) ? a : b);
         if (!topHit || Math.abs(best.pearson_r) > Math.abs(topHit.r))
-          topHit = { season: sn, r: best.pearson_r, stars: best.pearson_stars };
+          topHit = { season: sn, r: best.pearson_r, stars: correlationStars(best) };
       }
     }
     bestSeasonal[region] = topHit;
@@ -155,8 +156,8 @@ function col(r, sig) {
       if (!d.best) return 'sin datos';
       const r = d.best.pearson_r;
       const sign = r >= 0 ? '+' : '−';
-      const stars = d.best.pearson_stars || '';
-      const isSig = d.best.pearson_p < SIG_THRESHOLD;
+      const stars = correlationStars(d.best);
+      const isSig = correlationQ(d.best) < SIG_THRESHOLD;
       if (isSig) return sign + Math.abs(r).toFixed(3) + stars;
       /* Annual n.s. — append best seasonal if available */
       let label = sign + Math.abs(r).toFixed(3) + ' n.s.';
@@ -175,9 +176,9 @@ function col(r, sig) {
     .attr('font-size', 10.5)
     .attr('letter-spacing', '0.1em')
     .attr('fill', '#79818E')
-    .text('SEÑAL ENSO → LLUVIA');
+    .text('ASOCIACIÓN ONI · q FDR');
 
-  const legendItems = [[0.35, '***', true, 'Sig. fuerte (|r|≥0.35)'], [0.22, '**', true, 'Sig. moderada (|r|≥0.20)'], [0.10, '*', true, 'Sig. débil (|r|<0.20)'], [0.02, '', false, 'No significativa']];
+  const legendItems = [[0.35, '', true, '|r| = 0.35 (tamaño)'], [0.22, '', true, '|r| = 0.22 (tamaño)'], [0.10, '', true, '|r| = 0.10 (tamaño)'], [0.02, '', false, 'q ≥ 0.05 (discontinua)']];
   legendItems.forEach(([r, stars, sig, label], i) => {
     const y = 24 + i * 40;
     lg.append('circle')
@@ -200,7 +201,7 @@ function col(r, sig) {
     .attr('font-family', 'IBM Plex Mono, monospace')
     .attr('font-size', 10)
     .attr('fill', '#A7AEBB')
-    .text('Geometría: Natural Earth');
+    .text('CHIRPS: Patagonia 37–50°S · cajas');
 })();
 
 /* Dark mode via postMessage from parent */

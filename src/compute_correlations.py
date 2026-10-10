@@ -85,7 +85,7 @@ def compute_n_eff(x: np.ndarray, y: np.ndarray) -> int:
     if n < 10:
         return n
 
-    # Compute autocorrelation via FFT (much faster than loop for large n)
+    # Compute the sample autocorrelation by discrete correlation
     def _acf(series: np.ndarray) -> np.ndarray:
         s = series - series.mean()
         var = np.sum(s ** 2)

@@ -5,7 +5,8 @@ Produces a time-series of 2D grids (lat x lon) of SST anomalies for the last
 overlays and a time slider.
 
 Data source: NOAA OISST v2.1 via ERDDAP (ncdcOisst21Agg).
-Anomalies are relative to the 1991-2020 climatological baseline.
+The dataset's native `anom` variable uses the 1971-2000 OI.v2 climatology.
+Time slices are daily snapshots at 30-day intervals, not monthly means.
 Spatial resolution downsampled to ~2 degrees for performance.
 """
 
@@ -152,7 +153,9 @@ def fetch_sst_map(months: int = 12) -> dict | None:
         "grids": grids,
         "nino_boxes": NINO_BOXES,
         "source": "NOAA OISST v2.1 (ERDDAP ncdcOisst21Agg)",
-        "baseline": "1991-2020",
+        "baseline": "1971-2000",
+        "baseline_source": "https://coastwatch.pfeg.noaa.gov/erddap/griddap/ncdcOisst21Agg.html",
+        "temporal_aggregation": "daily snapshots at 30-day intervals",
     }
 
     logger.info(
