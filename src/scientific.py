@@ -15,6 +15,7 @@ from scipy import stats
 
 from src.compute_correlations import compute_n_eff
 from src.config import CORRELATION_LAGS, REGION_ORDER
+from src.climatology import reference_frame
 
 SEASONS = {"SON": (9, 10, 11), "DEF": (12, 1, 2),
            "MAM": (3, 4, 5), "JJA": (6, 7, 8)}
@@ -104,13 +105,17 @@ def _record(region: str, lag: int, paired: pd.DataFrame, *, seasonal: bool) -> d
             "sample_unit": "complete season" if seasonal else "calendar-month anomaly"}
 
 
-def correlations(frame: pd.DataFrame, oni: pd.DataFrame, *, variable: str = "precipitation") -> tuple[list[dict], dict]:
+def correlations(frame: pd.DataFrame, oni: pd.DataFrame, *, variable: str = "precipitation",
+                 calibration_period: tuple[int, int] | None = None) -> tuple[list[dict], dict]:
     """Recompute annual and seasonal correlations from dated observations."""
     monthly = monthly_frame(frame)
     canonical = monthly_frame(oni)["oni"]
     regions = [r for r in REGION_ORDER if r in monthly]
     annual, seasonal = [], {}
-    anomalies = monthly[regions] - monthly[regions].groupby(monthly.index.month).transform("mean")
+    reference = monthly_frame(reference_frame(frame, calibration_period))
+    means = reference[regions].groupby(reference.index.month).mean()
+    climatology = means.reindex(monthly.index.month).set_axis(monthly.index)
+    anomalies = monthly[regions] - climatology
     seasons = complete_seasons(frame, oni, aggregation="mean" if variable == "temperature" else "sum")
     for name, source in [("ANN", anomalies), *[
         (s, monthly_frame(seasons[seasons["season"] == s])) for s in SEASONS]]:
@@ -137,9 +142,11 @@ def correlations(frame: pd.DataFrame, oni: pd.DataFrame, *, variable: str = "pre
     return annual, seasonal
 
 
-def frequencies(frame: pd.DataFrame, oni: pd.DataFrame) -> tuple[dict, dict]:
+def frequencies(frame: pd.DataFrame, oni: pd.DataFrame, *,
+                calibration_period: tuple[int, int] | None = None) -> tuple[dict, dict]:
     """Descriptive counts and exploratory, approximate binomial diagnostics."""
     seasons = complete_seasons(frame, oni)
+    reference = complete_seasons(reference_frame(frame, calibration_period), oni)
     regions = [r for r in REGION_ORDER if r in seasons]
     result, cells = {}, []
     for season in SEASONS:
@@ -149,7 +156,10 @@ def frequencies(frame: pd.DataFrame, oni: pd.DataFrame) -> tuple[dict, dict]:
             valid = sample.dropna(subset=[region, "oni"])
             if valid.empty:
                 continue
-            mean, median = float(valid[region].mean()), float(valid[region].median())
+            baseline = reference.loc[reference.season == season].dropna(subset=[region, "oni"])
+            if baseline.empty:
+                continue
+            mean, median = float(baseline[region].mean()), float(baseline[region].median())
             entry = {"climatological_median_monthly_mm": round(median / 3, 1),
                      "climatological_mean_monthly_mm": round(mean / 3, 1),
                      "climatological_mean_seasonal_mm": round(mean, 1),
@@ -177,7 +187,8 @@ def frequencies(frame: pd.DataFrame, oni: pd.DataFrame) -> tuple[dict, dict]:
         cell["significant"] = cell["q_binomial"] < .05
     metadata = {
         "oni_classification": "ONI NOAA publicado para el mes central de la estación; umbrales ±0.5 °C",
-        "threshold_above_normal": "Mediana de las estaciones completas del período disponible",
+        "threshold_above_normal": "Mediana de estaciones completas del período de calibración documentado",
+        "calibration_period": list(calibration_period) if calibration_period else None,
         "deviation_pct_denominator": "Media climatológica estacional, no mediana",
         "test": "Binomial bilateral aproximado; independencia entre estaciones no garantizada",
         "correction": "Benjamini-Yekutieli FDR, q < 0.05",
@@ -243,6 +254,19 @@ def validate_publication(payload: dict, sst: dict | None = None) -> None:
         raise ValueError("Invalid observation dates")
     if metadata["regional_coverage"]["Patagonia"]["lat_min"] < -50:
         raise ValueError("CHIRPS v2 cannot cover southern Patagonia")
+    if payload.get("scientific_methodology", {}).get("version") == "2.1.0":
+        for entry in (metadata, payload.get("temperature_metadata")):
+            if not entry:
+                raise ValueError("Missing climate observation metadata")
+            month = pd.Timestamp(entry["observations_end"]).to_period("M")
+            if month >= pd.Timestamp.now(tz="UTC").tz_localize(None).to_period("M"):
+                raise ValueError("An incomplete current month cannot be published")
+            if (entry["climatology_start_year"], entry["climatology_end_year"]) != (1981, 2025):
+                raise ValueError("Unexpected change of climate calibration period")
+        for region in REGION_ORDER:
+            current = payload.get("spi_current", {}).get(region)
+            if not current or pd.Timestamp(current["date"]).to_period("M") != pd.Timestamp(metadata["observations_end"]).to_period("M"):
+                raise ValueError("SPI must cover the latest validated rainfall month in every region")
     cells = [entry[phase] for season in payload["frequency_stats"].values()
              for entry in season.values() for phase in ("el_nino", "la_nina") if phase in entry]
     expected = stats.false_discovery_control([c["p_binomial"] for c in cells], method="by") if cells else []

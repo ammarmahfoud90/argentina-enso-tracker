@@ -27,6 +27,19 @@ Result: `data/processed/correlations.parquet` (versioned in repo).
 
 ## Build the Site
 
+To extend the observations before rebuilding:
+
+```bash
+pip install -r requirements-data.txt
+python -m src.refresh_observations
+```
+
+The refresh validates each source independently and retains its previous
+series on failure. Only complete months are accepted. The daily build does
+not download climate observations; the weekly workflow does that separately.
+Calibration stays fixed at 1981–2025. Read `observations_refresh.json` for
+the source cutoffs and the status of the last attempt.
+
 ```bash
 python build.py                   # uses HTTP cache
 python build.py --force-recompute # bypasses cache, fetches fresh data

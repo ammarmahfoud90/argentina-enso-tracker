@@ -87,6 +87,8 @@ def _build_date_index(t_values: np.ndarray) -> pd.DatetimeIndex:
 def build_chirps_monthly_series(
     start_year: int = CHIRPS_START_YEAR,
     end_year: Optional[int] = None,
+    *,
+    through: datetime.date | None = None,
 ) -> pd.DataFrame:
     """Fetch CHIRPS monthly precipitation series for all Argentine regions.
 
@@ -96,7 +98,8 @@ def build_chirps_monthly_series(
 
     Args:
         start_year: First year to include (default: 1981).
-        end_year: Last year to include (default: most recent full year).
+        end_year: Last year to include (default: current year).
+        through: Date used to exclude the open current month.
 
     Returns:
         DataFrame with column ``date`` (datetime64) and one column per
@@ -115,7 +118,7 @@ def build_chirps_monthly_series(
         ) from exc
 
     if end_year is None:
-        end_year = datetime.date.today().year - 1
+        end_year = datetime.date.today().year
 
     logger.info(
         "Cargando CHIRPS v2.0 via IRI OPeNDAP (%d–%d, 5 regiones Argentina)…",
@@ -123,7 +126,8 @@ def build_chirps_monthly_series(
     )
 
     try:
-        ds = xr.open_dataset(IRI_OPENDAP_URL, engine="pydap", decode_times=False)
+        ds = xr.open_dataset(IRI_OPENDAP_URL, engine="pydap", decode_times=False,
+                             backend_kwargs={"timeout": 90})
     except Exception as exc:
         raise RuntimeError(
             f"No se pudo conectar al endpoint IRI OPeNDAP: {exc}\n"
@@ -144,7 +148,12 @@ def build_chirps_monthly_series(
     # Build date index and filter time range
     t_vals = ds["T"].values
     date_idx = _build_date_index(t_vals)
-    time_mask = (date_idx.year >= start_year) & (date_idx.year <= end_year)
+    cutoff = pd.Timestamp(through or datetime.date.today()).to_period("M") - 1
+    time_mask = ((date_idx.year >= start_year) & (date_idx.year <= end_year)
+                 & (date_idx.to_period("M") <= cutoff))
+    if date_idx.to_period("M").has_duplicates:
+        ds.close()
+        raise ValueError("Duplicate calendar months in CHIRPS source")
     t_indices = np.where(time_mask)[0]
 
     if len(t_indices) == 0:
@@ -180,7 +189,10 @@ def build_chirps_monthly_series(
     lon_slice = slice(int(lon_indices[0]), int(lon_indices[-1]) + 1)
 
     logger.info("Solicitando datos vía OPeNDAP (puede tardar varios minutos)…")
-    subset = precip_var.isel(T=t_slice, Y=lat_slice, X=lon_slice).values
+    try:
+        subset = precip_var.isel(T=t_slice, Y=lat_slice, X=lon_slice).values
+    finally:
+        ds.close()
     # subset shape: (n_time, n_lat, n_lon)
 
     sub_lats = lat_vals[lat_slice]
@@ -188,7 +200,6 @@ def build_chirps_monthly_series(
     sub_dates = date_idx[t_indices]
 
     logger.info("Datos recibidos: shape=%s", subset.shape)
-    ds.close()
 
     # Compute regional spatial means
     records = []
@@ -203,7 +214,7 @@ def build_chirps_monthly_series(
             # 2D boolean mask
             mask_2d = np.outer(lat_m, lon_m)
             valid_pixels = month_data[mask_2d]
-            valid_pixels = valid_pixels[valid_pixels > _MISSING_THRESHOLD]
+            valid_pixels = valid_pixels[np.isfinite(valid_pixels) & (valid_pixels >= 0)]
 
             if len(valid_pixels) == 0:
                 logger.warning("Sin píxeles válidos para %s en %s", region_name, ts.date())

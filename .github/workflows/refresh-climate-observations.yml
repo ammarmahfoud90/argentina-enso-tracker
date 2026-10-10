@@ -1,0 +1,83 @@
+name: Refresh regional climate observations
+
+on:
+  schedule:
+    # Monday 06:00 Argentina; monthly products are checked weekly.
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refresh-climate-observations.yml'
+      - 'src/refresh_observations.py'
+      - 'src/fetch_chirps.py'
+      - 'src/fetch_temperature.py'
+      - 'src/climatology.py'
+  pull_request:
+    paths:
+      - '.github/workflows/refresh-climate-observations.yml'
+      - 'src/refresh_observations.py'
+      - 'src/fetch_chirps.py'
+      - 'src/fetch_temperature.py'
+      - 'src/climatology.py'
+      - 'tests/test_observation_refresh.py'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: enso-data-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: pip install -r requirements-data.txt pytest
+      - name: Validate update and scientific contracts
+        run: |
+          python -m pytest -q tests/test_observation_refresh.py tests/test_scientific_validity.py
+          node tests/scientific-ui.mjs
+      - name: Cache CPC annual files
+        if: github.event_name != 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: data/cache/cpc_temp
+          key: cpc-climate-${{ github.run_id }}
+          restore-keys: cpc-climate-
+      - name: Incorporate complete published months
+        if: github.event_name != 'pull_request'
+        run: python -m src.refresh_observations
+      - name: Recompute and validate the site
+        if: github.event_name != 'pull_request'
+        run: python build.py
+      - name: Publish validated observations and site data
+        if: github.event_name != 'pull_request'
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git add -f data/processed/oni_precip_pairs.parquet data/processed/oni_temp_pairs.parquet data/processed/observations_refresh.json
+          git add site/data/enso.json site/data/enso-history.json site/data/sst_map.json site/data/pipeline_health.json site/data/lineage.json
+          if git diff --cached --quiet; then
+            echo 'No observation changes.'
+            exit 0
+          fi
+          git commit -m "data: refresh complete regional climate observations"
+          for attempt in 1 2 3; do
+            git pull --rebase
+            if git push; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo '::error::Could not publish climate data after 3 attempts.'
+              exit 1
+            fi
+            sleep "$((attempt * 10))"
+          done

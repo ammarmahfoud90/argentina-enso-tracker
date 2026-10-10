@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
   workflow_run:
-    workflows: ["Daily ENSO build"]
+    workflows: ["Daily ENSO build", "Refresh regional climate observations"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
