@@ -27,6 +27,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          # Queued data jobs must include the preceding refresh commit.
+          ref: ${{ github.ref }}
           fetch-depth: 1
 
       # ── Python ───────────────────────────────────────────────────────────
