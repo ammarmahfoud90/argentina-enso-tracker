@@ -42,6 +42,7 @@ jobs:
           npm i --no-save eslint
           node tests/smoke-lint.mjs
           node tests/scientific-ui.mjs
+          node tests/service-worker-freshness.mjs
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

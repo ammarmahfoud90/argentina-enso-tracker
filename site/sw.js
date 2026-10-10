@@ -1,13 +1,13 @@
 /*
  * Service Worker — Argentina ENSO Impact Tracker
  *
- * Strategy: stale-while-revalidate for data files,
- * cache-first for static assets (CSS, JS, fonts).
+ * Strategy: network-first for local application and data files,
+ * cache-first for third-party static assets.
  * Serves cached data when offline.
  */
 
-const CACHE_NAME = 'enso-tracker-science-v2';
-const DATA_CACHE = 'enso-data-science-v2';
+const CACHE_NAME = 'enso-tracker-science-v3';
+const DATA_CACHE = 'enso-data-science-v3';
 
 const STATIC_ASSETS = [
   './',
@@ -30,7 +30,9 @@ const DATA_URLS = [
 /* Install — pre-cache static shell */
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then((cache) =>
+      cache.addAll(STATIC_ASSETS.map((asset) => new Request(asset, { cache: 'reload' })))
+    )
   );
   self.skipWaiting();
 });
@@ -41,7 +43,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((keys) =>
       Promise.all(
         keys
-          .filter((k) => k !== CACHE_NAME && k !== DATA_CACHE)
+          .filter((k) => k.startsWith('enso-') && k !== CACHE_NAME && k !== DATA_CACHE)
           .map((k) => caches.delete(k))
       )
     )
@@ -49,27 +51,28 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-/* Fetch — stale-while-revalidate for data, cache-first for static */
+/* Fetch — current local files online, cached files offline */
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  /* Data files: serve cache immediately, update in background */
-  if (DATA_URLS.some((d) => url.pathname.endsWith(d.replace('./', '')))) {
+  /* Local code and data must belong to the current published version. */
+  if (url.origin === self.location.origin && event.request.method === 'GET') {
+    const isData = DATA_URLS.some((d) => url.pathname.endsWith(d.replace('./', '')));
     event.respondWith(
-      caches.open(DATA_CACHE).then((cache) =>
-        cache.match(event.request).then((cached) => {
-          const fetchPromise = fetch(event.request)
-            .then((response) => {
-              if (response.ok) {
-                cache.put(event.request, response.clone());
-              }
-              return response;
-            })
-            .catch(() => cached);
-
-          return cached || fetchPromise;
-        })
-      )
+      caches.open(isData ? DATA_CACHE : CACHE_NAME).then(async (cache) => {
+        try {
+          const response = await fetch(event.request, { cache: 'no-cache' });
+          if (response.ok) {
+            await cache.put(event.request, response.clone());
+            return response;
+          }
+          return (await cache.match(event.request)) || response;
+        } catch (error) {
+          const cached = await cache.match(event.request);
+          if (cached) return cached;
+          throw error;
+        }
+      })
     );
     return;
   }
