@@ -1632,7 +1632,7 @@ async function main() {
         }
         el2.textContent = txt;
       } else {
-        el2.textContent = t('summary_no_signal', {region});
+        el2.textContent = t('summary_no_signal', {region, phase});
       }
     }
 

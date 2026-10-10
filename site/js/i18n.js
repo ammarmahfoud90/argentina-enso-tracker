@@ -173,7 +173,7 @@ window.I18N = {
     timeline_title:   { es: '\u00bfCu\u00e1ndo ocurrieron El Ni\u00f1o y La Ni\u00f1a?', en: 'When did El Ni\u00f1o and La Ni\u00f1a occur?' },
     timeline_desc: {"es": "Cada barra es un episodio histórico detectado con ONI: cinco estaciones solapadas sobre ±0.5 °C. No reemplaza el aviso operativo de NOAA basado en RONI y otros indicadores.", "en": "Each bar is a historical episode detected with ONI: five overlapping seasons beyond ±0.5 °C. It does not replace NOAA operational advisories based on RONI and other indicators."},
     timeline_today:   { es: 'hoy', en: 'today' },
-    notable_title:    { es: 'Eventos ENSO notables y su impacto en Argentina', en: 'Notable ENSO events and their impact on Argentina' },
+    notable_title:    { es: 'Eventos ENSO notables en la serie histórica', en: 'Notable ENSO events in the historical record' },
 
     /* ── Correlation Section ── */
     corr_title:       { es: '\u00bfC\u00f3mo se relaciona el ENSO con la lluvia?', en: 'How is ENSO related to rainfall?' },
@@ -305,7 +305,7 @@ window.I18N = {
     summary_active_l2_other:{ es: ' Con {otherPhase}, {onlyStr}{ocM} de {ocN}.', en: ' With {otherPhase}, {onlyStr}{ocM} of {ocN}.' },
     summary_only:          { es: 'solo ', en: 'only ' },
     summary_active_l2_dev: {"es": " El promedio de lluvia fue {s}{dev}% respecto de la media climatológica de esos {seasonName}.", "en": " Mean rainfall was {s}{dev}% relative to the climatological mean for those {seasonName}."},
-    summary_no_signal:     { es: 'No se detecta se\u00f1al estad\u00edstica clara del ENSO sobre la lluvia en {region} (1981\u20132025).', en: 'No clear ENSO statistical signal detected for rainfall in {region} (1981\u20132025).' },
+    summary_no_signal:     { es: 'La tabla de frecuencias estacionales de {region} no muestra resultados significativos para {phase} tras el ajuste (1981–2025).', en: 'The seasonal frequency table for {region} shows no significant results for {phase} after adjustment (1981–2025).' },
     summary_l3: {"es": "Asociaciones históricas exploratorias: no predicen lluvia local ni niveles de río. Consultá SMN e INA.", "en": "Exploratory historical associations: they do not predict local rainfall or river levels. Consult SMN and INA."},
     only:                  { es: 'solo ', en: 'only ' },
 
