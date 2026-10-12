@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "checked_at": "2026-10-10T22:33:00.704895+00:00",
+  "checked_at": "2026-10-12T18:18:24.958524+00:00",
   "check_frequency": "weekly",
   "calibration_period": [
     1981,
@@ -27,15 +27,15 @@
       "source": "NOAA CPC Global Temperature",
       "url": "https://downloads.psl.noaa.gov/Datasets/cpc_global_temp/",
       "units": "degC",
-      "status": "unchanged",
+      "status": "retained_after_error",
       "observations_start": "1981-01-31",
       "observations_end": "2026-09-30",
       "months_before": 549,
       "months_after": 549,
       "months_added": 0,
-      "source_latest_month": "2026-09",
+      "error": "No CPC temperature data could be loaded",
       "sha256": "8978501c1e6f005db55b707bc732d08722bf59626ea9f45ab998080c9678d770"
     }
   },
-  "status": "success"
+  "status": "partial"
 }
