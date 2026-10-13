@@ -3,8 +3,8 @@
     "oni_value": 2.16,
     "oni_season": "JAS",
     "oni_date": "2026-08-15",
-    "nino34_value": 2.98,
-    "nino34_date": "2026-09-15",
+    "nino34_value": 3.3,
+    "nino34_date": "2026-10-15",
     "soi_value": -2.0,
     "soi_date": "2026-09-15",
     "conditions": "El Niño",
@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "3.0.0",
-    "computed_at": "2026-10-12T18:21:02.243539+00:00",
+    "computed_at": "2026-10-13T15:31:57.056013+00:00",
     "calibration_period": [
       1981,
       2025
@@ -5737,7 +5737,7 @@
     "observations_end": "2026-08-15",
     "latest_complete_month": "2026-08",
     "last_month_end": "2026-08-31",
-    "observation_age_days": 42,
+    "observation_age_days": 43,
     "climatology_start_year": 1981,
     "climatology_end_year": 2025,
     "global_latitude_coverage": [
@@ -18453,7 +18453,7 @@
     "version": "3.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-10-12T18:20:42.751042+00:00",
+    "computed_at": "2026-10-13T15:30:39.221734+00:00",
     "legacy_end_year": 2026,
     "analysis_version": "3.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
@@ -40494,145 +40494,7 @@
       }
     ]
   },
-  "subsurface": {
-    "longitudes": [
-      165.0,
-      180.0,
-      190.0,
-      205.0,
-      220.0,
-      235.0,
-      250.0,
-      265.0
-    ],
-    "lon_labels": [
-      "165°E",
-      "180°",
-      "170°W",
-      "155°W",
-      "140°W",
-      "125°W",
-      "110°W",
-      "95°W"
-    ],
-    "depths": [
-      1.0,
-      25.0,
-      50.0,
-      80.0,
-      100.0,
-      125.0,
-      150.0,
-      200.0,
-      250.0,
-      300.0
-    ],
-    "temperatures": [
-      [
-        29.57,
-        29.75,
-        29.98,
-        30.24,
-        29.47,
-        28.53,
-        27.75,
-        27.14
-      ],
-      [
-        29.47,
-        29.57,
-        29.8,
-        30.17,
-        29.42,
-        28.5,
-        27.69,
-        26.97
-      ],
-      [
-        29.42,
-        29.49,
-        29.72,
-        30.19,
-        29.38,
-        28.42,
-        27.36,
-        26.13
-      ],
-      [
-        28.94,
-        29.33,
-        29.66,
-        30.14,
-        29.15,
-        27.97,
-        25.94,
-        24.25
-      ],
-      [
-        27.42,
-        28.98,
-        29.52,
-        29.94,
-        28.78,
-        27.15,
-        23.79,
-        21.35
-      ],
-      [
-        24.21,
-        25.04,
-        27.79,
-        28.33,
-        27.08,
-        23.93,
-        20.16,
-        17.8
-      ],
-      [
-        21.45,
-        21.23,
-        22.6,
-        22.72,
-        22.14,
-        18.69,
-        16.68,
-        15.64
-      ],
-      [
-        16.3,
-        16.6,
-        16.93,
-        15.71,
-        15.22,
-        14.31,
-        14.03,
-        null
-      ],
-      [
-        13.39,
-        13.57,
-        13.6,
-        13.19,
-        13.21,
-        13.04,
-        13.11,
-        13.74
-      ],
-      [
-        12.58,
-        12.18,
-        12.2,
-        12.41,
-        12.57,
-        12.62,
-        12.65,
-        13.04
-      ]
-    ],
-    "period_start": "2026-07-16",
-    "period_end": "2026-09-16",
-    "source": "TAO/TRITON ERDDAP (pmelTaoMonT)"
-  },
+  "subsurface": null,
   "iri_forecast": {
     "probabilities": [
       {
@@ -40780,6 +40642,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-12T18:21:02Z",
+  "last_updated": "2026-10-13T15:31:57Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
