@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-10-13T15:30:19.241016+00:00",
+  "build_id": "2026-10-14T13:14:49.093482+00:00",
   "status": "partial",
-  "duration_seconds": 108.68,
-  "last_updated": "2026-10-13T15:32:07.921091+00:00",
+  "duration_seconds": 7.53,
+  "last_updated": "2026-10-14T13:14:56.619742+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 19227.9,
-      "freshness_days": 59
+      "latency_ms": 2149.8,
+      "freshness_days": 60
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 15.2,
+      "latency_ms": 9.6,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 3.4,
+      "latency_ms": 2.3,
       "freshness_days": null
     },
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 236.0,
+      "latency_ms": 744.4,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
-      "status": "failed",
-      "latency_ms": 72871.9,
+      "status": "success",
+      "latency_ms": 540.4,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 312.2,
-      "freshness_days": 28
+      "latency_ms": 384.0,
+      "freshness_days": 29
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 1881.6,
+      "latency_ms": 880.4,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 10763.1,
+      "latency_ms": 1358.3,
       "freshness_days": null
     }
   ],
@@ -66,13 +66,12 @@
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 838.8,
+    "site/data/enso.json": 840.7,
     "site/data/enso-history.json": 417.8,
-    "site/data/sst_map.json": 131.7
+    "site/data/sst_map.json": 131.5
   },
   "warnings": [
-    "Weekly temperature refresh failed; valid observations retained through 2026-09-30",
-    "Data sources failed: TAO/TRITON subsurface"
+    "Weekly temperature refresh failed; valid observations retained through 2026-09-30"
   ],
   "errors": []
 }
