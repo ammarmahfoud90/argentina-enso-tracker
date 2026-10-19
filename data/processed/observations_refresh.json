@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "checked_at": "2026-10-12T18:18:24.958524+00:00",
+  "checked_at": "2026-10-19T15:57:34.579542+00:00",
   "check_frequency": "weekly",
   "calibration_period": [
     1981,
@@ -12,16 +12,16 @@
       "source": "CHIRPS v3.0",
       "url": "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/",
       "units": "mm/month",
-      "status": "unchanged",
+      "status": "updated",
       "observations_start": "1981-01-15",
-      "observations_end": "2026-08-15",
+      "observations_end": "2026-09-15",
       "months_before": 548,
-      "months_after": 548,
-      "months_added": 0,
+      "months_after": 549,
+      "months_added": 1,
       "dataset_id": "CHIRPS-v3.0-final-monthly",
       "product_status": "final",
-      "source_latest_month": "2026-08",
-      "sha256": "a0a9ff23b47a2228a6ab36563738300279d0f52ff8fe466e965b468cdac2f925"
+      "source_latest_month": "2026-09",
+      "sha256": "ce2f67f3961c78726828744d1b8b53f49b0d33eb77386726ac2c2f9229f7989c"
     },
     "temperature": {
       "source": "NOAA CPC Global Temperature",

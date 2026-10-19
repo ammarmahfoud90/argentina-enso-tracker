@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "3.0.0",
-    "computed_at": "2026-10-19T15:13:40.579046+00:00",
+    "computed_at": "2026-10-19T15:59:38.658612+00:00",
     "calibration_period": [
       1981,
       2025
@@ -5734,10 +5734,10 @@
     "extraction_method": "native_pixel_centres_unweighted_mean_v1",
     "migration_note": "Serie completa recalculada con CHIRPS v3.0, incluida la referencia 1981–2025 y el SPI. Sus valores pueden diferir de los publicados con v2. Se conservaron las cajas y el límite de lluvia de Patagonia en 50°S.",
     "observations_start": "1981-01-15",
-    "observations_end": "2026-08-15",
-    "latest_complete_month": "2026-08",
-    "last_month_end": "2026-08-31",
-    "observation_age_days": 49,
+    "observations_end": "2026-09-15",
+    "latest_complete_month": "2026-09",
+    "last_month_end": "2026-09-30",
+    "observation_age_days": 19,
     "climatology_start_year": 1981,
     "climatology_end_year": 2025,
     "global_latitude_coverage": [
@@ -5824,7 +5824,7 @@
   },
   "observation_refresh": {
     "schema_version": "1.1.0",
-    "checked_at": "2026-10-12T18:18:24.958524+00:00",
+    "checked_at": "2026-10-19T15:57:34.579542+00:00",
     "check_frequency": "weekly",
     "calibration_period": [
       1981,
@@ -5836,16 +5836,16 @@
         "source": "CHIRPS v3.0",
         "url": "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/",
         "units": "mm/month",
-        "status": "unchanged",
+        "status": "updated",
         "observations_start": "1981-01-15",
-        "observations_end": "2026-08-15",
+        "observations_end": "2026-09-15",
         "months_before": 548,
-        "months_after": 548,
-        "months_added": 0,
+        "months_after": 549,
+        "months_added": 1,
         "dataset_id": "CHIRPS-v3.0-final-monthly",
         "product_status": "final",
-        "source_latest_month": "2026-08",
-        "sha256": "a0a9ff23b47a2228a6ab36563738300279d0f52ff8fe466e965b468cdac2f925"
+        "source_latest_month": "2026-09",
+        "sha256": "ce2f67f3961c78726828744d1b8b53f49b0d33eb77386726ac2c2f9229f7989c"
       },
       "temperature": {
         "source": "NOAA CPC Global Temperature",
@@ -15280,7 +15280,7 @@
       "spearman_n_eff": 245,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 5.071651557169648e-05,
+      "pearson_q": 5.567237520664318e-05,
       "spearman_q": 0.0002763659019794633,
       "significant": true,
       "pearson_stars": "***",
@@ -15299,7 +15299,7 @@
       "spearman_n_eff": 275,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 2.393043998271536e-05,
+      "pearson_q": 2.6228203330260317e-05,
       "spearman_q": 0.0002763659019794633,
       "significant": true,
       "pearson_stars": "***",
@@ -15357,7 +15357,7 @@
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 0.35341564298505257,
-      "spearman_q": 0.5008015181540658,
+      "spearman_q": 0.49036815319252275,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15366,16 +15366,16 @@
     {
       "region": "Pampa Húmeda",
       "lag": 1,
-      "pearson_r": 0.3014,
-      "pearson_p": 4.251810325687288e-07,
-      "spearman_r": 0.2998,
-      "spearman_p": 1.7678344642759063e-06,
-      "n_obs": 548,
+      "pearson_r": 0.2989,
+      "pearson_p": 5.366138768320782e-07,
+      "spearman_r": 0.2989,
+      "spearman_p": 1.8933267084836163e-06,
+      "n_obs": 549,
       "n_eff": 271,
       "spearman_n_eff": 245,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 5.071651557169648e-05,
+      "pearson_q": 5.567237520664318e-05,
       "spearman_q": 0.0002763659019794633,
       "significant": true,
       "pearson_stars": "***",
@@ -15385,16 +15385,16 @@
     {
       "region": "NEA",
       "lag": 1,
-      "pearson_r": 0.3233,
-      "pearson_p": 9.191511399326842e-08,
+      "pearson_r": 0.3217,
+      "pearson_p": 1.0112317154890538e-07,
       "spearman_r": 0.282,
-      "spearman_p": 2.0161170867686388e-06,
-      "n_obs": 548,
-      "n_eff": 261,
+      "spearman_p": 2.0073104126025254e-06,
+      "n_obs": 549,
+      "n_eff": 262,
       "spearman_n_eff": 275,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 2.393043998271536e-05,
+      "pearson_q": 2.6228203330260317e-05,
       "spearman_q": 0.0002763659019794633,
       "significant": true,
       "pearson_stars": "***",
@@ -15404,17 +15404,17 @@
     {
       "region": "NOA",
       "lag": 1,
-      "pearson_r": 0.0812,
-      "pearson_p": 0.13965871567834773,
-      "spearman_r": 0.1469,
-      "spearman_p": 0.015509483001833127,
-      "n_obs": 548,
+      "pearson_r": 0.0832,
+      "pearson_p": 0.1301928372853075,
+      "spearman_r": 0.1492,
+      "spearman_p": 0.014120312586384902,
+      "n_obs": 549,
       "n_eff": 332,
-      "spearman_n_eff": 271,
+      "spearman_n_eff": 270,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
-      "spearman_q": 0.2774260118411138,
+      "spearman_q": 0.2615978287594886,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15423,17 +15423,17 @@
     {
       "region": "Cuyo",
       "lag": 1,
-      "pearson_r": 0.1705,
-      "pearson_p": 0.0023160289552464266,
-      "spearman_r": 0.1543,
-      "spearman_p": 0.011432818242547658,
-      "n_obs": 548,
-      "n_eff": 317,
-      "spearman_n_eff": 268,
+      "pearson_r": 0.1715,
+      "pearson_p": 0.002258782605587902,
+      "spearman_r": 0.1563,
+      "spearman_p": 0.010970893686918223,
+      "n_obs": 549,
+      "n_eff": 315,
+      "spearman_n_eff": 264,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.04449672789869516,
-      "spearman_q": 0.23089787650412644,
+      "pearson_q": 0.04339688187208195,
+      "spearman_q": 0.22764066903973615,
       "significant": true,
       "pearson_stars": "*",
       "correction": "Benjamini-Yekutieli",
@@ -15442,17 +15442,17 @@
     {
       "region": "Patagonia",
       "lag": 1,
-      "pearson_r": 0.0774,
-      "pearson_p": 0.13830569340483104,
-      "spearman_r": 0.0869,
-      "spearman_p": 0.1044036688182366,
-      "n_obs": 548,
-      "n_eff": 368,
-      "spearman_n_eff": 350,
+      "pearson_r": 0.0794,
+      "pearson_p": 0.13036842103405633,
+      "spearman_r": 0.0894,
+      "spearman_p": 0.09734019106114035,
+      "n_obs": 549,
+      "n_eff": 364,
+      "spearman_n_eff": 345,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
-      "spearman_q": 0.8205776430103231,
+      "spearman_q": 0.7889692479270385,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15461,17 +15461,17 @@
     {
       "region": "Pampa Húmeda",
       "lag": 2,
-      "pearson_r": 0.2701,
-      "pearson_p": 6.481069732054692e-06,
-      "spearman_r": 0.2612,
-      "spearman_p": 3.342322977445912e-05,
-      "n_obs": 548,
-      "n_eff": 271,
+      "pearson_r": 0.2684,
+      "pearson_p": 7.185808411743711e-06,
+      "spearman_r": 0.2606,
+      "spearman_p": 3.5041822280662437e-05,
+      "n_obs": 549,
+      "n_eff": 272,
       "spearman_n_eff": 246,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.000480282220261645,
-      "spearman_q": 0.001926432341099249,
+      "pearson_q": 0.0005325071571592142,
+      "spearman_q": 0.002019724011953683,
       "significant": true,
       "pearson_stars": "***",
       "correction": "Benjamini-Yekutieli",
@@ -15480,17 +15480,17 @@
     {
       "region": "NEA",
       "lag": 2,
-      "pearson_r": 0.3089,
-      "pearson_p": 3.756516389435883e-07,
-      "spearman_r": 0.2683,
-      "spearman_p": 6.415564715360594e-06,
-      "n_obs": 548,
-      "n_eff": 260,
+      "pearson_r": 0.3079,
+      "pearson_p": 3.9071856675045735e-07,
+      "spearman_r": 0.2684,
+      "spearman_p": 6.3529115120761695e-06,
+      "n_obs": 549,
+      "n_eff": 261,
       "spearman_n_eff": 275,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 5.071651557169648e-05,
-      "spearman_q": 0.0006655991233484716,
+      "pearson_q": 5.567237520664318e-05,
+      "spearman_q": 0.0006590990069859571,
       "significant": true,
       "pearson_stars": "***",
       "correction": "Benjamini-Yekutieli",
@@ -15499,17 +15499,17 @@
     {
       "region": "NOA",
       "lag": 2,
-      "pearson_r": 0.0677,
-      "pearson_p": 0.2192513717849767,
-      "spearman_r": 0.1395,
-      "spearman_p": 0.021572110275776993,
-      "n_obs": 548,
-      "n_eff": 331,
-      "spearman_n_eff": 271,
+      "pearson_r": 0.0695,
+      "pearson_p": 0.20661439720729532,
+      "spearman_r": 0.1418,
+      "spearman_p": 0.019790208902932,
+      "n_obs": 549,
+      "n_eff": 332,
+      "spearman_n_eff": 270,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
-      "spearman_q": 0.32912552897825953,
+      "spearman_q": 0.3019390727425321,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15518,16 +15518,16 @@
     {
       "region": "Cuyo",
       "lag": 2,
-      "pearson_r": 0.1567,
-      "pearson_p": 0.00518200628243145,
-      "spearman_r": 0.1314,
-      "spearman_p": 0.03156092649131309,
-      "n_obs": 548,
-      "n_eff": 317,
-      "spearman_n_eff": 268,
+      "pearson_r": 0.1576,
+      "pearson_p": 0.004970684912879416,
+      "spearman_r": 0.1334,
+      "spearman_p": 0.02992751065178485,
+      "n_obs": 549,
+      "n_eff": 316,
+      "spearman_n_eff": 265,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.08960340961917393,
+      "pearson_q": 0.08594939721447047,
       "spearman_q": 0.3967517084478944,
       "significant": false,
       "pearson_stars": "",
@@ -15537,13 +15537,13 @@
     {
       "region": "Patagonia",
       "lag": 2,
-      "pearson_r": 0.0323,
-      "pearson_p": 0.5355337966555702,
-      "spearman_r": 0.0577,
-      "spearman_p": 0.28069290843804057,
-      "n_obs": 548,
-      "n_eff": 370,
-      "spearman_n_eff": 352,
+      "pearson_r": 0.0343,
+      "pearson_p": 0.5128888389143174,
+      "spearman_r": 0.06,
+      "spearman_p": 0.2646371061756077,
+      "n_obs": 549,
+      "n_eff": 367,
+      "spearman_n_eff": 347,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
@@ -15556,17 +15556,17 @@
     {
       "region": "Pampa Húmeda",
       "lag": 3,
-      "pearson_r": 0.2349,
-      "pearson_p": 9.193540352172449e-05,
-      "spearman_r": 0.2183,
-      "spearman_p": 0.0005650637556636419,
-      "n_obs": 548,
+      "pearson_r": 0.2338,
+      "pearson_p": 9.913352061324732e-05,
+      "spearman_r": 0.2178,
+      "spearman_p": 0.0005806029835853892,
+      "n_obs": 549,
       "n_eff": 272,
       "spearman_n_eff": 246,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.0034064546093122866,
-      "spearman_q": 0.01724234718919167,
+      "pearson_q": 0.0036731642576687366,
+      "spearman_q": 0.0177165109630902,
       "significant": true,
       "pearson_stars": "**",
       "correction": "Benjamini-Yekutieli",
@@ -15575,17 +15575,17 @@
     {
       "region": "NEA",
       "lag": 3,
-      "pearson_r": 0.2762,
-      "pearson_p": 6.169058199368869e-06,
-      "spearman_r": 0.2351,
-      "spearman_p": 8.249746956015109e-05,
-      "n_obs": 548,
-      "n_eff": 260,
+      "pearson_r": 0.2757,
+      "pearson_p": 6.1452973942447924e-06,
+      "spearman_r": 0.2354,
+      "spearman_p": 8.103488606038957e-05,
+      "n_obs": 549,
+      "n_eff": 261,
       "spearman_n_eff": 275,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.000480282220261645,
-      "spearman_q": 0.0030567537061320484,
+      "pearson_q": 0.0005312996257019131,
+      "spearman_q": 0.003056537511885149,
       "significant": true,
       "pearson_stars": "***",
       "correction": "Benjamini-Yekutieli",
@@ -15594,17 +15594,17 @@
     {
       "region": "NOA",
       "lag": 3,
-      "pearson_r": 0.0571,
-      "pearson_p": 0.3005761773791204,
-      "spearman_r": 0.1202,
-      "spearman_p": 0.04857469242598912,
-      "n_obs": 548,
+      "pearson_r": 0.0585,
+      "pearson_p": 0.28840478128617786,
+      "spearman_r": 0.1223,
+      "spearman_p": 0.04461496127983467,
+      "n_obs": 549,
       "n_eff": 331,
       "spearman_n_eff": 270,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
-      "spearman_q": 0.503950534833671,
+      "spearman_q": 0.49036815319252275,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15613,17 +15613,17 @@
     {
       "region": "Cuyo",
       "lag": 3,
-      "pearson_r": 0.1446,
-      "pearson_p": 0.009814334349591097,
-      "spearman_r": 0.1143,
-      "spearman_p": 0.06109023711686823,
-      "n_obs": 548,
-      "n_eff": 318,
-      "spearman_n_eff": 269,
+      "pearson_r": 0.1455,
+      "pearson_p": 0.009586338427765857,
+      "spearman_r": 0.1163,
+      "spearman_p": 0.05821401451405167,
+      "n_obs": 549,
+      "n_eff": 316,
+      "spearman_n_eff": 266,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
-      "pearson_q": 0.1454590210161918,
-      "spearman_q": 0.5714443894658783,
+      "pearson_q": 0.14207987553336388,
+      "spearman_q": 0.5490510365486149,
       "significant": false,
       "pearson_stars": "",
       "correction": "Benjamini-Yekutieli",
@@ -15632,13 +15632,13 @@
     {
       "region": "Patagonia",
       "lag": 3,
-      "pearson_r": -0.0058,
-      "pearson_p": 0.9117993584734367,
-      "spearman_r": 0.033,
-      "spearman_p": 0.5369685267176539,
-      "n_obs": 548,
-      "n_eff": 372,
-      "spearman_n_eff": 353,
+      "pearson_r": -0.0041,
+      "pearson_p": 0.9369174631970438,
+      "spearman_r": 0.0351,
+      "spearman_p": 0.5130043116032662,
+      "n_obs": 549,
+      "n_eff": 370,
+      "spearman_n_eff": 349,
       "inference_available": true,
       "sample_unit": "calendar-month anomaly",
       "pearson_q": 1.0,
@@ -15854,7 +15854,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.5498843962056027,
-        "spearman_q": 0.2774260118411138,
+        "spearman_q": 0.27316617430288387,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -15892,7 +15892,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 1.0,
-        "spearman_q": 0.553948841878024,
+        "spearman_q": 0.5490510365486149,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -15949,7 +15949,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.8043470569185117,
-        "spearman_q": 0.8200855779826024,
+        "spearman_q": 0.80746887678287,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -16236,7 +16236,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.003047199639860038,
-        "spearman_q": 0.0030567537061320484,
+        "spearman_q": 0.003056537511885149,
         "significant": true,
         "pearson_stars": "**",
         "correction": "Benjamini-Yekutieli",
@@ -16293,7 +16293,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.37312000671156054,
-        "spearman_q": 0.8205776430103231,
+        "spearman_q": 0.8119765487008703,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -16331,7 +16331,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.0044657529414315975,
-        "spearman_q": 0.0030567537061320484,
+        "spearman_q": 0.003056537511885149,
         "significant": true,
         "pearson_stars": "**",
         "correction": "Benjamini-Yekutieli",
@@ -16713,7 +16713,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.4559019765435305,
-        "spearman_q": 0.503950534833671,
+        "spearman_q": 0.49473311775259204,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -16962,7 +16962,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 0.15057230231359897,
-        "spearman_q": 0.503950534833671,
+        "spearman_q": 0.49473311775259204,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -17038,7 +17038,7 @@
         "inference_available": true,
         "sample_unit": "complete season",
         "pearson_q": 1.0,
-        "spearman_q": 0.4914421035958793,
+        "spearman_q": 0.49036815319252275,
         "significant": false,
         "pearson_stars": "",
         "correction": "Benjamini-Yekutieli",
@@ -18453,18 +18453,13 @@
     "version": "3.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-10-19T15:13:22.462909+00:00",
+    "computed_at": "2026-10-19T15:59:31.189686+00:00",
     "legacy_end_year": 2026,
     "analysis_version": "3.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
   },
   "precip_anomaly_12m": {
     "Pampa Húmeda": [
-      {
-        "date": "2025-09-15",
-        "month": 9,
-        "anomaly_mm": 17.8
-      },
       {
         "date": "2025-10-15",
         "month": 10,
@@ -18519,14 +18514,14 @@
         "date": "2026-08-15",
         "month": 8,
         "anomaly_mm": 21.3
+      },
+      {
+        "date": "2026-09-15",
+        "month": 9,
+        "anomaly_mm": -5.3
       }
     ],
     "NEA": [
-      {
-        "date": "2025-09-15",
-        "month": 9,
-        "anomaly_mm": 47.0
-      },
       {
         "date": "2025-10-15",
         "month": 10,
@@ -18581,14 +18576,14 @@
         "date": "2026-08-15",
         "month": 8,
         "anomaly_mm": 35.4
+      },
+      {
+        "date": "2026-09-15",
+        "month": 9,
+        "anomaly_mm": 3.0
       }
     ],
     "NOA": [
-      {
-        "date": "2025-09-15",
-        "month": 9,
-        "anomaly_mm": -5.0
-      },
       {
         "date": "2025-10-15",
         "month": 10,
@@ -18643,14 +18638,14 @@
         "date": "2026-08-15",
         "month": 8,
         "anomaly_mm": 10.4
+      },
+      {
+        "date": "2026-09-15",
+        "month": 9,
+        "anomaly_mm": 11.3
       }
     ],
     "Cuyo": [
-      {
-        "date": "2025-09-15",
-        "month": 9,
-        "anomaly_mm": -6.4
-      },
       {
         "date": "2025-10-15",
         "month": 10,
@@ -18705,14 +18700,14 @@
         "date": "2026-08-15",
         "month": 8,
         "anomaly_mm": 4.7
+      },
+      {
+        "date": "2026-09-15",
+        "month": 9,
+        "anomaly_mm": 6.4
       }
     ],
     "Patagonia": [
-      {
-        "date": "2025-09-15",
-        "month": 9,
-        "anomaly_mm": 9.4
-      },
       {
         "date": "2025-10-15",
         "month": 10,
@@ -18767,6 +18762,11 @@
         "date": "2026-08-15",
         "month": 8,
         "anomaly_mm": 10.9
+      },
+      {
+        "date": "2026-09-15",
+        "month": 9,
+        "anomaly_mm": 10.2
       }
     ]
   },
@@ -23134,6 +23134,12 @@
         "spi": 1.31,
         "classification": "humedad_moderada",
         "label": "Humedad moderada"
+      },
+      {
+        "date": "2026-09-15",
+        "spi": 0.79,
+        "classification": "normal",
+        "label": "Normal"
       }
     ],
     "NEA": [
@@ -26410,6 +26416,12 @@
       {
         "date": "2026-08-15",
         "spi": 0.91,
+        "classification": "normal",
+        "label": "Normal"
+      },
+      {
+        "date": "2026-09-15",
+        "spi": 0.76,
         "classification": "normal",
         "label": "Normal"
       }
@@ -29690,6 +29702,12 @@
         "spi": 1.03,
         "classification": "humedad_moderada",
         "label": "Humedad moderada"
+      },
+      {
+        "date": "2026-09-15",
+        "spi": 1.51,
+        "classification": "humedad_severa",
+        "label": "Humedad severa"
       }
     ],
     "Cuyo": [
@@ -32968,6 +32986,12 @@
         "spi": 0.96,
         "classification": "normal",
         "label": "Normal"
+      },
+      {
+        "date": "2026-09-15",
+        "spi": 1.22,
+        "classification": "humedad_moderada",
+        "label": "Humedad moderada"
       }
     ],
     "Patagonia": [
@@ -36246,39 +36270,45 @@
         "spi": 0.43,
         "classification": "normal",
         "label": "Normal"
+      },
+      {
+        "date": "2026-09-15",
+        "spi": 1.74,
+        "classification": "humedad_severa",
+        "label": "Humedad severa"
       }
     ]
   },
   "spi_current": {
     "Pampa Húmeda": {
-      "spi": 1.31,
-      "classification": "humedad_moderada",
-      "label": "Humedad moderada",
-      "date": "2026-08-15"
+      "spi": 0.79,
+      "classification": "normal",
+      "label": "Normal",
+      "date": "2026-09-15"
     },
     "NEA": {
-      "spi": 0.91,
+      "spi": 0.76,
       "classification": "normal",
       "label": "Normal",
-      "date": "2026-08-15"
+      "date": "2026-09-15"
     },
     "NOA": {
-      "spi": 1.03,
-      "classification": "humedad_moderada",
-      "label": "Humedad moderada",
-      "date": "2026-08-15"
+      "spi": 1.51,
+      "classification": "humedad_severa",
+      "label": "Humedad severa",
+      "date": "2026-09-15"
     },
     "Cuyo": {
-      "spi": 0.96,
-      "classification": "normal",
-      "label": "Normal",
-      "date": "2026-08-15"
+      "spi": 1.22,
+      "classification": "humedad_moderada",
+      "label": "Humedad moderada",
+      "date": "2026-09-15"
     },
     "Patagonia": {
-      "spi": 0.43,
-      "classification": "normal",
-      "label": "Normal",
-      "date": "2026-08-15"
+      "spi": 1.74,
+      "classification": "humedad_severa",
+      "label": "Humedad severa",
+      "date": "2026-09-15"
     }
   },
   "sam_monthly": [
@@ -40780,6 +40810,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-19T15:13:40Z",
+  "last_updated": "2026-10-19T15:59:38Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }

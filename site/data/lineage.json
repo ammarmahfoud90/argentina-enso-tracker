@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-10-19T15:13:20.129311+00:00",
+  "build_id": "2026-10-19T15:59:28.968511+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -47,7 +47,7 @@
       "status": "success",
       "date_range_start": null,
       "date_range_end": null,
-      "row_count": 548,
+      "row_count": 549,
       "feeds_sections": [
         "precip_anomaly_12m",
         "seasonal_correlations",
@@ -190,14 +190,14 @@
   "artifacts": [
     {
       "path": "site/data/enso.json",
-      "size_bytes": 860842,
+      "size_bytes": 861563,
       "format": "json",
       "key_count": 35,
       "row_count": null
     },
     {
       "path": "site/data/enso-history.json",
-      "size_bytes": 427814,
+      "size_bytes": 428286,
       "format": "json",
       "key_count": 5,
       "row_count": null
