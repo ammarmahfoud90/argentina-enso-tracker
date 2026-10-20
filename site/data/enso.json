@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "3.0.0",
-    "computed_at": "2026-10-19T15:59:38.658612+00:00",
+    "computed_at": "2026-10-20T13:13:28.326848+00:00",
     "calibration_period": [
       1981,
       2025
@@ -5737,7 +5737,7 @@
     "observations_end": "2026-09-15",
     "latest_complete_month": "2026-09",
     "last_month_end": "2026-09-30",
-    "observation_age_days": 19,
+    "observation_age_days": 20,
     "climatology_start_year": 1981,
     "climatology_end_year": 2025,
     "global_latitude_coverage": [
@@ -18453,7 +18453,7 @@
     "version": "3.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-10-19T15:59:31.189686+00:00",
+    "computed_at": "2026-10-20T13:13:12.470970+00:00",
     "legacy_end_year": 2026,
     "analysis_version": "3.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
@@ -40666,12 +40666,6 @@
   "iri_forecast": {
     "probabilities": [
       {
-        "trimester": "SON",
-        "la_nina": 0,
-        "neutral": 0,
-        "el_nino": 100
-      },
-      {
         "trimester": "OND",
         "la_nina": 0,
         "neutral": 0,
@@ -40704,20 +40698,26 @@
       {
         "trimester": "MAM",
         "la_nina": 0,
-        "neutral": 1,
-        "el_nino": 99
+        "neutral": 0,
+        "el_nino": 100
       },
       {
         "trimester": "AMJ",
         "la_nina": 0,
-        "neutral": 10,
-        "el_nino": 90
+        "neutral": 8,
+        "el_nino": 92
       },
       {
         "trimester": "MJJ",
         "la_nina": 2,
-        "neutral": 37,
-        "el_nino": 61
+        "neutral": 38,
+        "el_nino": 60
+      },
+      {
+        "trimester": "JJA",
+        "la_nina": 12,
+        "neutral": 51,
+        "el_nino": 37
       }
     ],
     "probs_svg": "https://ensoforecast.iri.columbia.edu/figure3_plot/2026/10",
@@ -40810,6 +40810,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-10-19T15:59:38Z",
+  "last_updated": "2026-10-20T13:13:28Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
