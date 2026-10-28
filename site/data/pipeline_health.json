@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-10-27T13:52:35.303494+00:00",
-  "status": "success",
-  "duration_seconds": 46.74,
-  "last_updated": "2026-10-27T13:53:22.045277+00:00",
+  "build_id": "2026-10-28T14:46:45.035295+00:00",
+  "status": "partial",
+  "duration_seconds": 618.82,
+  "last_updated": "2026-10-28T14:57:03.851781+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 2231.4,
-      "freshness_days": 73
+      "latency_ms": 146080.0,
+      "freshness_days": 74
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 14.7,
+      "latency_ms": 10.4,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.6,
+      "latency_ms": 2.0,
       "freshness_days": null
     },
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 636.6,
+      "latency_ms": 397.6,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
-      "status": "success",
-      "latency_ms": 37833.0,
+      "status": "failed",
+      "latency_ms": 190129.2,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 437.9,
-      "freshness_days": 42
+      "latency_ms": 385.2,
+      "freshness_days": 43
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 497.9,
+      "latency_ms": 236.3,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
-      "status": "success",
-      "latency_ms": 2180.5,
+      "status": "failed",
+      "latency_ms": 280284.0,
       "freshness_days": null
     }
   ],
@@ -66,10 +66,12 @@
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 841.3,
+    "site/data/enso.json": 839.5,
     "site/data/enso-history.json": 418.2,
-    "site/data/sst_map.json": 131.6
+    "site/data/sst_map.json": 131.7
   },
-  "warnings": [],
+  "warnings": [
+    "Data sources failed: TAO/TRITON subsurface, OISST SST map"
+  ],
   "errors": []
 }
