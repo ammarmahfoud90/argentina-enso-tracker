@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-11-02T17:41:47.523542+00:00",
+  "build_id": "2026-11-02T18:56:03.146595+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -190,7 +190,7 @@
   "artifacts": [
     {
       "path": "site/data/enso.json",
-      "size_bytes": 861537,
+      "size_bytes": 861532,
       "format": "json",
       "key_count": 35,
       "row_count": null
