@@ -5,8 +5,8 @@
     "oni_date": "2026-08-15",
     "nino34_value": 3.3,
     "nino34_date": "2026-10-15",
-    "soi_value": -2.0,
-    "soi_date": "2026-09-15",
+    "soi_value": -1.1,
+    "soi_date": "2026-10-15",
     "conditions": "El Niño",
     "conditions_intensity": "muy fuerte",
     "episode_confirmed": false,
@@ -5706,7 +5706,7 @@
   ],
   "scientific_methodology": {
     "version": "3.0.0",
-    "computed_at": "2026-11-02T18:56:08.846868+00:00",
+    "computed_at": "2026-11-03T15:43:45.397520+00:00",
     "calibration_period": [
       1981,
       2025
@@ -5737,7 +5737,7 @@
     "observations_end": "2026-09-15",
     "latest_complete_month": "2026-09",
     "last_month_end": "2026-09-30",
-    "observation_age_days": 33,
+    "observation_age_days": 34,
     "climatology_start_year": 1981,
     "climatology_end_year": 2025,
     "global_latitude_coverage": [
@@ -15167,13 +15167,13 @@
     {
       "date": "2026-09-15",
       "soi": -2.0
+    },
+    {
+      "date": "2026-10-15",
+      "soi": -1.1
     }
   ],
   "soi_series_24m": [
-    {
-      "date": "2024-10-15",
-      "soi": 0.5
-    },
     {
       "date": "2024-11-15",
       "soi": 0.5
@@ -15265,6 +15265,10 @@
     {
       "date": "2026-09-15",
       "soi": -2.0
+    },
+    {
+      "date": "2026-10-15",
+      "soi": -1.1
     }
   ],
   "correlations": [
@@ -18453,7 +18457,7 @@
     "version": "3.0.0",
     "start_year": 1981,
     "end_year": 2026,
-    "computed_at": "2026-11-02T18:56:05.184681+00:00",
+    "computed_at": "2026-11-03T15:43:42.013823+00:00",
     "legacy_end_year": 2026,
     "analysis_version": "3.0.0",
     "method": "Recomputed from dated climate observations and current canonical ONI; BY FDR"
@@ -40810,6 +40814,6 @@
     "nino34": "ERDDAP",
     "soi": "CPC"
   },
-  "last_updated": "2026-11-02T18:56:08Z",
+  "last_updated": "2026-11-03T15:43:45Z",
   "disclaimer": "Índice automático — no constituye declaración oficial de NOAA. Análisis exploratorio de cajas rectangulares CHIRPS v3.0 (período disponible en precipitation_metadata); Patagonia solo hasta 50°S. el comportamiento puede diferir significativamente entre provincias dentro de una misma región."
 }
