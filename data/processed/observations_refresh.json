@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "checked_at": "2026-11-02T18:55:31.932566+00:00",
+  "checked_at": "2026-11-09T19:16:39.112382+00:00",
   "check_frequency": "weekly",
   "calibration_period": [
     1981,
@@ -12,7 +12,7 @@
       "source": "CHIRPS v3.0",
       "url": "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/",
       "units": "mm/month",
-      "status": "unchanged",
+      "status": "retained_after_error",
       "observations_start": "1981-01-15",
       "observations_end": "2026-09-15",
       "months_before": 549,
@@ -20,22 +20,22 @@
       "months_added": 0,
       "dataset_id": "CHIRPS-v3.0-final-monthly",
       "product_status": "final",
-      "source_latest_month": "2026-09",
+      "error": "Final CHIRPS v3 month 2026-01 failed: HTTP response code: 429",
       "sha256": "ce2f67f3961c78726828744d1b8b53f49b0d33eb77386726ac2c2f9229f7989c"
     },
     "temperature": {
       "source": "NOAA CPC Global Temperature",
       "url": "https://downloads.psl.noaa.gov/Datasets/cpc_global_temp/",
       "units": "degC",
-      "status": "updated",
+      "status": "unchanged",
       "observations_start": "1981-01-31",
       "observations_end": "2026-10-31",
-      "months_before": 549,
+      "months_before": 550,
       "months_after": 550,
-      "months_added": 1,
+      "months_added": 0,
       "source_latest_month": "2026-10",
       "sha256": "5414f5eeefc5013f6620122f48936dd0ffc7b1f8dc67d108e40e54fcbd3485fc"
     }
   },
-  "status": "success"
+  "status": "partial"
 }
