@@ -1,55 +1,55 @@
 {
-  "build_id": "2026-11-12T16:30:10.456153+00:00",
+  "build_id": "2026-11-13T15:51:39.431186+00:00",
   "status": "partial",
-  "duration_seconds": 48.9,
-  "last_updated": "2026-11-12T16:30:59.360619+00:00",
+  "duration_seconds": 29.18,
+  "last_updated": "2026-11-13T15:52:08.608971+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 16960.3,
-      "freshness_days": 58
+      "latency_ms": 22561.4,
+      "freshness_days": 59
     },
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 12.4,
+      "latency_ms": 13.8,
       "freshness_days": null
     },
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 1.9,
+      "latency_ms": 2.5,
       "freshness_days": null
     },
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 430.6,
+      "latency_ms": 259.2,
       "freshness_days": null
     },
     {
       "name": "TAO/TRITON subsurface",
-      "status": "failed",
-      "latency_ms": 13682.5,
+      "status": "success",
+      "latency_ms": 488.6,
       "freshness_days": null
     },
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 172.7,
-      "freshness_days": 28
+      "latency_ms": 176.3,
+      "freshness_days": 29
     },
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 2391.0,
+      "latency_ms": 423.5,
       "freshness_days": null
     },
     {
       "name": "OISST SST map",
-      "status": "failed",
-      "latency_ms": 13634.4,
+      "status": "success",
+      "latency_ms": 2471.6,
       "freshness_days": null
     }
   ],
@@ -66,13 +66,12 @@
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 839.9,
+    "site/data/enso.json": 841.8,
     "site/data/enso-history.json": 418.5,
-    "site/data/sst_map.json": 131.5
+    "site/data/sst_map.json": 131.3
   },
   "warnings": [
-    "Weekly precipitation refresh failed; valid observations retained through 2026-09-15",
-    "Data sources failed: TAO/TRITON subsurface, OISST SST map"
+    "Weekly precipitation refresh failed; valid observations retained through 2026-09-15"
   ],
   "errors": []
 }
