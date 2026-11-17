@@ -1,13 +1,13 @@
 {
-  "build_id": "2026-11-17T17:06:52.743041+00:00",
+  "build_id": "2026-11-17T17:09:28.165221+00:00",
   "status": "success",
-  "duration_seconds": 46.82,
-  "last_updated": "2026-11-17T17:07:39.564421+00:00",
+  "duration_seconds": 43.92,
+  "last_updated": "2026-11-17T17:10:12.085575+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 783.1,
+      "latency_ms": 425.9,
       "freshness_days": 63,
       "cached_from": null,
       "as_of": null,
@@ -16,7 +16,7 @@
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 13.6,
+      "latency_ms": 11.4,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -25,7 +25,7 @@
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.5,
+      "latency_ms": 2.0,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -34,7 +34,7 @@
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 642.6,
+      "latency_ms": 376.6,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -43,7 +43,7 @@
     {
       "name": "TAO/TRITON subsurface",
       "status": "success",
-      "latency_ms": 16925.9,
+      "latency_ms": 19522.3,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -52,7 +52,7 @@
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 308.9,
+      "latency_ms": 171.0,
       "freshness_days": 33,
       "cached_from": null,
       "as_of": null,
@@ -61,7 +61,7 @@
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 1777.4,
+      "latency_ms": 134.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -70,7 +70,7 @@
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 23589.0,
+      "latency_ms": 21498.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
