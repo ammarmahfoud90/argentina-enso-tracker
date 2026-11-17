@@ -464,7 +464,7 @@ def _fetch_with_fallback(
     fallback_label: str,
     fallback_parser,
 ) -> tuple:
-    """Try primary source (ERDDAP), fall back to secondary (CPC) on failure.
+    """Try the primary source, fall back to the secondary one on failure.
 
     Returns:
         (DataFrame, source_label) — the parsed data and which source was used.
@@ -516,14 +516,18 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     latest_oni = oni_df.iloc[-1]
     data_sources["oni"] = "CPC"
 
-    # --- Niño 3.4 (ERDDAP primary, CPC fallback) ---
+    # --- Niño 3.4 (CPC ERSSTv6 primary, ERDDAP fallback) ---
+    # CPC's monthly ERSSTv6 series is the input to the ONI: same product,
+    # same climatology and complete months only. The ERDDAP weekly OISST
+    # series uses a 1981-2010 base and its latest "month" can average only
+    # one or two weeks, so it is kept as fallback.
     nino_df, nino_source = _fetch_with_fallback(
-        primary_url=ERDDAP_NINO34_URL,
-        primary_label="ERDDAP Niño 3.4",
-        primary_parser=parse_erddap_nino34,
-        fallback_url=NOAA_NINO34_URL,
-        fallback_label="CPC Niño 3.4",
-        fallback_parser=parse_nino34,
+        primary_url=NOAA_NINO34_URL,
+        primary_label="CPC Niño 3.4",
+        primary_parser=parse_nino34,
+        fallback_url=ERDDAP_NINO34_URL,
+        fallback_label="ERDDAP Niño 3.4",
+        fallback_parser=parse_erddap_nino34,
     )
     latest_nino = nino_df.iloc[-1]
     data_sources["nino34"] = nino_source

@@ -37,7 +37,7 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 ## Features
 
 ### Data Pipeline (Phase 1)
-- **ERDDAP migration**: Nino 3.4 and SOI fetched from ERDDAP structured CSV with CPC ASCII fallback
+- **Index sources**: Nino 3.4 (ERSSTv6) and SOI fetched from NOAA CPC, with ERDDAP structured CSV as fallback
 - **HTTP response cache**: file-based TTL cache (1h) prevents rate-limiting during builds
 - **Dual-source fallback**: automatic failover between ERDDAP (primary) and CPC (fallback)
 - **Data freshness indicator**: green/yellow/red dot based on data age
@@ -78,7 +78,7 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 | RONI (operational NOAA monitoring since Feb 2026) | NOAA CPC ERSSTv6 | No ONI substitution | Monthly |
 | NOAA operational ENSO advisory | NOAA CPC | Explicit unavailable status | Dated advisory |
 | ONI (legacy historical analysis) | NOAA CPC | — | Monthly |
-| Nino 3.4 SST anomaly | ERDDAP (ncepNinoSSTwk) | NOAA CPC ERSSTv6 (`detrend.nino34.ascii.txt`, monthly input to the ONI) | Weekly -> monthly |
+| Nino 3.4 SST anomaly | NOAA CPC ERSSTv6 (`detrend.nino34.ascii.txt`, monthly input to the ONI) | ERDDAP ncepNinoSSTwk (weekly OISST, 1981-2010 base) | Monthly |
 | SOI (standardized CPC scale) | NOAA CPC | ERDDAP (different normalization, explicitly labeled) | Monthly |
 | Subsurface temperature | ERDDAP (pmelTaoMonT) | — | Monthly |
 | SST anomaly map | OISST v2.1 final (ERDDAP ncdcOisst21Agg), native anom relative to 1971–2000 | Last dated grids labeled stale if fetch fails | Daily snapshots every 30 days; final product has its own latency |
