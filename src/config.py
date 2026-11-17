@@ -247,8 +247,35 @@ CACHE_TTL_SECONDS: int = 3600  # 1 hour — prevents rate-limiting during builds
 # ---------------------------------------------------------------------------
 
 REQUEST_TIMEOUT_SECONDS: int = 30
-REQUEST_MAX_RETRIES: int = 3
-REQUEST_RETRY_WAIT_SECONDS: int = 5
+REQUEST_MAX_RETRIES: int = 4
+REQUEST_RETRY_WAIT_SECONDS: int = 10
+"""Seconds to wait before the *first* retry; later waits grow geometrically
+by ``REQUEST_RETRY_BACKOFF`` (10s, 20s, 40s)."""
+
+REQUEST_RETRY_BACKOFF: float = 2.0
+"""Multiplier applied to the retry wait after each failed attempt."""
+
+REQUEST_MAX_TOTAL_SECONDS: int = 170
+"""Hard ceiling on the time one source may consume across all attempts
+(requests plus waits).  Keeps a single unreachable endpoint under ~3
+minutes so a NOAA outage cannot stall the whole build."""
+
+# ---------------------------------------------------------------------------
+# Versioned offline copies of the NOAA CPC index files
+#
+# The "Refresh NOAA ENSO Data" workflow keeps these files in sync with the
+# live endpoints.  When a live download fails after all retries the pipeline
+# reads the versioned copy instead of aborting the build.  The mapping is
+# per-URL on purpose: a cached copy may only ever stand in for *its own*
+# index, never for another one.
+# ---------------------------------------------------------------------------
+
+RAW_FALLBACK_PATHS: dict[str, str] = {
+    NOAA_ONI_URL: "data/raw/oni.ascii.txt",
+    NOAA_RONI_URL: "data/raw/roni.ascii.txt",
+    NOAA_NINO34_URL: "data/raw/nino34.ascii.txt",
+    NOAA_SOI_URL: "data/raw/soi.txt",
+}
 
 # ---------------------------------------------------------------------------
 # DuckDB warehouse & pipeline observability

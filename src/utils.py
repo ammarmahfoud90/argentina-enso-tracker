@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import subprocess
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -17,7 +18,10 @@ import requests
 from src.config import (
     CACHE_DIR,
     CACHE_TTL_SECONDS,
+    RAW_FALLBACK_PATHS,
     REQUEST_MAX_RETRIES,
+    REQUEST_MAX_TOTAL_SECONDS,
+    REQUEST_RETRY_BACKOFF,
     REQUEST_RETRY_WAIT_SECONDS,
     REQUEST_TIMEOUT_SECONDS,
 )
@@ -108,15 +112,27 @@ def fetch_text(
     retry_wait: int = REQUEST_RETRY_WAIT_SECONDS,
     label: Optional[str] = None,
     use_cache: bool = True,
+    backoff: float = REQUEST_RETRY_BACKOFF,
+    max_total_seconds: int = REQUEST_MAX_TOTAL_SECONDS,
 ) -> str:
     """Fetch plain-text content from *url* with retry logic.
+
+    Retries use a geometric backoff (``retry_wait`` seconds before the first
+    retry, multiplied by ``backoff`` after each further failure), so a source
+    that is briefly overloaded gets progressively more breathing room.  The
+    whole sequence — requests and waits together — is capped at
+    ``max_total_seconds``: attempts stop early rather than exceed the budget,
+    so one unreachable endpoint cannot stall the build.
 
     Args:
         url: Target URL.
         timeout: Per-request timeout in seconds.
         max_retries: Maximum number of attempts (including the first).
-        retry_wait: Seconds to wait between retries.
+        retry_wait: Seconds to wait before the first retry.
         label: Human-readable label used in log messages (defaults to URL).
+        use_cache: Read from and write to the short-lived HTTP response cache.
+        backoff: Multiplier applied to the wait after each failed attempt.
+        max_total_seconds: Ceiling on the total time spent on this URL.
 
     Returns:
         Response body as a decoded string.
@@ -133,10 +149,25 @@ def fetch_text(
         if cached is not None:
             return cached
 
+    started = time.monotonic()
+    wait = float(retry_wait)
+    attempts_made = 0
+
     for attempt in range(1, max_retries + 1):
+        remaining = max_total_seconds - (time.monotonic() - started)
+        if attempt > 1 and remaining <= 0:
+            logger.warning(
+                "Presupuesto de %ds agotado para %s tras %d intento(s)",
+                max_total_seconds, tag, attempts_made,
+            )
+            break
+
+        # Never let a single request run past the remaining budget.
+        attempt_timeout = timeout if attempt == 1 else max(1, min(timeout, int(remaining)))
+        attempts_made = attempt
         try:
             logger.info("Fetching %s (attempt %d/%d)", tag, attempt, max_retries)
-            resp = requests.get(url, timeout=timeout, allow_redirects=True)
+            resp = requests.get(url, timeout=attempt_timeout, allow_redirects=True)
             resp.raise_for_status()
             logger.info("OK — received %d bytes from %s", len(resp.content), tag)
             text = resp.text
@@ -154,13 +185,216 @@ def fetch_text(
             logger.warning(msg)
 
         if attempt < max_retries:
-            logger.info("Esperando %ds antes de reintentar…", retry_wait)
-            time.sleep(retry_wait)
+            remaining = max_total_seconds - (time.monotonic() - started)
+            if remaining <= 0:
+                logger.warning(
+                    "Presupuesto de %ds agotado para %s — no se reintenta",
+                    max_total_seconds, tag,
+                )
+                break
+            sleep_for = min(wait, remaining)
+            logger.info("Esperando %.0fs antes de reintentar…", sleep_for)
+            time.sleep(sleep_for)
+            wait *= backoff
 
     raise RuntimeError(
-        f"No se pudo obtener datos de {tag} tras {max_retries} intentos. "
+        f"No se pudo obtener datos de {tag} tras {attempts_made} intentos. "
         "Verifique su conexión o que la fuente esté disponible."
     )
+
+
+# ---------------------------------------------------------------------------
+# Versioned offline copies (data/raw/) used when a live fetch fails
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class SourceText:
+    """Raw text for one index together with where it actually came from.
+
+    Attributes:
+        text:       The raw ASCII payload.
+        status:     ``"live"`` when NOAA answered, ``"cached"`` when the
+                    versioned copy in ``data/raw/`` was read instead.
+        path:       Repo-relative path of the local copy used, else None.
+        as_of:      ISO date of the copy's contents, else None.  See
+                    ``as_of_source`` for how it was determined.
+        as_of_source: ``"commit"`` when ``as_of`` is the date of the last
+                    commit that touched the file — the reliable answer — or
+                    ``"mtime"`` when git could not date it and the filesystem
+                    timestamp had to be used.  A CI checkout rewrites mtimes
+                    to the build time, so an ``"mtime"`` date says little
+                    about how old the data really is.
+        live_error: The live-fetch error that forced the fallback, else None.
+    """
+
+    text: str
+    status: str
+    path: Optional[str] = None
+    as_of: Optional[str] = None
+    as_of_source: Optional[str] = None
+    live_error: Optional[str] = None
+
+    @property
+    def is_cached(self) -> bool:
+        """True when this text came from the versioned offline copy."""
+        return self.status == "cached"
+
+
+def _git_commit_date(path: Path) -> Optional[str]:
+    """Return the ISO date of the last commit that touched *path*, else None.
+
+    This is the only trustworthy age for a versioned file: a CI checkout
+    rewrites every mtime to the time of the build, so the filesystem
+    timestamp of ``data/raw/oni.ascii.txt`` always reads as "today" there,
+    however old the data inside it is.
+
+    Returns None when git is not installed, when the history does not reach
+    the last commit for that path (a shallow clone), or when the file is not
+    tracked.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        ``"YYYY-MM-DD"``, or None when git cannot answer.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(path.parent), "log", "-1", "--format=%cs", "--", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        logger.warning("git no disponible para fechar %s: %s", path.name, exc)
+        return None
+
+    if proc.returncode != 0:
+        logger.warning(
+            "git log falló para %s (código %d): %s",
+            path.name, proc.returncode, (proc.stderr or "").strip()[:200],
+        )
+        return None
+
+    date = (proc.stdout or "").strip()
+    if len(date) != 10 or date.count("-") != 2:
+        logger.warning(
+            "git log no devolvió una fecha para %s "
+            "(¿clon superficial o archivo sin seguimiento?)", path.name,
+        )
+        return None
+    return date
+
+
+def file_as_of(path: Path) -> tuple[str, str]:
+    """Date the contents of *path*, and say how that date was obtained.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        ``(iso_date, source)`` where *source* is ``"commit"`` or ``"mtime"``.
+    """
+    commit_date = _git_commit_date(path)
+    if commit_date:
+        return commit_date, "commit"
+    mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).date().isoformat()
+    return mtime, "mtime"
+
+
+def read_raw_fallback(url: str, label: Optional[str] = None) -> SourceText:
+    """Read the versioned offline copy registered for *url*.
+
+    Args:
+        url: The live endpoint whose offline copy is wanted.
+        label: Human-readable label used in messages.
+
+    Returns:
+        A :class:`SourceText` with ``status="cached"``.
+
+    Raises:
+        RuntimeError: If no offline copy is registered for *url*, if the file
+            is missing, or if it is empty.  The message names the expected
+            path, so the failure is actionable instead of silent.
+    """
+    tag = label or url
+    rel = RAW_FALLBACK_PATHS.get(url)
+    if rel is None:
+        raise RuntimeError(
+            f"{tag}: la descarga en vivo falló y no hay copia versionada "
+            f"registrada para {url}."
+        )
+
+    path = Path(rel)
+    if not path.is_absolute():
+        path = Path(__file__).resolve().parent.parent / rel
+
+    if not path.exists():
+        raise RuntimeError(
+            f"{tag}: la descarga en vivo falló y la copia versionada no "
+            f"existe ({rel}). Ejecute el workflow «Refresh NOAA ENSO "
+            f"Data» para regenerarla."
+        )
+
+    text = path.read_text(encoding="utf-8", errors="replace")
+    if not text.strip():
+        raise RuntimeError(
+            f"{tag}: la copia versionada {rel} está vacía; no se "
+            f"publica nada con ella."
+        )
+
+    as_of, as_of_source = file_as_of(path)
+    if as_of_source == "commit":
+        logger.warning(
+            "%s: usando la copia versionada %s (último commit %s) — la "
+            "descarga en vivo falló.", tag, rel, as_of,
+        )
+    else:
+        logger.warning(
+            "%s: usando la copia versionada %s (mtime %s; git no pudo fechar el "
+            "archivo, así que esa fecha puede ser la del checkout y no la de "
+            "los datos) — la descarga en vivo falló.", tag, rel, as_of,
+        )
+    return SourceText(
+        text=text, status="cached", path=rel, as_of=as_of, as_of_source=as_of_source
+    )
+
+
+def fetch_text_or_cached(
+    url: str,
+    label: Optional[str] = None,
+    **kwargs,
+) -> SourceText:
+    """Fetch *url*; on failure fall back to its versioned copy in ``data/raw/``.
+
+    The fallback is strictly per-URL: a cached file may only ever stand in for
+    its own index.  Nothing is invented and nothing is substituted silently —
+    the returned :class:`SourceText` records which copy was used and when it
+    was written, so callers can publish that provenance.
+
+    Args:
+        url: Target URL.
+        label: Human-readable label used in log messages.
+        **kwargs: Forwarded to :func:`fetch_text`.
+
+    Returns:
+        A :class:`SourceText` with ``status`` ``"live"`` or ``"cached"``.
+
+    Raises:
+        RuntimeError: If the live fetch fails *and* no usable offline copy
+            exists.  The message names both the endpoint and the expected path.
+    """
+    tag = label or url
+    try:
+        return SourceText(text=fetch_text(url, label=label, **kwargs), status="live")
+    except RuntimeError as exc:
+        logger.warning(
+            "%s: descarga en vivo fallida (%s) — probando la copia local", tag, exc
+        )
+        fallback = read_raw_fallback(url, label=label)
+        fallback.live_error = str(exc)
+        return fallback
 
 
 def fetch_binary(

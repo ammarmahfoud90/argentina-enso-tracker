@@ -218,17 +218,49 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
         snapshot.oni_value, snapshot.oni_season,
         snapshot.nino34_value, snapshot.soi_value, snapshot.phase,
     )
+
+    # Per-index provenance.  Each index is fetched live; if NOAA is down after
+    # all retries, the versioned copy in data/raw/ is read instead.  That is
+    # recorded as "cached" in pipeline_health.json with the copy's write date,
+    # and raised as a build warning — never as a silent substitution.
+    source_status = snapshot.source_status or {}
+    for index_name, prov in source_status.items():
+        if prov.get("status") != "cached":
+            continue
+        monitor.record_source(
+            f"NOAA {index_name.upper()} (copia versionada)",
+            status="cached",
+            cached_from=prov.get("path"),
+            as_of=prov.get("as_of"),
+            as_of_source=prov.get("as_of_source"),
+            error_message=prov.get("live_error"),
+        )
+        dated = (
+            f"último commit {prov.get('as_of')}"
+            if prov.get("as_of_source") == "commit"
+            else f"mtime {prov.get('as_of')}, sin fecha de commit"
+        )
+        monitor.add_warning(
+            f"{index_name}: descarga en vivo fallida; publicado desde "
+            f"{prov.get('path')} ({dated})"
+        )
+
+    oni_cached = source_status.get("oni", {}).get("status") == "cached"
     lineage.register_source(
         "NOAA ONI", url="https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt",
-        access_method="live_fetch", status="success",
+        access_method="cache" if oni_cached else "live_fetch",
+        status="cached" if oni_cached else "success",
         row_count=len(snapshot.oni_series),
         date_range_start=snapshot.oni_series.iloc[0]["date"].date().isoformat(),
         date_range_end=snapshot.oni_series.iloc[-1]["date"].date().isoformat(),
         feeds_sections=["current", "oni_series", "episodes"],
     )
     if snapshot.soi_series is not None:
+        soi_cached = source_status.get("soi", {}).get("status") == "cached"
         lineage.register_source(
-            "NOAA SOI", access_method="live_fetch", status="success",
+            "NOAA SOI",
+            access_method="cache" if soi_cached else "live_fetch",
+            status="cached" if soi_cached else "success",
             row_count=len(snapshot.soi_series),
             feeds_sections=["soi_series"],
         )
@@ -626,6 +658,7 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
             "description": "Pronóstico estacional oficial del Servicio Meteorológico Nacional de Argentina.",
         },
         "data_sources":  snapshot.data_sources or {},
+        "source_status":  snapshot.source_status or {},
         "last_updated":  datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "disclaimer": (
             "Índice automático — no constituye declaración oficial de NOAA. "

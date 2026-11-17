@@ -40,6 +40,17 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 - **Index sources**: Nino 3.4 (ERSSTv6) and SOI fetched from NOAA CPC, with ERDDAP structured CSV as fallback
 - **HTTP response cache**: file-based TTL cache (1h) prevents rate-limiting during builds
 - **Dual-source fallback**: automatic failover between ERDDAP (primary) and CPC (fallback)
+- **Offline copies of the NOAA index files**: `data/raw/` holds a versioned
+  copy of ONI, RONI, Nino 3.4 and SOI, kept current by the "Refresh NOAA ENSO
+  Data" workflow. When a live download fails after all retries, the build
+  reads that copy instead of aborting, labels the index `cached` in
+  `pipeline_health.json` with the date of the last commit that touched the
+  copy, and keeps publishing each index's own dates. A cached copy only ever
+  stands in for its own index; if the copy is missing the build fails with the
+  expected path in the message.
+- **Retry budget per source**: geometric backoff (10s, 20s, 40s) capped at
+  `REQUEST_MAX_TOTAL_SECONDS` (170s), so one unreachable endpoint cannot stall
+  the build
 - **Data freshness indicator**: green/yellow/red dot based on data age
 
 ### Visualizations (Phase 2)
@@ -85,6 +96,23 @@ build.py  ->  site/data/enso.json  ->  site/index.html  (Plotly + vanilla JS)
 | Precipitation observations | CHIRPS v3.0 final monthly (UCSB CHC) | Last validated monthly series | Checked weekly; only complete published months |
 | Regional temperature observations | NOAA PSL CPC Global Temperature, (tmax+tmin)/2 | Last validated monthly series | Checked weekly; only months with all calendar days |
 | ENSO forecast | IRI Columbia (ensoforecast2 SVG) | NOAA CPC | Monthly |
+
+When a live NOAA download fails after all retries, the ONI, RONI, Nino 3.4 and
+SOI fetches fall back to the versioned copy of *that same file* in `data/raw/`
+(`oni.ascii.txt`, `roni.ascii.txt`, `nino34.ascii.txt`, `soi.txt`). The index
+is then reported as `cached` in `site/data/pipeline_health.json`, together with
+the path and the copy's date, and the build is marked `partial`. Values and
+dates are whatever that file contains: nothing is interpolated and no index is
+substituted for another.
+
+The copy's date (`as_of`) is the date of the last commit that touched the file
+(`as_of_source: "commit"`). The filesystem mtime is not used for this, because
+a CI checkout rewrites every mtime to the time of the build, which would make
+a months-old copy read as "today". The daily build and the observations
+refresh therefore check out with `fetch-depth: 0`, so that commit is in the
+history. When git cannot date the file at all — not installed, shallow clone,
+file untracked — the build falls back to the mtime and says so with
+`as_of_source: "mtime"`.
 
 ---
 
