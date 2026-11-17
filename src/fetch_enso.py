@@ -186,12 +186,14 @@ def parse_oni(raw_text: str) -> pd.DataFrame:
 
 
 def parse_nino34(raw_text: str) -> pd.DataFrame:
-    """Parse NOAA ERSSTv5 monthly Niño region anomaly file.
+    """Parse a NOAA CPC monthly Niño 3.4 anomaly file.
 
-    The file has a multi-line header followed by rows:
+    Two layouts are accepted:
+        YR  MON  TOTAL  ClimAdjust  ANOM            (ERSSTv6, current)
         YR  MON  NINO1+2  ANOM  NINO3  ANOM  NINO4  ANOM  NINO3.4  ANOM
+                                                    (legacy ERSSTv5)
 
-    We extract year, month and Niño 3.4 anomaly (column index 9).
+    The anomaly is the last column in both cases.
 
     Args:
         raw_text: Raw string content of the Niño index file.
@@ -205,12 +207,12 @@ def parse_nino34(raw_text: str) -> pd.DataFrame:
     rows = []
     for line in raw_text.strip().splitlines():
         parts = line.split()
-        if len(parts) < 10:
+        if len(parts) not in (5, 10):
             continue
         try:
             year = int(parts[0])
             month = int(parts[1])
-            nino34_anom = float(parts[9])
+            nino34_anom = float(parts[-1])
             rows.append({"year": year, "month": month, "nino34": nino34_anom})
         except (ValueError, IndexError):
             continue

@@ -54,7 +54,7 @@ SOURCES: list[dict] = [
         "label": "Nino34",
         "url": NOAA_NINO34_URL,
         "local_path": RAW_DIR / "nino34.ascii.txt",
-        "description": "Monthly Niño 3.4 SST anomalies (ERSSTv5, base 1991-2020)",
+        "description": "Monthly Niño 3.4 SST anomalies (ERSSTv6, input to the ONI)",
     },
     {
         "label": "SOI",

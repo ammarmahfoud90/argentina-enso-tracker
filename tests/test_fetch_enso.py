@@ -100,7 +100,20 @@ class TestParseONI:
             parse_oni("")
 
 
+NINO34_V6_SAMPLE = """\
+ YR   MON  TOTAL ClimAdjust ANOM
+2026   8   29.05   26.87    2.17
+2026   9   29.27   26.71    2.56
+"""
+
+
 class TestParseNino34:
+    def test_parses_ersstv6_layout(self):
+        df = parse_nino34(NINO34_V6_SAMPLE)
+        assert len(df) == 2
+        assert abs(df["nino34"].iloc[-1] - 2.56) < 1e-9
+        assert df["date"].iloc[-1] == pd.Timestamp("2026-09-15")
+
     def test_returns_dataframe(self):
         df = parse_nino34(NINO34_SAMPLE)
         assert isinstance(df, pd.DataFrame)
