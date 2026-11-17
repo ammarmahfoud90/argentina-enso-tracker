@@ -22,7 +22,13 @@ from src.config import PIPELINE_HEALTH_PATH
 
 @dataclass
 class SourceMetrics:
-    """Metrics for a single data source fetch."""
+    """Metrics for a single data source fetch.
+
+    ``status`` is "success", "failed", or "cached".  "cached" means the live
+    endpoint could not be reached and the versioned copy in ``data/raw/`` was
+    read instead; ``cached_from`` names that file and ``as_of`` is the date it
+    was last written.
+    """
 
     source_name: str
     status: str = "pending"
@@ -33,6 +39,8 @@ class SourceMetrics:
     row_count: Optional[int] = None
     error_message: Optional[str] = None
     cache_hit: bool = False
+    cached_from: Optional[str] = None
+    as_of: Optional[str] = None
 
 
 @dataclass
@@ -122,6 +130,51 @@ class PipelineMonitor:
         self._build.quality.append(qm)
         return qm
 
+    def record_source(
+        self,
+        source_name: str,
+        status: str,
+        *,
+        cached_from: Optional[str] = None,
+        as_of: Optional[str] = None,
+        row_count: Optional[int] = None,
+        data_freshness_days: Optional[int] = None,
+        error_message: Optional[str] = None,
+    ) -> SourceMetrics:
+        """Record a source outcome that was not measured by :meth:`track_source`.
+
+        Used for per-index provenance: the ENSO fetch is tracked as one source,
+        but each index may individually have come from the live endpoint or
+        from its versioned offline copy.
+
+        Args:
+            source_name: Label shown in pipeline_health.json.
+            status: "success", "failed", or "cached".
+            cached_from: Path of the offline copy, when status is "cached".
+            as_of: Date that copy was written, when status is "cached".
+            row_count: Rows parsed from the source.
+            data_freshness_days: Age in days of the newest data point.
+            error_message: Live-fetch error that forced a fallback.
+
+        Returns:
+            The recorded :class:`SourceMetrics`.
+        """
+        now = datetime.now(timezone.utc).isoformat()
+        metrics = SourceMetrics(
+            source_name=source_name,
+            status=status,
+            start_time=now,
+            end_time=now,
+            data_freshness_days=data_freshness_days,
+            row_count=row_count,
+            error_message=(error_message[:200] if error_message else None),
+            cache_hit=status == "cached",
+            cached_from=cached_from,
+            as_of=as_of,
+        )
+        self._build.sources.append(metrics)
+        return metrics
+
     def record_output(self, path: str, size_bytes: int) -> None:
         """Record an output artifact."""
         self._build.output_files[path] = size_bytes
@@ -159,6 +212,8 @@ class PipelineMonitor:
                     "status": s.status,
                     "latency_ms": s.latency_ms,
                     "freshness_days": s.data_freshness_days,
+                    "cached_from": s.cached_from,
+                    "as_of": s.as_of,
                 }
                 for s in self._build.sources
             ],

@@ -4,7 +4,9 @@ import pandas as pd
 import pytest
 from scipy import stats
 
+import src.utils as src_utils
 from src.compute_spi import classify_spi, compute_spi
+from src.config import NOAA_RONI_URL
 from src.fetch_enso import fetch_operational_reference, parse_advisory, parse_oni
 from src.scientific import (
     adjust_fdr,
@@ -99,10 +101,16 @@ def test_noaa_real_discussion_header_format():
     assert parse_advisory(raw)["issued"] == "2026-10-08"
 
 
-def test_reference_failure_explicit(monkeypatch):
+def test_reference_failure_explicit(monkeypatch, tmp_path):
     def fail(*args, **kwargs):
         raise RuntimeError("unavailable")
     monkeypatch.setattr("src.fetch_enso.fetch_text", fail)
+    # RONI also falls back to its own versioned copy, so a true outage means
+    # both the live endpoint and that copy are unavailable.
+    monkeypatch.setattr("src.utils.fetch_text", fail)
+    monkeypatch.setitem(
+        src_utils.RAW_FALLBACK_PATHS, NOAA_RONI_URL, str(tmp_path / "no-roni.txt")
+    )
     result = fetch_operational_reference()
     assert result["roni"] is None and result["advisory"] is None
     assert len(result["errors"]) == 2

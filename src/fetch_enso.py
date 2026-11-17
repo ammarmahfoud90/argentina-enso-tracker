@@ -38,7 +38,7 @@ from src.config import (
     NOAA_RONI_URL,
     NOAA_SOI_URL,
 )
-from src.utils import fetch_text, get_logger
+from src.utils import fetch_text, fetch_text_or_cached, read_raw_fallback, get_logger
 
 logger = get_logger(__name__)
 
@@ -68,6 +68,12 @@ class ENSOSnapshot:
         oni_series: Full ONI time series as a DataFrame (columns: date, season, oni).
         soi_series: Full SOI time series as a DataFrame (columns: date, soi).
         data_sources: Dict mapping index name to the source used ("ERDDAP" or "CPC").
+        source_status: Dict mapping index name to how its text was obtained:
+            ``{"status": "live"|"cached", "path": ..., "as_of": ...}``.  A
+            "cached" entry means the live endpoint failed after all retries
+            and the versioned copy in ``data/raw/`` was read instead; the
+            copy's write date is reported in ``as_of``.  Index values and
+            their dates always come from the file that was actually read.
     """
 
     oni_value: float
@@ -85,6 +91,7 @@ class ENSOSnapshot:
     oni_series: pd.DataFrame
     soi_series: pd.DataFrame = None
     data_sources: dict = None
+    source_status: dict = None
 
 
 # ---------------------------------------------------------------------------
@@ -463,35 +470,93 @@ def _fetch_with_fallback(
     fallback_url: str,
     fallback_label: str,
     fallback_parser,
+    provenance: Optional[dict] = None,
 ) -> tuple:
-    """Try the primary source, fall back to the secondary one on failure.
+    """Try the primary source, then the secondary one, then the offline copy.
+
+    The third step reads the versioned copy of the *primary* URL from
+    ``data/raw/`` — the same file the "Refresh NOAA ENSO Data" workflow
+    keeps up to date.  It stands in only for its own index and only when both
+    live endpoints have failed; the data keeps its own dates and the caller is
+    told, through *provenance*, that the copy was used.
+
+    Args:
+        primary_url: Preferred live endpoint.
+        primary_label: Human-readable label for the primary source.
+        primary_parser: Parser for the primary payload.
+        fallback_url: Secondary live endpoint.
+        fallback_label: Human-readable label for the secondary source.
+        fallback_parser: Parser for the secondary payload.
+        provenance: Optional dict, updated in place with ``status``
+            ("live" or "cached"), and, when cached, ``path``, ``as_of`` and
+            ``live_error``.
 
     Returns:
         (DataFrame, source_label) — the parsed data and which source was used.
+
+    Raises:
+        RuntimeError: If both live sources and the offline copy fail.  The
+            message names every source tried.
     """
     # Derive source tag from label (first word: "ERDDAP" or "CPC")
     primary_source = primary_label.split()[0]
     fallback_source = fallback_label.split()[0]
+
+    def _record(**fields) -> None:
+        if provenance is not None:
+            provenance.update(fields)
 
     # Try primary
     try:
         raw = fetch_text(primary_url, label=primary_label, timeout=45)
         df = primary_parser(raw)
         if len(df) > 0:
+            _record(status="live", source=primary_source)
             return df, primary_source
     except Exception as exc:
         logger.warning("Primary source %s failed: %s — trying fallback", primary_label, exc)
 
     # Fallback
+    fallback_error: Optional[Exception] = None
     try:
         raw = fetch_text(fallback_url, label=fallback_label)
         df = fallback_parser(raw)
-        return df, fallback_source
+        if len(df) > 0:
+            _record(status="live", source=fallback_source)
+            return df, fallback_source
+        fallback_error = ValueError(f"{fallback_label} returned no rows")
+    except Exception as exc:
+        fallback_error = exc
+        logger.warning(
+            "Fallback source %s failed: %s — trying the versioned copy of %s",
+            fallback_label, exc, primary_label,
+        )
+
+    # Last resort: the versioned offline copy of the primary index.
+    try:
+        cached = read_raw_fallback(primary_url, label=primary_label)
+        df = primary_parser(cached.text)
+        if len(df) == 0:
+            raise ValueError(f"{cached.path} contains no usable data rows")
     except Exception as exc:
         raise RuntimeError(
-            f"Both primary ({primary_label}) and fallback ({fallback_label}) failed. "
-            f"Last error: {exc}"
+            f"{primary_label}: live sources ({primary_label}, {fallback_label}) and "
+            f"the versioned copy all failed. Live error: {fallback_error}. "
+            f"Offline error: {exc}"
         ) from exc
+
+    _record(
+        status="cached",
+        source=primary_source,
+        path=cached.path,
+        as_of=cached.as_of,
+        live_error=str(fallback_error),
+    )
+    logger.warning(
+        "%s: publicando desde la copia versionada %s (escrita el %s)",
+        primary_label, cached.path, cached.as_of,
+    )
+    return df, primary_source
 
 
 def fetch_enso_snapshot() -> ENSOSnapshot:
@@ -509,18 +574,42 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     """
     logger.info("=== Iniciando ingesta ENSO ===")
     data_sources = {}
+    source_status: dict = {}
 
     # --- ONI (always from CPC — canonical source, no ERDDAP equivalent) ---
-    oni_raw = fetch_text(NOAA_ONI_URL, label="NOAA ONI")
-    oni_df = parse_oni(oni_raw)
+    # A NOAA outage must not tumble the build: when the live file cannot be
+    # downloaded after all retries we read the versioned copy in data/raw/
+    # instead, and say so.  No value is invented and no other index is
+    # substituted for this one.
+    oni_text = fetch_text_or_cached(NOAA_ONI_URL, label="NOAA ONI")
+    try:
+        oni_df = parse_oni(oni_text.text)
+    except Exception as exc:
+        if oni_text.is_cached:
+            raise RuntimeError(
+                f"NOAA ONI: la copia versionada {oni_text.path} no se pudo "
+                f"interpretar: {exc}"
+            ) from exc
+        raise
+    if len(oni_df) == 0:
+        raise RuntimeError(
+            f"NOAA ONI: la fuente {oni_text.path or NOAA_ONI_URL} no trae filas usables."
+        )
     latest_oni = oni_df.iloc[-1]
     data_sources["oni"] = "CPC"
+    source_status["oni"] = {
+        "status": oni_text.status,
+        "path": oni_text.path,
+        "as_of": oni_text.as_of,
+        "live_error": oni_text.live_error,
+    }
 
     # --- Niño 3.4 (CPC ERSSTv6 primary, ERDDAP fallback) ---
     # CPC's monthly ERSSTv6 series is the input to the ONI: same product,
     # same climatology and complete months only. The ERDDAP weekly OISST
     # series uses a 1981-2010 base and its latest "month" can average only
     # one or two weeks, so it is kept as fallback.
+    nino_provenance: dict = {}
     nino_df, nino_source = _fetch_with_fallback(
         primary_url=NOAA_NINO34_URL,
         primary_label="CPC Niño 3.4",
@@ -528,15 +617,18 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         fallback_url=ERDDAP_NINO34_URL,
         fallback_label="ERDDAP Niño 3.4",
         fallback_parser=parse_erddap_nino34,
+        provenance=nino_provenance,
     )
     latest_nino = nino_df.iloc[-1]
     data_sources["nino34"] = nino_source
+    source_status["nino34"] = nino_provenance
 
     # --- SOI (CPC primary, ERDDAP fallback) ---
     # CPC standardised SOI is primary: erdlasNoix uses a different
     # standardisation base period, producing values that diverge >0.5 from
     # CPC in ~54% of months.  Since thresholds in advice.js are calibrated
     # for the CPC scale, CPC must be canonical.
+    soi_provenance: dict = {}
     soi_df, soi_source = _fetch_with_fallback(
         primary_url=NOAA_SOI_URL,
         primary_label="CPC SOI",
@@ -544,9 +636,11 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         fallback_url=ERDDAP_SOI_URL,
         fallback_label="ERDDAP SOI",
         fallback_parser=parse_erddap_soi,
+        provenance=soi_provenance,
     )
     latest_soi = soi_df.iloc[-1]
     data_sources["soi"] = soi_source
+    source_status["soi"] = soi_provenance
 
     # --- Niño 3.4 date validation ---
     # Niño 3.4 must be more recent than ONI to add value (ONI has ~2-month
@@ -601,6 +695,7 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         oni_series=oni_df,
         soi_series=soi_df,
         data_sources=data_sources,
+        source_status=source_status,
     )
 
     logger.info(
@@ -612,6 +707,12 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         snapshot.phase,
     )
     logger.info("Data sources: %s", data_sources)
+    cached_indices = [k for k, v in source_status.items() if v.get("status") == "cached"]
+    if cached_indices:
+        logger.warning(
+            "Índices publicados desde la copia versionada: %s",
+            ", ".join(f"{k} ({source_status[k].get('as_of')})" for k in cached_indices),
+        )
     return snapshot
 
 
@@ -639,14 +740,21 @@ def fetch_operational_reference() -> dict:
     result = {"monitoring_index": "RONI", "official_since": "2026-02-01",
               "roni": None, "advisory": None, "errors": []}
     try:
-        frame = parse_oni(fetch_text(NOAA_RONI_URL, label="NOAA RONI"))
+        # A NOAA outage falls back to the versioned copy of RONI itself;
+        # when neither is available RONI stays explicitly unavailable, as
+        # before — an ONI value is never substituted for it.
+        roni_text = fetch_text_or_cached(NOAA_RONI_URL, label="NOAA RONI")
+        frame = parse_oni(roni_text.text)
         latest = frame.iloc[-1]
         result["roni"] = {"value": float(latest.oni), "season": str(latest.season),
                           "date": latest.date.date().isoformat(),
                           "source_url": NOAA_RONI_URL,
                           "definition_url": "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/",
                           "baseline": "1991-2020", "dataset": "ERSSTv6",
-                          "provisional": True}
+                          "provisional": True,
+                          "status": roni_text.status,
+                          "cached_path": roni_text.path,
+                          "cached_as_of": roni_text.as_of}
         result["roni_series"] = [{"date": r.date.date().isoformat(), "season": str(r.season),
                                   "year": int(r.year), "roni": float(r.oni)} for r in frame.itertuples()]
     except Exception as exc:

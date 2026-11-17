@@ -29,7 +29,7 @@ from pathlib import Path
 # Allow running as `python -m scripts.refresh_noaa_data` from the project root.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.config import NOAA_ONI_URL, NOAA_NINO34_URL, NOAA_SOI_URL
+from src.config import NOAA_ONI_URL, NOAA_RONI_URL, NOAA_NINO34_URL, NOAA_SOI_URL
 from src.utils import check_noaa_data_freshness, fetch_text, get_logger
 
 logger = get_logger(__name__)
@@ -61,6 +61,12 @@ SOURCES: list[dict] = [
         "url": NOAA_SOI_URL,
         "local_path": RAW_DIR / "soi.txt",
         "description": "Southern Oscillation Index — Tahiti minus Darwin SLP",
+    },
+    {
+        "label": "RONI",
+        "url": NOAA_RONI_URL,
+        "local_path": RAW_DIR / "roni.ascii.txt",
+        "description": "Relative Oceanic Niño Index — NOAA's operational monitoring index",
     },
 ]
 

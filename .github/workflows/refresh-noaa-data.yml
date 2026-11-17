@@ -5,6 +5,11 @@
 #   • ONI   → data/raw/oni.ascii.txt
 #   • Niño 3.4 → data/raw/nino34.ascii.txt
 #   • SOI   → data/raw/soi.txt
+#   • RONI  → data/raw/roni.ascii.txt
+#
+# These files are also the pipeline's offline fallback: when a live NOAA
+# download fails after all retries, the build reads the copy from here and
+# labels that index "cached" in pipeline_health.json instead of aborting.
 #
 # The CHIRPS correlation cache (data/processed/correlations.parquet) is
 # intentionally NOT touched by this workflow — that 1981-2025 dataset is
@@ -96,7 +101,8 @@ jobs:
           git add -f \
             data/raw/oni.ascii.txt \
             data/raw/nino34.ascii.txt \
-            data/raw/soi.txt
+            data/raw/soi.txt \
+            data/raw/roni.ascii.txt
 
           # Commit message includes which sources were refreshed.
           # Example: "chore: refresh NOAA ENSO data (auto) [ONI,Nino34]"
