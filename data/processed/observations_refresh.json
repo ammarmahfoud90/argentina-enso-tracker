@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1.0",
-  "checked_at": "2026-11-16T18:59:43.654706+00:00",
+  "checked_at": "2026-11-17T17:06:20.506920+00:00",
   "check_frequency": "weekly",
   "calibration_period": [
     1981,
@@ -12,12 +12,12 @@
       "source": "CHIRPS v3.0",
       "url": "https://data.chc.ucsb.edu/products/CHIRPS/v3.0/monthly/global/cogs/",
       "units": "mm/month",
-      "status": "updated",
+      "status": "unchanged",
       "observations_start": "1981-01-15",
       "observations_end": "2026-10-15",
-      "months_before": 549,
+      "months_before": 550,
       "months_after": 550,
-      "months_added": 1,
+      "months_added": 0,
       "dataset_id": "CHIRPS-v3.0-final-monthly",
       "product_status": "final",
       "source_latest_month": "2026-10",
