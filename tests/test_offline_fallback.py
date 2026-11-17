@@ -9,6 +9,8 @@ explicit — never an invented value, never one index standing in for another.
 
 from __future__ import annotations
 
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -87,6 +89,9 @@ class TestFetchTextOrCached:
         assert result.text == local.read_text(encoding="utf-8", errors="replace")
         # The file's own date is reported, not today's data as if it were fresh.
         assert result.as_of and len(result.as_of) == 10
+        assert result.as_of_source == "commit", (
+            "a tracked copy must be dated by its last commit, not by its mtime"
+        )
         assert "tras" in (result.live_error or ""), "the live error must be preserved"
 
     def test_missing_local_copy_raises_a_clear_error(self, monkeypatch, tmp_path):
@@ -115,6 +120,122 @@ class TestFetchTextOrCached:
 
         with pytest.raises(RuntimeError, match="vac"):
             utils.fetch_text_or_cached(NOAA_ONI_URL, label="NOAA ONI")
+
+
+# ---------------------------------------------------------------------------
+# Dating the offline copy
+# ---------------------------------------------------------------------------
+
+
+class TestFileAsOf:
+    """The copy's age must come from git, not from the filesystem timestamp.
+
+    A CI checkout rewrites every mtime to the time of the build, so an
+    mtime-based ``as_of`` would always read as "today" however old the data is.
+    """
+
+    def test_tracked_file_is_dated_by_its_last_commit(self):
+        path = REPO_ROOT / RAW_FALLBACK_PATHS[NOAA_ONI_URL]
+        as_of, source = utils.file_as_of(path)
+
+        assert source == "commit"
+        assert as_of == utils._git_commit_date(path)
+        # The same date git reports for that path, independent of this helper.
+        expected = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "log", "-1", "--format=%cs", "--", str(path)],
+            capture_output=True, text=True, check=True,
+        ).stdout.strip()
+        assert as_of == expected
+
+    def test_commit_date_is_used_even_when_the_mtime_says_today(self, monkeypatch):
+        """The mtime is deliberately ignored while git can answer."""
+        monkeypatch.setattr(utils, "fetch_text", _dead_fetch)
+        path = REPO_ROOT / RAW_FALLBACK_PATHS[NOAA_ONI_URL]
+        path.touch()  # what a fresh checkout does to every file
+        today = datetime.now(timezone.utc).date().isoformat()
+
+        result = utils.fetch_text_or_cached(NOAA_ONI_URL, label="NOAA ONI")
+
+        assert result.as_of_source == "commit"
+        assert result.as_of == utils._git_commit_date(path)
+        assert result.as_of != today, (
+            "as_of must date the data, not the moment the file was written"
+        )
+
+    def test_untracked_file_falls_back_to_mtime_and_says_so(self, monkeypatch, tmp_path):
+        copy = tmp_path / "oni.ascii.txt"
+        copy.write_text(" SEAS  YR   TOTAL   ANOM\n  ASO 2026  29.23  2.46\n", encoding="utf-8")
+        monkeypatch.setitem(utils.RAW_FALLBACK_PATHS, NOAA_ONI_URL, str(copy))
+        monkeypatch.setattr(utils, "fetch_text", _dead_fetch)
+
+        as_of, source = utils.file_as_of(copy)
+        assert source == "mtime"
+        assert as_of == datetime.now(timezone.utc).date().isoformat()
+
+        result = utils.fetch_text_or_cached(NOAA_ONI_URL, label="NOAA ONI")
+        assert result.status == "cached"
+        assert result.as_of_source == "mtime", "the weaker date must be flagged"
+
+    def test_missing_git_falls_back_to_mtime(self, monkeypatch, tmp_path):
+        """git not installed is not a build failure, just a weaker date."""
+        copy = tmp_path / "oni.ascii.txt"
+        copy.write_text(" SEAS  YR   TOTAL   ANOM\n  ASO 2026  29.23  2.46\n", encoding="utf-8")
+
+        def no_git(*args, **kwargs):
+            raise FileNotFoundError("git")
+
+        monkeypatch.setattr(utils.subprocess, "run", no_git)
+        assert utils._git_commit_date(copy) is None
+        as_of, source = utils.file_as_of(copy)
+        assert source == "mtime"
+        assert len(as_of) == 10
+
+    def test_shallow_clone_without_the_commit_falls_back_to_mtime(self, monkeypatch, tmp_path):
+        """git answering with no date (shallow clone) must not be taken as one."""
+        copy = tmp_path / "oni.ascii.txt"
+        copy.write_text(" SEAS  YR   TOTAL   ANOM\n  ASO 2026  29.23  2.46\n", encoding="utf-8")
+
+        class _Empty:
+            returncode = 0
+            stdout = "\n"
+            stderr = ""
+
+        monkeypatch.setattr(utils.subprocess, "run", lambda *a, **k: _Empty())
+        assert utils._git_commit_date(copy) is None
+        assert utils.file_as_of(copy)[1] == "mtime"
+
+    def test_cached_provenance_reaches_pipeline_health(self, monkeypatch, tmp_path):
+        """as_of_source travels from the fetch all the way into the health file."""
+        monkeypatch.setattr(fe, "fetch_text", _dead_fetch)
+        provenance: dict = {}
+        fe._fetch_with_fallback(
+            primary_url=NOAA_NINO34_URL,
+            primary_label="CPC Niño 3.4",
+            primary_parser=fe.parse_nino34,
+            fallback_url=ERDDAP_NINO34_URL,
+            fallback_label="ERDDAP Niño 3.4",
+            fallback_parser=fe.parse_erddap_nino34,
+            provenance=provenance,
+        )
+        assert provenance["as_of_source"] == "commit"
+
+        monitor = PipelineMonitor()
+        monitor.record_source(
+            "NOAA NINO34 (copia versionada)",
+            status="cached",
+            cached_from=provenance["path"],
+            as_of=provenance["as_of"],
+            as_of_source=provenance["as_of_source"],
+        )
+        monitor.finalize("success")
+        out = tmp_path / "pipeline_health.json"
+        monitor.write_health_json(str(out))
+
+        import json
+
+        entry = json.loads(out.read_text(encoding="utf-8"))["sources"][0]
+        assert entry["as_of"] == provenance["as_of"]
+        assert entry["as_of_source"] == "commit"
 
 
 # ---------------------------------------------------------------------------
@@ -206,6 +327,7 @@ class TestFetchWithFallbackOffline:
         assert provenance["status"] == "cached"
         assert provenance["path"] == RAW_FALLBACK_PATHS[NOAA_NINO34_URL]
         assert provenance["as_of"]
+        assert provenance["as_of_source"] == "commit"
         # Dates come from the file that was read — nothing is invented.
         assert df.iloc[-1]["date"] is not None
 

@@ -232,11 +232,17 @@ def build_payload() -> tuple[dict, PipelineMonitor, LineageTracker]:
             status="cached",
             cached_from=prov.get("path"),
             as_of=prov.get("as_of"),
+            as_of_source=prov.get("as_of_source"),
             error_message=prov.get("live_error"),
+        )
+        dated = (
+            f"último commit {prov.get('as_of')}"
+            if prov.get("as_of_source") == "commit"
+            else f"mtime {prov.get('as_of')}, sin fecha de commit"
         )
         monitor.add_warning(
             f"{index_name}: descarga en vivo fallida; publicado desde "
-            f"{prov.get('path')} (escrita el {prov.get('as_of')})"
+            f"{prov.get('path')} ({dated})"
         )
 
     oni_cached = source_status.get("oni", {}).get("status") == "cached"

@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import subprocess
 import time
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
@@ -216,7 +217,14 @@ class SourceText:
         status:     ``"live"`` when NOAA answered, ``"cached"`` when the
                     versioned copy in ``data/raw/`` was read instead.
         path:       Repo-relative path of the local copy used, else None.
-        as_of:      ISO date on which that local copy was last written, else None.
+        as_of:      ISO date of the copy's contents, else None.  See
+                    ``as_of_source`` for how it was determined.
+        as_of_source: ``"commit"`` when ``as_of`` is the date of the last
+                    commit that touched the file — the reliable answer — or
+                    ``"mtime"`` when git could not date it and the filesystem
+                    timestamp had to be used.  A CI checkout rewrites mtimes
+                    to the build time, so an ``"mtime"`` date says little
+                    about how old the data really is.
         live_error: The live-fetch error that forced the fallback, else None.
     """
 
@@ -224,12 +232,75 @@ class SourceText:
     status: str
     path: Optional[str] = None
     as_of: Optional[str] = None
+    as_of_source: Optional[str] = None
     live_error: Optional[str] = None
 
     @property
     def is_cached(self) -> bool:
         """True when this text came from the versioned offline copy."""
         return self.status == "cached"
+
+
+def _git_commit_date(path: Path) -> Optional[str]:
+    """Return the ISO date of the last commit that touched *path*, else None.
+
+    This is the only trustworthy age for a versioned file: a CI checkout
+    rewrites every mtime to the time of the build, so the filesystem
+    timestamp of ``data/raw/oni.ascii.txt`` always reads as "today" there,
+    however old the data inside it is.
+
+    Returns None when git is not installed, when the history does not reach
+    the last commit for that path (a shallow clone), or when the file is not
+    tracked.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        ``"YYYY-MM-DD"``, or None when git cannot answer.
+    """
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(path.parent), "log", "-1", "--format=%cs", "--", str(path)],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        logger.warning("git no disponible para fechar %s: %s", path.name, exc)
+        return None
+
+    if proc.returncode != 0:
+        logger.warning(
+            "git log falló para %s (código %d): %s",
+            path.name, proc.returncode, (proc.stderr or "").strip()[:200],
+        )
+        return None
+
+    date = (proc.stdout or "").strip()
+    if len(date) != 10 or date.count("-") != 2:
+        logger.warning(
+            "git log no devolvió una fecha para %s "
+            "(¿clon superficial o archivo sin seguimiento?)", path.name,
+        )
+        return None
+    return date
+
+
+def file_as_of(path: Path) -> tuple[str, str]:
+    """Date the contents of *path*, and say how that date was obtained.
+
+    Args:
+        path: Absolute path to the file.
+
+    Returns:
+        ``(iso_date, source)`` where *source* is ``"commit"`` or ``"mtime"``.
+    """
+    commit_date = _git_commit_date(path)
+    if commit_date:
+        return commit_date, "commit"
+    mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).date().isoformat()
+    return mtime, "mtime"
 
 
 def read_raw_fallback(url: str, label: Optional[str] = None) -> SourceText:
@@ -273,12 +344,21 @@ def read_raw_fallback(url: str, label: Optional[str] = None) -> SourceText:
             f"publica nada con ella."
         )
 
-    as_of = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc).date().isoformat()
-    logger.warning(
-        "%s: usando la copia versionada %s (escrita el %s) — la descarga "
-        "en vivo falló.", tag, rel, as_of,
+    as_of, as_of_source = file_as_of(path)
+    if as_of_source == "commit":
+        logger.warning(
+            "%s: usando la copia versionada %s (último commit %s) — la "
+            "descarga en vivo falló.", tag, rel, as_of,
+        )
+    else:
+        logger.warning(
+            "%s: usando la copia versionada %s (mtime %s; git no pudo fechar el "
+            "archivo, así que esa fecha puede ser la del checkout y no la de "
+            "los datos) — la descarga en vivo falló.", tag, rel, as_of,
+        )
+    return SourceText(
+        text=text, status="cached", path=rel, as_of=as_of, as_of_source=as_of_source
     )
-    return SourceText(text=text, status="cached", path=rel, as_of=as_of)
 
 
 def fetch_text_or_cached(

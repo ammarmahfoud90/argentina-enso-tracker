@@ -26,8 +26,10 @@ class SourceMetrics:
 
     ``status`` is "success", "failed", or "cached".  "cached" means the live
     endpoint could not be reached and the versioned copy in ``data/raw/`` was
-    read instead; ``cached_from`` names that file and ``as_of`` is the date it
-    was last written.
+    read instead; ``cached_from`` names that file, ``as_of`` dates its
+    contents and ``as_of_source`` says whether that date is the file's last
+    commit ("commit") or merely its mtime ("mtime"), which in CI is the time
+    of the checkout rather than of the data.
     """
 
     source_name: str
@@ -41,6 +43,7 @@ class SourceMetrics:
     cache_hit: bool = False
     cached_from: Optional[str] = None
     as_of: Optional[str] = None
+    as_of_source: Optional[str] = None
 
 
 @dataclass
@@ -137,6 +140,7 @@ class PipelineMonitor:
         *,
         cached_from: Optional[str] = None,
         as_of: Optional[str] = None,
+        as_of_source: Optional[str] = None,
         row_count: Optional[int] = None,
         data_freshness_days: Optional[int] = None,
         error_message: Optional[str] = None,
@@ -151,7 +155,8 @@ class PipelineMonitor:
             source_name: Label shown in pipeline_health.json.
             status: "success", "failed", or "cached".
             cached_from: Path of the offline copy, when status is "cached".
-            as_of: Date that copy was written, when status is "cached".
+            as_of: Date of that copy's contents, when status is "cached".
+            as_of_source: "commit" or "mtime" — how *as_of* was determined.
             row_count: Rows parsed from the source.
             data_freshness_days: Age in days of the newest data point.
             error_message: Live-fetch error that forced a fallback.
@@ -171,6 +176,7 @@ class PipelineMonitor:
             cache_hit=status == "cached",
             cached_from=cached_from,
             as_of=as_of,
+            as_of_source=as_of_source,
         )
         self._build.sources.append(metrics)
         return metrics
@@ -214,6 +220,7 @@ class PipelineMonitor:
                     "freshness_days": s.data_freshness_days,
                     "cached_from": s.cached_from,
                     "as_of": s.as_of,
+                    "as_of_source": s.as_of_source,
                 }
                 for s in self._build.sources
             ],

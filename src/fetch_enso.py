@@ -69,11 +69,13 @@ class ENSOSnapshot:
         soi_series: Full SOI time series as a DataFrame (columns: date, soi).
         data_sources: Dict mapping index name to the source used ("ERDDAP" or "CPC").
         source_status: Dict mapping index name to how its text was obtained:
-            ``{"status": "live"|"cached", "path": ..., "as_of": ...}``.  A
-            "cached" entry means the live endpoint failed after all retries
-            and the versioned copy in ``data/raw/`` was read instead; the
-            copy's write date is reported in ``as_of``.  Index values and
-            their dates always come from the file that was actually read.
+            ``{"status": "live"|"cached", "path": ..., "as_of": ...,
+            "as_of_source": ...}``.  A "cached" entry means the live endpoint
+            failed after all retries and the versioned copy in ``data/raw/``
+            was read instead; ``as_of`` is the date of the last commit that
+            touched that copy (``as_of_source="commit"``), or its mtime when
+            git could not date it (``as_of_source="mtime"``).  Index values
+            and their dates always come from the file that was actually read.
     """
 
     oni_value: float
@@ -550,6 +552,7 @@ def _fetch_with_fallback(
         source=primary_source,
         path=cached.path,
         as_of=cached.as_of,
+        as_of_source=cached.as_of_source,
         live_error=str(fallback_error),
     )
     logger.warning(
@@ -601,6 +604,7 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
         "status": oni_text.status,
         "path": oni_text.path,
         "as_of": oni_text.as_of,
+        "as_of_source": oni_text.as_of_source,
         "live_error": oni_text.live_error,
     }
 
@@ -711,7 +715,11 @@ def fetch_enso_snapshot() -> ENSOSnapshot:
     if cached_indices:
         logger.warning(
             "Índices publicados desde la copia versionada: %s",
-            ", ".join(f"{k} ({source_status[k].get('as_of')})" for k in cached_indices),
+            ", ".join(
+                f"{k} ({source_status[k].get('as_of')}"
+                f", {source_status[k].get('as_of_source')})"
+                for k in cached_indices
+            ),
         )
     return snapshot
 
@@ -754,7 +762,8 @@ def fetch_operational_reference() -> dict:
                           "provisional": True,
                           "status": roni_text.status,
                           "cached_path": roni_text.path,
-                          "cached_as_of": roni_text.as_of}
+                          "cached_as_of": roni_text.as_of,
+                          "cached_as_of_source": roni_text.as_of_source}
         result["roni_series"] = [{"date": r.date.date().isoformat(), "season": str(r.season),
                                   "year": int(r.year), "roni": float(r.oni)} for r in frame.itertuples()]
     except Exception as exc:
