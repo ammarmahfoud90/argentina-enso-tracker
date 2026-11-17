@@ -1736,6 +1736,8 @@ async function main() {
   const nino34Sign = cur.nino34_value >= 0 ? '+' : '';
   const soiSign2 = cur.soi_value >= 0 ? '+' : '';
   document.getElementById('gauge-nino34').textContent = nino34Sign + cur.nino34_value.toFixed(2) + ' °C';
+  const nino34DateEl = document.getElementById('gauge-nino34-date');
+  if (nino34DateEl && cur.nino34_date) nino34DateEl.textContent = cur.nino34_date.slice(0, 7);
   document.getElementById('gauge-soi').textContent = soiSign2 + cur.soi_value.toFixed(1);
   document.getElementById('gauge-season-label').textContent = cur.oni_season;
   document.getElementById('gauge-season-val').textContent = cur.oni_date;

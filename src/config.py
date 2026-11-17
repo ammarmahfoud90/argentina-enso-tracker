@@ -23,10 +23,11 @@ NOAA_ENSO_DISCUSSION_URL = (
 )
 
 NOAA_NINO34_URL = (
-    "https://www.cpc.ncep.noaa.gov/data/indices/ersst5.nino.mth.91-20.ascii"
+    "https://www.cpc.ncep.noaa.gov/data/indices/detrend.nino34.ascii.txt"
 )
-"""Monthly Niño region SST anomalies (regions 1+2, 3, 4, 3.4) from
-ERSSTv5, base period 1991-2020."""
+"""Monthly Niño 3.4 SST anomaly from ERSSTv6 (columns YR MON TOTAL
+ClimAdjust ANOM), the monthly input to CPC's ONI. Replaces the ERSSTv5
+file ersst5.nino.mth.91-20.ascii, which stopped updating after June 2026."""
 
 NOAA_SOI_URL = (
     "https://www.cpc.ncep.noaa.gov/data/indices/soi"
