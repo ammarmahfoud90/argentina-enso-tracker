@@ -63,12 +63,13 @@ jobs:
           cache: "pip"
 
       # ── 3. Install minimal runtime dependencies ──────────────────────────
-      # Only `requests` is needed — it is the sole external import used by
-      # src/utils.fetch_text(), which drives all three NOAA fetches.
-      # We do NOT install the full requirements (pandas, xarray, etc.) because
-      # this workflow does not touch correlation computation or CHIRPS data.
+      # `requests` drives the NOAA fetches in src/utils.fetch_text().
+      # `pandas` is needed because the SOI freshness check reuses
+      # src.fetch_enso.parse_soi rather than keeping a second SOI parser.
+      # We still do NOT install the full requirements (xarray, rasterio, etc.)
+      # because this workflow does not touch correlations or CHIRPS data.
       - name: Install dependencies
-        run: pip install requests
+        run: pip install requests pandas
 
       # ── 4. Run the refresh script ────────────────────────────────────────
       # scripts/refresh_noaa_data.py:
@@ -78,6 +79,8 @@ jobs:
       #   • Overwrites data/raw/<file> only when period_delta_months > 0.
       #   • Writes a `changed_sources` output variable (e.g. "ONI,SOI") so
       #     the commit step knows what actually changed.
+      # A non-zero exit means a source could not be fetched or parsed; the
+      # job then fails instead of passing with a [FAIL] buried in the log.
       - name: Refresh NOAA index files
         id: refresh
         run: python -m scripts.refresh_noaa_data
@@ -86,8 +89,10 @@ jobs:
       # The `if` guard reads the output variable set in step 4.
       # An empty `changed_sources` means all files were already current —
       # we skip this step entirely to avoid pointless empty commits.
+      # always(): files that *were* refreshed still get committed even when
+      # another source failed and the job is going to end red.
       - name: Commit updated NOAA files
-        if: steps.refresh.outputs.changed_sources != ''
+        if: always() && steps.refresh.outputs.changed_sources != ''
         run: |
           # Configure the built-in Actions bot as the commit author.
           git config user.name  "github-actions[bot]"

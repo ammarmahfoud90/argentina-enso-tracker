@@ -7,8 +7,11 @@ Designed to be called by the GitHub Actions workflow at
 
 Exit codes
 ----------
-0  All sources processed successfully (some may have been unchanged).
-1  At least one network fetch failed; partial updates may have been written.
+0  Every source was processed successfully (some may have been unchanged).
+1  At least one source could not be fetched or could not be parsed; partial
+   updates may have been written.  A parse error is a failure like any other:
+   a file whose freshness cannot be checked is a file that quietly stops
+   being refreshed, which is exactly how data/raw/soi.txt froze at May 2026.
 
 GitHub Actions integration
 --------------------------
@@ -30,9 +33,37 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import NOAA_ONI_URL, NOAA_RONI_URL, NOAA_NINO34_URL, NOAA_SOI_URL
+from src.fetch_enso import parse_soi
 from src.utils import check_noaa_data_freshness, fetch_text, get_logger
 
 logger = get_logger(__name__)
+
+
+def _soi_last_period(raw_text: str) -> tuple[int, int]:
+    """Return the latest ``(year, month)`` of a CPC SOI payload.
+
+    The generic row scanner in :func:`src.utils._parse_last_period` cannot
+    read this file: each row carries twelve monthly values, and the year runs
+    into the first value when that value is wide (``2030-999.9-999.9...``).
+    So this delegates to :func:`src.fetch_enso.parse_soi`, the same parser the
+    build uses, instead of keeping a second SOI reader that can drift from it.
+    ``parse_soi`` already drops the ``-999.9`` placeholders, so the result is
+    the last month that actually carries an observation.
+
+    Args:
+        raw_text: Raw content of the CPC SOI file.
+
+    Returns:
+        ``(year, month)`` of the newest observation.
+
+    Raises:
+        ValueError: If no valid SOI rows can be parsed.
+    """
+    frame = parse_soi(raw_text)
+    if frame.empty:
+        raise ValueError("No valid SOI rows found in the provided text.")
+    latest = frame["date"].iloc[-1]
+    return int(latest.year), int(latest.month)
 
 # ---------------------------------------------------------------------------
 # Source registry
@@ -61,6 +92,7 @@ SOURCES: list[dict] = [
         "url": NOAA_SOI_URL,
         "local_path": RAW_DIR / "soi.txt",
         "description": "Southern Oscillation Index — Tahiti minus Darwin SLP",
+        "period_parser": _soi_last_period,
     },
     {
         "label": "RONI",
@@ -94,14 +126,16 @@ def _section(title: str) -> None:
 # Main refresh logic
 # ---------------------------------------------------------------------------
 
-def refresh_all() -> list[str]:
+def refresh_all() -> tuple[list[str], list[str]]:
     """Fetch, compare, and conditionally overwrite each NOAA source file.
 
     Returns
     -------
-    list[str]
-        Labels of sources whose local files were updated (e.g. ["ONI", "SOI"]).
-        Empty list means everything was already current.
+    tuple[list[str], list[str]]
+        ``(changed, failed)``: labels of the sources whose local files were
+        updated, and labels of the sources that could not be fetched or
+        parsed.  An empty *changed* means everything was already current; a
+        non-empty *failed* must make the run fail.
     """
     RAW_DIR.mkdir(parents=True, exist_ok=True)
     changed: list[str] = []
@@ -139,10 +173,13 @@ def refresh_all() -> list[str]:
         # ── 3. Freshness check against existing local file ─────────────────
         print(f"\n  [CHECK] Running freshness comparison...")
         try:
-            report = check_noaa_data_freshness(local_path, live_text)
+            report = check_noaa_data_freshness(
+                local_path, live_text, period_parser=source.get("period_parser")
+            )
         except ValueError as exc:
-            # Parser could not find data rows — log and skip rather than
-            # silently overwriting with potentially corrupt data.
+            # Parser could not find data rows — do not overwrite with
+            # possibly corrupt data, and do not let the run pass either: a
+            # file that cannot be checked quietly stops being refreshed.
             print(f"  [FAIL]  Parser error during freshness check: {exc}")
             logger.error("Parser failed for %s: %s", label, exc)
             fetch_errors.append(label)
@@ -173,7 +210,7 @@ def refresh_all() -> list[str]:
             print(f"\n  [SKIP]  Status is {report.status!r} but delta={report.period_delta_months:+d}. "
                   f"No overwrite — see message above.")
 
-    return changed
+    return changed, fetch_errors
 
 
 def main() -> None:
@@ -181,12 +218,7 @@ def main() -> None:
     print("  NOAA ENSO Data Refresh")
     print("=" * 60)
 
-    changed = refresh_all()
-    had_errors = any(
-        s["label"] not in [c for c in changed]
-        and not Path(s["local_path"]).exists()
-        for s in SOURCES
-    )
+    changed, failed = refresh_all()
 
     # ── Summary ────────────────────────────────────────────────────────────
     print("\n" + "=" * 60)
@@ -194,14 +226,21 @@ def main() -> None:
         print(f"  UPDATED : {', '.join(changed)}")
     else:
         print("  No sources updated — all local files are current.")
+    if failed:
+        print(f"  FAILED  : {', '.join(failed)}")
+        print("  A source that cannot be fetched or parsed stops being")
+        print("  refreshed, so this run is a failure.")
+        for label in failed:
+            print(f"::error::Refresh failed for {label}")
     print("=" * 60 + "\n")
 
     # ── Emit GitHub Actions output ─────────────────────────────────────────
     # The workflow reads `changed_sources` to decide whether to git-commit.
     # An empty value means "nothing to commit".
     _write_github_output("changed_sources", ",".join(changed))
+    _write_github_output("failed_sources", ",".join(failed))
 
-    sys.exit(1 if had_errors else 0)
+    sys.exit(1 if failed else 0)
 
 
 if __name__ == "__main__":

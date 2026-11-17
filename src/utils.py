@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Callable, Optional, Tuple
 
 import requests
 
@@ -510,6 +510,13 @@ def _parse_last_period(text: str) -> Tuple[int, int]:
     The function scans all data rows, ignores headers, and returns the
     ``(year, month)`` pair from the last valid row found.
 
+    It does **not** understand every CPC layout.  The SOI file, for one, puts
+    twelve monthly values on each year's row and runs the year into the first
+    value when that value is wide (``2030-999.9-999.9...``), which no rule
+    here matches.  Rather than grow a second SOI parser next to
+    :func:`src.fetch_enso.parse_soi`, callers pass their own
+    ``period_parser`` to :func:`check_noaa_data_freshness`.
+
     Args:
         text: Raw ASCII content of the NOAA data file or freshly fetched string.
 
@@ -564,6 +571,7 @@ def check_noaa_data_freshness(
     local_file_path: str | Path,
     fetched_text: str,
     stale_threshold_days: int = STALE_THRESHOLD_DAYS,
+    period_parser: Optional[Callable[[str], Tuple[int, int]]] = None,
 ) -> FreshnessReport:
     """Compare a local NOAA ENSO data file against freshly fetched text.
 
@@ -583,6 +591,10 @@ def check_noaa_data_freshness(
                          format as the local file).
         stale_threshold_days: Number of days after which the local file is
                               considered stale by age alone (default 40).
+        period_parser: Callable returning the latest ``(year, month)`` of a
+                       raw payload.  Defaults to :func:`_parse_last_period`.
+                       Pass the index's own parser for formats that one does
+                       not read — the SOI file, for instance.
 
     Returns:
         A :class:`FreshnessReport` with all comparison details.
@@ -613,9 +625,10 @@ def check_noaa_data_freshness(
     days_since_write = (now_utc - mtime_utc).days
 
     # --- Parse latest period from each source ---
+    parse_period = period_parser or _parse_last_period
     local_text = path.read_text(encoding="utf-8", errors="replace")
-    local_period = _parse_last_period(local_text)
-    remote_period = _parse_last_period(fetched_text)
+    local_period = parse_period(local_text)
+    remote_period = parse_period(fetched_text)
 
     # --- Staleness flags ---
     delta_months = _period_delta_months(local_period, remote_period)
