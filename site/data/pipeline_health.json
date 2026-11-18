@@ -1,14 +1,14 @@
 {
-  "build_id": "2026-11-17T17:23:52.763885+00:00",
-  "status": "partial",
-  "duration_seconds": 266.19,
-  "last_updated": "2026-11-17T17:28:18.953556+00:00",
+  "build_id": "2026-11-18T16:53:12.893703+00:00",
+  "status": "success",
+  "duration_seconds": 43.81,
+  "last_updated": "2026-11-18T16:53:56.705360+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 524.9,
-      "freshness_days": 63,
+      "latency_ms": 986.0,
+      "freshness_days": 64,
       "cached_from": null,
       "as_of": null,
       "as_of_source": null
@@ -16,7 +16,7 @@
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 14.9,
+      "latency_ms": 12.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -25,7 +25,7 @@
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.6,
+      "latency_ms": 2.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -34,7 +34,7 @@
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 379.1,
+      "latency_ms": 754.6,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -42,8 +42,8 @@
     },
     {
       "name": "TAO/TRITON subsurface",
-      "status": "failed",
-      "latency_ms": 130425.2,
+      "status": "success",
+      "latency_ms": 17335.9,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -52,8 +52,8 @@
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 286.8,
-      "freshness_days": 33,
+      "latency_ms": 291.3,
+      "freshness_days": 34,
       "cached_from": null,
       "as_of": null,
       "as_of_source": null
@@ -61,7 +61,7 @@
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 121.4,
+      "latency_ms": 459.2,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -69,8 +69,8 @@
     },
     {
       "name": "OISST SST map",
-      "status": "failed",
-      "latency_ms": 132067.0,
+      "status": "success",
+      "latency_ms": 22184.2,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -90,12 +90,10 @@
     }
   },
   "output_sizes_kb": {
-    "site/data/enso.json": 841.0,
+    "site/data/enso.json": 842.9,
     "site/data/enso-history.json": 418.9,
     "site/data/sst_map.json": 131.4
   },
-  "warnings": [
-    "Data sources failed: TAO/TRITON subsurface, OISST SST map"
-  ],
+  "warnings": [],
   "errors": []
 }
