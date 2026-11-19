@@ -1,64 +1,83 @@
 /* ==========================================================================
-   Design tokens — Argentina ENSO Tracker v2
-   Editorial bulletin palette (white background).
+   Design tokens — Argentina ENSO Tracker
 
-   Fonts loaded in <head>:
-     Libre Franklin (body) · IBM Plex Mono (data / code)
-   Via Google Fonts.
+   One ground, one ink, one accent per phase. Surfaces are separated by a step
+   in tone, never by a line or a shadow. Colour arrives in solid fields, the
+   way a two-colour print job would use it.
+
+   One typeface: Libre Franklin. Figures use tabular numerals rather than a
+   second, monospaced face.
    ========================================================================== */
 
 :root {
-  /* ── Colour palette ───────────────────────────────────────────────────── */
+  /* ── Ground and ink (light) ───────────────────────────────────────────── */
   --color-bg:        #FFFFFF;
-  --color-bg-alt:    #F4F6F9;       /* panel / section background            */
-  --color-bg-inset:  #FAFBFC;       /* inset panel background                */
-  --color-ink:       #14161A;       /* primary text                          */
-  --color-ink-2:     #555C68;       /* secondary / captions                  */
-  --color-ink-3:     #79818E;       /* tertiary / metadata                   */
-  --color-ink-4:     #A7AEBB;       /* disabled / faint                      */
-  --color-border:    #E4E7EC;       /* hairline borders                      */
-  --color-border-2:  #C7CCD6;       /* axis / dividers                       */
-  --color-border-3:  #EEF0F4;       /* faint grid lines                      */
-  --color-rule:      #E4E7EC;       /* horizontal rules, borders             */
+  --color-bg-alt:    #EFF1F4;       /* one tone step down from the ground    */
+  --color-bg-inset:  #E6E9ED;       /* two steps down                        */
+  --color-ink:       #14161A;
+  --color-ink-2:     #474D57;
+  --color-ink-3:     #5C636D;
+  --color-ink-4:     #9AA1AC;
+  --color-border:    #DDE1E6;
+  --color-border-2:  #C7CCD6;
+  --color-border-3:  #E6E9ED;
+  --color-rule:      #DDE1E6;
 
-  /* Phase colours */
-  --color-nino:      #C2382A;       /* El Niño red                           */
-  --color-nino-bg:   #FDF0EF;       /* El Niño tinted background             */
-  --color-nina:      #2A55D0;       /* La Niña blue                          */
-  --color-nina-bg:   #EEF2FB;       /* La Niña tinted background             */
-  --color-neutral:   #79818E;       /* Neutral gray                          */
-  --color-neutral-bg:#F2F2F0;       /* Neutral tinted background             */
+  /* ── The three phases ─────────────────────────────────────────────────── */
+  --color-nino:      #C0252A;       /* El Niño                                */
+  --color-nino-bg:   #F7E6E3;
+  --color-nina:      #2A55D0;       /* La Niña                                */
+  --color-nina-bg:   #E4EAF8;
+  --color-neutral:   #6B7280;
+  --color-neutral-bg:#ECEDEF;
 
-  /* Accent */
-  --color-accent:    #1A3F8F;       /* dark blue for links / headers         */
-  --color-accent-2:  #D4A01A;       /* amber — used for warnings             */
+  /* The solid field each phase paints the first screen with. */
+  --field-nino:      #8E2318;
+  --field-nina:      #17307E;
+  --field-neutral:   #262B33;
+  --field-ink:       #FFFFFF;
 
-  /* Significance highlight */
-  --color-sig-bg:    #FFFBE6;       /* highlighted significant cell bg        */
+  /* ── Accent ───────────────────────────────────────────────────────────── */
+  --color-accent:    #1A3F8F;
+  --color-accent-2:  #9A6B0F;
 
-  /* ── Typography ──────────────────────────────────────────────────────── */
+  --color-sig-bg:    #F3EEDC;
+
+  /* ── Type ─────────────────────────────────────────────────────────────── */
   --font-body:    'Libre Franklin', system-ui, -apple-system, sans-serif;
-  --font-mono:    'IBM Plex Mono', 'Courier New', monospace;
+  --font-figures: 'Libre Franklin', system-ui, -apple-system, sans-serif;
 
-  --text-xs:   0.72rem;   /* 11.5px */
-  --text-sm:   0.82rem;   /* 13px   */
-  --text-base: 0.95rem;   /* 15px   */
-  --text-lg:   1.1rem;    /* 17.6px */
-  --text-xl:   1.3rem;
-  --text-2xl:  1.7rem;
-  --text-3xl:  2.4rem;
-  --text-hero: 3.2rem;
+  /* Five steps do the visible work. */
+  --t-display: clamp(2.2rem, 7.2vw, 6.5rem);
+  --t-figure:  clamp(2.75rem, 5.2vw, 4.75rem);
+  --t-head:    clamp(1.75rem, 1.15rem + 2.3vw, 2.9rem);
+  --t-lead:    clamp(1.15rem, 1.02rem + 0.5vw, 1.4rem);
+  --t-body:    1.0625rem;   /* 17px */
+  --t-small:   0.875rem;    /* 14px, for labels and notes only */
+
+  /* Kept for anything still reading the old names. */
+  --text-xs:   var(--t-small);
+  --text-sm:   var(--t-small);
+  --text-base: var(--t-body);
+  --text-lg:   var(--t-lead);
+  --text-xl:   var(--t-lead);
+  --text-2xl:  var(--t-head);
+  --text-3xl:  var(--t-head);
+  --text-hero: var(--t-display);
+  --text-hero-fluid: var(--t-display);
+  --text-h1-fluid:   var(--t-display);
+  --text-h2-fluid:   var(--t-head);
 
   --weight-regular: 400;
   --weight-medium:  500;
   --weight-semi:    600;
   --weight-bold:    700;
-  --weight-black:   900;
+  --weight-black:   800;
 
-  --leading-tight:  1.2;
-  --leading-snug:   1.4;
-  --leading-normal: 1.6;
-  --leading-loose:  1.85;
+  --leading-tight:  1.05;
+  --leading-snug:   1.3;
+  --leading-normal: 1.55;
+  --leading-loose:  1.7;
 
   /* ── Spacing ──────────────────────────────────────────────────────────── */
   --space-1:   4px;
@@ -73,86 +92,86 @@
   --space-16: 64px;
   --space-20: 80px;
 
+  /* The gap between sections, clearly larger than any gap inside one. */
+  --section-gap: clamp(88px, 9vw, 160px);
+
   /* ── Layout ───────────────────────────────────────────────────────────── */
   --max-width: 1180px;
   --max-width-wide: 1180px;
+  --margin: clamp(16px, 3.2vw, 44px);
 
-  /* ── Borders & radius ─────────────────────────────────────────────────── */
-  --radius-sm:  3px;
-  --radius-md:  6px;
-  --radius-lg: 10px;
+  /* ── Square corners, decided once ─────────────────────────────────────── */
+  --radius-sm:  0;
+  --radius-md:  0;
+  --radius-lg:  0;
+  --radius-card: 0;
 
-  /* ── Shadows ──────────────────────────────────────────────────────────── */
-  --shadow-card:  0 1px 4px rgba(20,22,26,0.08);
-  --shadow-hover: 0 4px 16px rgba(20,22,26,0.12);
+  /* Defined so older rules resolve; nothing at rest carries one. */ /* taste-skill-ignore */
+  --shadow-card:  none;
+  --shadow-hover: none;
+  --shadow-card-up: none;
+  --shadow-card-lift: none;
+  --shadow-card-hover-lift: none;
+  --shadow-nino: none;
+  --shadow-nina: none;
+  --shadow-neutral: none;
+  --glass-shadow: none;
+  --glass-card-blur: 0px;
+  --glass-bg: var(--color-bg-alt);
+  --glass-border: transparent;
+  --glass-card-bg: var(--color-bg-alt);
+  --glass-card-border: transparent;
 
-  /* ── Transitions ──────────────────────────────────────────────────────── */
+  /* ── Motion ───────────────────────────────────────────────────────────── */
   --transition: 150ms ease;
-}
-
-/* ── Gradient scale (ENSO hero) ─────────────────────────────────────────── */
-:root {
-  --gradient-enso: linear-gradient(
-    to right,
-    var(--color-nina)   0%,
-    #7BA8E8             30%,
-    #D4D4D0             50%,
-    #E89090             70%,
-    var(--color-nino)  100%
-  );
-
-  /* ── Phase gradients (command center) ─────────────────────────────────── */
-  --gradient-nino:    linear-gradient(135deg, #7f1d1d 0%, #b91c1c 25%, #c2382a 50%, #ea580c 75%, #d97706 100%);
-  --gradient-nina:    linear-gradient(135deg, #0c1445 0%, #1e3a8a 25%, #2563eb 55%, #38bdf8 100%);
-  --gradient-neutral: linear-gradient(135deg, #1e1e2e 0%, #334155 50%, #475569 100%);
-
-  /* ── Glassmorphism ────────────────────────────────────────────────────── */
-  --glass-bg:         rgba(255, 255, 255, 0.55);
-  --glass-border:     rgba(255, 255, 255, 0.3);
-  --glass-shadow:     0 8px 32px rgba(0, 0, 0, 0.08);
-
-  /* ── Card system ──────────────────────────────────────────────────────── */
-  --radius-card:      12px;
-  --shadow-card-up:   0 4px 20px rgba(20, 22, 26, 0.06);
-  --shadow-card-lift: 0 8px 30px rgba(20, 22, 26, 0.12);
-
-  /* ── Dark mode enhanced ───────────────────────────────────────────────── */
-  --dark-bg:              #0a0e27;
-  --dark-bg-gradient:     linear-gradient(180deg, #0a0e27 0%, #0f1631 50%, #131a3a 100%);
-  --dark-glass-bg:        rgba(20, 24, 50, 0.6);
-  --dark-glass-border:    rgba(100, 120, 200, 0.15);
-  --dark-card-bg:         rgba(15, 18, 38, 0.8);
-  --dark-gradient-nino:   linear-gradient(135deg, #450a0a 0%, #7f1d1d 30%, #991b1b 60%, #b45309 100%);
-  --dark-gradient-nina:   linear-gradient(135deg, #020617 0%, #0c1445 30%, #1e3a8a 60%, #1d4ed8 100%);
-  --dark-gradient-neutral:linear-gradient(135deg, #0a0e27 0%, #1e1e2e 50%, #2d2d44 100%);
-
-  /* ── Transitions ──────────────────────────────────────────────────────── */
-  --ease-smooth:  250ms cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-bounce:  350ms cubic-bezier(0.34, 1.56, 0.64, 1);
-  --ease-spring:  500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth:  220ms cubic-bezier(0.22, 0.7, 0.3, 1);
+  --ease-bounce:  300ms cubic-bezier(0.22, 0.7, 0.3, 1);
+  --ease-spring:  420ms cubic-bezier(0.22, 0.7, 0.3, 1);
   --ease-out-expo: 600ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* ── Glassmorphism cards ────────────────────────────────────────────── */
-  --glass-card-bg:     rgba(255, 255, 255, 0.65);
-  --glass-card-border: rgba(255, 255, 255, 0.4);
-  --glass-card-blur:   12px;
+  /* ── Flat fields where gradients used to be ───────────────────────────── */
+  --gradient-enso:    var(--color-bg-alt);
+  --gradient-nino:    var(--field-nino);
+  --gradient-nina:    var(--field-nina);
+  --gradient-neutral: var(--field-neutral);
 
-  /* ── Phase-tinted shadows ───────────────────────────────────────────── */
-  --shadow-nino:    0 4px 24px rgba(194, 56, 42, 0.10), 0 1px 4px rgba(194, 56, 42, 0.06);
-  --shadow-nina:    0 4px 24px rgba(42, 85, 208, 0.10), 0 1px 4px rgba(42, 85, 208, 0.06);
-  --shadow-neutral: 0 4px 24px rgba(121, 129, 142, 0.08), 0 1px 4px rgba(121, 129, 142, 0.04);
+  /* ── Dark ground ──────────────────────────────────────────────────────── */
+  --dark-bg:              #0E1014;
+  --dark-bg-gradient:     #0E1014;
+  --dark-surface:         #171A20;
+  --dark-surface-2:       #21252D;
+  --dark-ink:             #F2F3F5;
+  --dark-ink-2:           #B4BAC3;
+  --dark-ink-3:           #8A919B;
+  --dark-glass-bg:        #171A20;
+  --dark-glass-border:    transparent;
+  --dark-card-bg:         #171A20;
+  --dark-gradient-nino:   #7A1D14;
+  --dark-gradient-nina:   #142A6E;
+  --dark-gradient-neutral:#1F232B;
+  --dark-glow-nino:    none;
+  --dark-glow-nina:    none;
+  --dark-glow-neutral: none;
+  --dark-card-glow:    none;
+}
 
-  /* ── Card hover lift ────────────────────────────────────────────────── */
-  --shadow-card-hover-lift: 0 12px 40px rgba(20, 22, 26, 0.12), 0 4px 12px rgba(20, 22, 26, 0.06);
-
-  /* ── Fluid typography ───────────────────────────────────────────────── */
-  --text-hero-fluid: clamp(2.2rem, 5vw, 3.6rem);
-  --text-h1-fluid:   clamp(1.8rem, 4vw, 3rem);
-  --text-h2-fluid:   clamp(1.3rem, 2.5vw, 1.85rem);
-
-  /* ── Dark mode glow borders ─────────────────────────────────────────── */
-  --dark-glow-nino:    0 0 20px rgba(194, 56, 42, 0.15), inset 0 1px 0 rgba(194, 56, 42, 0.1);
-  --dark-glow-nina:    0 0 20px rgba(42, 85, 208, 0.15), inset 0 1px 0 rgba(42, 85, 208, 0.1);
-  --dark-glow-neutral: 0 0 20px rgba(100, 120, 200, 0.1), inset 0 1px 0 rgba(100, 120, 200, 0.08);
-  --dark-card-glow:    0 0 1px rgba(100, 120, 200, 0.3), 0 4px 20px rgba(0, 0, 0, 0.3);
+/* ── The dark ground: the same tokens, swapped ──────────────────────────── */
+html.dark {
+  --color-bg:        var(--dark-bg);
+  --color-bg-alt:    var(--dark-surface);
+  --color-bg-inset:  var(--dark-surface-2);
+  --color-ink:       var(--dark-ink);
+  --color-ink-2:     var(--dark-ink-2);
+  --color-ink-3:     var(--dark-ink-3);
+  --color-ink-4:     #6E757F;
+  --color-border:    #262B33;
+  --color-border-2:  #333942;
+  --color-border-3:  #21252D;
+  --color-accent:    #8CB0FF;
+  --color-nina-bg:   #16213F;
+  --color-neutral-bg:#21252D;
+  --color-nino-bg:   #2E1613;
+  --field-nino:      var(--dark-gradient-nino);
+  --field-nina:      var(--dark-gradient-nina);
+  --field-neutral:   var(--dark-gradient-neutral);
 }

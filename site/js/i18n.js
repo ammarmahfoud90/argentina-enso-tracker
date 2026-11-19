@@ -23,6 +23,7 @@ window.I18N = {
   getLang() { return this._lang; },
 
   translations: {
+    hero_cta: {"es": "Ver qué significa para cada región", "en": "See what it means for each region"},
     legacy_oni_label: {"es": "clasificación por ONI histórico", "en": "historical ONI classification"},
     roni_reading: {"es": "RONI NOAA: {value} °C · {season} {year}", "en": "NOAA RONI: {value} °C · {season} {year}"},
     advisory_reading: {"es": "Aviso oficial: {status} · emitido {date}.", "en": "Official advisory: {status} · issued {date}."},
@@ -121,7 +122,7 @@ window.I18N = {
     sam_current: {"es": "Último SAM observado", "en": "Last observed SAM"},
     sam_aria:         { es: 'Serie temporal del SAM/AAO', en: 'SAM/AAO time series' },
     sam_note: {"es": "El SAM modifica la posición y la intensidad de los vientos del oeste. Su asociación con la lluvia depende de la estación y del lugar; un valor positivo o negativo no determina por sí solo la lluvia en toda Patagonia. Puede interactuar con ENSO.", "en": "SAM affects the position and strength of the westerlies. Its rainfall association depends on season and location; its sign alone does not determine rainfall throughout Patagonia. It can interact with ENSO."},
-    sam_stale:        { es: 'Dato desactualizado: ultimo valor de {month} {year} ({days} dias). La fuente NOAA CPC puede estar temporalmente sin actualizar.', en: 'Stale data: last value from {month} {year} ({days} days ago). The NOAA CPC source may be temporarily not updated.' },
+    sam_stale:        { es: 'Dato desactualizado: el último valor es de {month} {year}, hace {days} días. La fuente de NOAA CPC puede estar sin actualizar.', en: 'Stale data: last value from {month} {year} ({days} days ago). The NOAA CPC source may be temporarily not updated.' },
 
     /* ── Subsurface Section ── */
     subsurface_title: { es: '\u00bfQu\u00e9 pasa debajo de la superficie?', en: "What's happening below the surface?" },
@@ -147,7 +148,7 @@ window.I18N = {
     forecast_plume_link:{ es: 'Consultar en IRI', en: 'View at IRI' },
     forecast_no_data: { es: 'Pron\u00f3stico IRI no disponible para este mes.', en: 'IRI forecast not available for this month.' },
     forecast_source:  { es: 'Fuente: IRI/CCSR, Columbia University.', en: 'Source: IRI/CCSR, Columbia University.' },
-    forecast_stale:   { es: 'Pronostico IRI de {month} {year}. La actualizacion automatica fallo el {date}.', en: 'IRI forecast from {month} {year}. Automatic update failed on {date}.' },
+    forecast_stale:   { es: 'Pronóstico IRI de {month} {year}. La actualización automática falló el {date}.', en: 'IRI forecast from {month} {year}. Automatic update failed on {date}.' },
     forecast_not_available: { es: 'Pron\u00f3stico no disponible.', en: 'Forecast not available.' },
 
     /* ── Forecast links ── */
@@ -184,10 +185,10 @@ window.I18N = {
     corr_desc: {"es": "Asociaciones históricas entre ONI y lluvia en cinco cajas rectangulares CHIRPS v3.0. La comparación anual usa anomalías por mes calendario; la estacional, acumulados de tres meses completos. La altura de una barra indica asociación, no causalidad ni capacidad de pronóstico.", "en": "Historical associations between ONI and rainfall in five CHIRPS v3.0 rectangular boxes. Annual comparisons use calendar-month anomalies; seasonal comparisons use complete three-month totals. Bar height indicates association, not causality or forecast skill."},
     corr_season_label:{ es: 'Estaci\u00f3n:', en: 'Season:' },
     corr_bar_aria:    { es: 'Gr\u00e1fico de barras de correlaci\u00f3n ENSO-precipitaci\u00f3n por regi\u00f3n', en: 'ENSO-precipitation correlation bar chart by region' },
-    corr_detail_toggle:{ es: 'Tabla detallada por lag \u25b8', en: 'Detailed table by lag \u25b8' },
+    corr_detail_toggle:{ es: 'Tabla detallada por lag', en: 'Detailed table by lag' },
     corr_legend_label:{ es: 'correlaci\u00f3n', en: 'correlation' },
     corr_note: {"es": "Los colores y asteriscos requieren q < 0.05 después de corregir todas las comparaciones de la familia. Un resultado sin asterisco no demuestra ausencia de un vínculo físico. Las cajas no son promedios por provincia ni por cuenca; Patagonia solo cubre 37–50°S.", "en": "Colors and stars require q < 0.05 after adjusting all comparisons in the family. An unstarred result does not prove absence of a physical link. Boxes are not province or watershed means; Patagonia only covers 37–50°S."},
-    corr_stat_toggle: { es: 'Detalle estad\u00edstico \u25b8', en: 'Statistical detail \u25b8' },
+    corr_stat_toggle: { es: 'Detalle estad\u00edstico', en: 'Statistical detail' },
     corr_stat_detail: {"es": "Pearson y Spearman con p aproximado por autocorrelación y q ajustado por Benjamini–Yekutieli. Familia: regiones × lags 0–3 × anual y cuatro estaciones, separada por variable y coeficiente. Asteriscos: * q<0.05, ** q<0.01, *** q<0.001. Resultados exploratorios sin validación fuera de muestra.", "en": "Pearson and Spearman with approximate autocorrelation-adjusted p and Benjamini–Yekutieli adjusted q. Family: regions × lags 0–3 × annual and four seasons, separately by variable and coefficient. Stars: * q<0.05, ** q<0.01, *** q<0.001. Exploratory results without out-of-sample validation."},
     all_months: {"es": "Todos los meses disponibles", "en": "All available months"},
     all_months_temp:  { es: 'Todos los meses \u00b7 CPC Global Temperature', en: 'All months \u00b7 CPC Global Temperature' },
@@ -232,7 +233,7 @@ window.I18N = {
     data_fresh: {"es": "El sitio se generó recientemente; cada serie tiene su propia fecha de observación.", "en": "The site was generated recently; each series has its own observation date."},
     data_aging: {"es": "El sitio se generó hace {days} días; revisá las fechas de cada indicador.", "en": "The site was generated {days} days ago; check each indicator date."},
     data_stale: {"es": "El sitio se generó hace {days} días; sus datos pueden estar atrasados.", "en": "The site was generated {days} days ago; its observations may be delayed."},
-    stale_banner:     { es: 'ATENCIÓN: Datos desactualizados (última actualización hace {days} días). Verifique el estado del pipeline.', en: 'WARNING: Outdated data (last update {days} days ago). Check the pipeline status.' },
+    stale_banner:     { es: 'Atención: los datos están atrasados. La última actualización fue hace {days} días. Revisá el estado del pipeline.', en: 'Warning: the data is out of date. The last update was {days} days ago. Check the pipeline.' },
     footer_generated: { es: 'Datos generados el {date}.', en: 'Data generated on {date}.' },
     footer_generated_stale: { es: 'Datos generados el {date} (hace {days} dias. Revise el pipeline).', en: 'Data generated on {date} ({days} days ago. Check the pipeline).' },
 
@@ -248,13 +249,13 @@ window.I18N = {
     parana_ina_desc:  { es: 'Niveles actuales del Paran\u00e1 y alerta hidrol\u00f3gica del INA.', en: 'Current Paran\u00e1 levels and INA hydrological alert.' },
     parana_bdhi_name: { es: 'BDHI: Base de Datos Hidrol\u00f3gica', en: 'BDHI: Hydrological Database' },
     parana_bdhi_tag:  { es: 'Hist\u00f3rico', en: 'Historical' },
-    parana_bdhi_desc: { es: 'Base de datos hidrol\u00f3gica integrada del INA \u2014 series hist\u00f3ricas de caudal y nivel.', en: 'INA integrated hydrological database \u2014 historical flow and level series.' },
+    parana_bdhi_desc: { es: 'Base de datos hidrol\u00f3gica integrada del INA: series hist\u00f3ricas de caudal y nivel.', en: 'INA integrated hydrological database: historical flow and level series.' },
     forecast_ina_name:  { es: 'INA Alerta Hidrol\u00f3gico', en: 'INA Hydrological Alert' },
     forecast_ina_tag:   { es: 'Tiempo real', en: 'Real-time' },
     forecast_ina_desc:  { es: 'Niveles actuales del Paran\u00e1 y alerta hidrol\u00f3gica del INA.', en: 'Current Paran\u00e1 levels and INA hydrological alert.' },
     forecast_bdhi_name: { es: 'BDHI: Base de Datos Hidrol\u00f3gica', en: 'BDHI: Hydrological Database' },
     forecast_bdhi_tag:  { es: 'Hist\u00f3rico', en: 'Historical' },
-    forecast_bdhi_desc: { es: 'Base de datos hidrol\u00f3gica integrada del INA \u2014 series hist\u00f3ricas de caudal y nivel.', en: 'INA integrated hydrological database \u2014 historical flow and level series.' },
+    forecast_bdhi_desc: { es: 'Base de datos hidrol\u00f3gica integrada del INA: series hist\u00f3ricas de caudal y nivel.', en: 'INA integrated hydrological database: historical flow and level series.' },
     forecast_iri_nodata:{ es: 'Pron\u00f3stico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a>', en: 'IRI forecast not available for this month. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">View at IRI</a>' },
     forecast_iri_credit:{ es: 'Fuente: IRI/CCSR, Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a>', en: 'Source: IRI/CCSR, Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">View at IRI</a>' },
 
@@ -347,8 +348,8 @@ window.I18N = {
     detail_less_rain: { es: 'menos lluvia', en: 'less rainfall' },
     detail_more_rain_2:{ es: 'm\u00e1s lluvia', en: 'more rainfall' },
     detail_nino_years:{ es: 'A\u00f1os El Ni\u00f1o tienden a ser {signal} en esta regi\u00f3n; a\u00f1os La Ni\u00f1a se asocian con {ninaEffect}. Es una se\u00f1al estad\u00edstica, no certeza operacional.', en: 'El Ni\u00f1o years tend to be {signal} in this region; La Ni\u00f1a years are associated with {ninaEffect}. This is a statistical signal, not operational certainty.' },
-    detail_stat_toggle:{ es: 'Detalle estad\u00edstico \u25b8', en: 'Statistical detail \u25b8' },
-    detail_seasonal_toggle:{ es: 'Frecuencia estacional \u25b8', en: 'Seasonal frequency \u25b8' },
+    detail_stat_toggle:{ es: 'Detalle estad\u00edstico', en: 'Statistical detail' },
+    detail_seasonal_toggle:{ es: 'Frecuencia estacional', en: 'Seasonal frequency' },
 
     /* ── Frequency table headers ── */
     freq_season:      { es: 'Estaci\u00f3n', en: 'Season' },
