@@ -66,3 +66,9 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# design-taste-frontend working files: inspector screenshots, reports and the
+# originals of the pictures. What the site serves lives in site/media/, and
+# site/media/credits.json keeps each picture's source and licence.
+.taste-skill/
+assets/

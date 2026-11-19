@@ -21,7 +21,7 @@
   <meta name="theme-color" content="#1E3FAE">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/tokens.css">
   <script>/* Early dark mode — prevent FOUC */
   (function(){var s=localStorage.getItem('enso-dark-mode');if(s===null||s==='1')document.documentElement.classList.add('dark');})()</script>
@@ -31,341 +31,327 @@
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
     html{scroll-behavior:smooth;}
-    body{font-family:'Libre Franklin',sans-serif;color:#14161A;background:#f8f9fc;background-image:radial-gradient(circle at 1px 1px,rgba(0,0,0,0.03) 1px,transparent 0);background-size:24px 24px;-webkit-font-smoothing:antialiased;font-size:15px;line-height:1.55;}
-    a{color:#1E3FAE;text-decoration:none;}
-    a:hover{color:#C2382A;text-decoration:underline;}
-    a:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
-    button:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
-    details summary:focus-visible{outline:2px solid #1E3FAE;outline-offset:2px;border-radius:3px;}
+    body{font-family:var(--font-body);color:var(--color-ink);background:var(--color-bg);-webkit-font-smoothing:antialiased;font-size:var(--t-body);line-height:1.55;}
+    h1,h2,h3,h4,h5,h6{font-weight:800;letter-spacing:-0.025em;line-height:1.05;}
+    a{color:var(--color-accent);text-decoration:none;}
+    a:hover{color:var(--color-nino);text-decoration:underline;}
+    a:focus-visible,button:focus-visible,details summary:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}
+    ::selection{background:var(--color-ink);color:var(--color-bg);}
+    svg text{font-family:var(--font-body);}
+    sub,sup{font-size:0.8em;line-height:0;}
 
-    /* Skip link */
-    .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;}
-    .skip-link:focus{position:fixed;top:8px;left:8px;width:auto;height:auto;padding:8px 16px;background:#14161A;color:#FFFFFF;font-family:'IBM Plex Mono',monospace;font-size:13px;border-radius:4px;z-index:999;text-decoration:none;}
+    /* Numbers line up; they do not change typeface to do it. */
+    .num,.gauge-value,.gauge-sec-value,.acc-r,.risk-card-r,.masthead-meta .date,
+    .heatmap-cell,.indicator-value{font-variant-numeric:tabular-nums;}
+
+    .skip-link{position:absolute;left:-9999px;top:auto;width:1px;height:1px;overflow:hidden;} /* taste-skill-ignore: visually-hidden, not a rule */
+    .skip-link:focus{position:fixed;top:8px;left:8px;width:auto;height:auto;padding:10px 18px;background:var(--color-ink);color:#fff;font-size:var(--t-small);z-index:999;text-decoration:none;}
     details>summary{list-style:none;cursor:pointer;}
     details>summary::-webkit-details-marker{display:none;}
 
-    @keyframes omFadeUp{from{opacity:0;transform:translateY(14px)}}
+    @keyframes omFadeUp{from{opacity:0;transform:translateY(16px)}}
     @keyframes omDraw{to{stroke-dashoffset:0}}
     @keyframes omIn{from{opacity:0}}
-    @keyframes omMarker{from{left:50%;transform:translateX(-50%)}}
-    @keyframes omPulse{0%,100%{transform:scale(1);opacity:1;box-shadow:0 0 0 0 currentColor}50%{transform:scale(1.4);opacity:.75;box-shadow:0 0 10px 3px currentColor}}
-    @keyframes omWave{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-    @keyframes omAurora{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
-    @keyframes omGradientLine{0%{background-position:-200% center}100%{background-position:200% center}}
-    @keyframes omLoadPulse{0%,100%{opacity:0.4;transform:scale(0.95)}50%{opacity:1;transform:scale(1)}}
+    @keyframes omMarker{from{transform:translateX(-50%) scaleX(0)}}
     @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 
-    .page{max-width:1180px;margin:0 auto;padding:0 32px 80px;}
+    /* The page runs edge to edge so a section can paint a whole field; each
+       block holds itself to one pair of margins inside that. */
+    .page{max-width:none;margin:0;padding:0 0 var(--section-gap);overflow-x:clip;}
+    .page > .section,.page > .noscript-shim{max-width:var(--max-width);margin-inline:auto;padding-inline:var(--margin);}
 
-    /* Command center (masthead + hero + indicators) */
-    .command-center{background:var(--gradient-neutral);margin:0 -32px;padding:0 32px 60px;position:relative;overflow:hidden;border-radius:0 0 var(--radius-card) var(--radius-card);animation:omFadeUp .55s ease;}
-    .command-center.phase-nino{background:var(--gradient-nino);}
-    .command-center.phase-nina{background:var(--gradient-nina);}
-    .command-center.phase-neutral{background:var(--gradient-neutral);}
-    .command-center::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 80%,rgba(255,255,255,0.08) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 20%,rgba(255,255,255,0.06) 0%,transparent 50%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(255,255,255,0.04) 0%,transparent 40%);background-size:200% 200%;animation:omAurora 15s ease-in-out infinite;pointer-events:none;z-index:0;}
-    .command-center>*{position:relative;z-index:2;}
-    .command-center::after{content:'';position:absolute;bottom:-1px;left:0;width:200%;height:50px;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%23f8f9fc'/%3E%3C/svg%3E") repeat-x bottom center;background-size:1440px 50px;z-index:1;animation:omWave 25s linear infinite;}
-    .command-center,.command-center *{color:rgba(255,255,255,0.92);}
+    /* ── The first screen: one solid field, the phase decides its colour ── */
+    .command-center{background:var(--field-neutral);color:var(--field-ink);margin:0 0 var(--section-gap);padding:0 var(--margin) clamp(48px,6vw,88px);animation:omFadeUp .5s var(--ease-smooth) both;}
+    .command-center > *{max-width:var(--max-width);margin-inline:auto;}
+    .command-center.phase-nino{background:var(--field-nino);}
+    .command-center.phase-nina{background:var(--field-nina);}
+    .command-center.phase-neutral{background:var(--field-neutral);}
+    .command-center a{color:var(--field-ink);text-decoration:underline;text-underline-offset:3px;}
     .command-center .region-pill.active{color:#14161A;}
 
     /* Masthead */
-    .masthead{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:24px;padding:36px 0 20px;border-bottom:1px solid rgba(255,255,255,0.15);}
-    .masthead-kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:10px;}
-    .masthead h1{font-size:var(--text-h1-fluid);font-weight:800;letter-spacing:-0.02em;line-height:1.02;color:#FFFFFF;}
-    .masthead-meta{text-align:right;padding-bottom:4px;}
-    .masthead-meta .label{font-family:'IBM Plex Mono',monospace;font-size:12px;color:rgba(255,255,255,0.6);}
-    .masthead-meta .date{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:#FFFFFF;}
-    .masthead-meta .desc{font-size:12px;color:rgba(255,255,255,0.55);margin-top:6px;}
+    .masthead{display:grid;grid-template-columns:1fr auto;align-items:end;gap:clamp(20px,3vw,48px);padding:clamp(40px,5vw,72px) 0 clamp(28px,3vw,44px);}
+    .masthead-kicker{display:none;}
+    .masthead h1{font-size:var(--t-display);font-weight:800;letter-spacing:-0.035em;line-height:0.92;color:var(--field-ink);}
+    .masthead-meta{text-align:right;padding-bottom:6px;max-width:34ch;}
+    .masthead-meta .label{font-size:var(--t-small);color:var(--field-ink);opacity:.72;}
+    .masthead-meta .date{font-size:var(--t-lead);font-weight:600;color:var(--field-ink);}
+    .masthead-meta .desc{font-size:var(--t-small);color:var(--field-ink);opacity:.78;margin-top:8px;line-height:1.45;}
+    #lang-toggle{font-size:var(--t-small);font-weight:600;padding:8px 14px;border:0;background:rgba(255,255,255,0.16);color:var(--field-ink);cursor:pointer;margin-top:12px;transition:background var(--ease-smooth);}
+    #lang-toggle:hover{background:rgba(255,255,255,0.28);}
 
-    /* Hero */
-    .hero{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:48px;align-items:center;padding:40px 0 36px;border-bottom:none;}
-    .hero-status{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-    .status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;flex-shrink:0;animation:omPulse 2s ease-in-out infinite;box-shadow:0 0 6px currentColor,0 0 20px currentColor;}
-    @media(prefers-reduced-motion:reduce){.status-dot{animation:none;}}
-    .hero-phase{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;letter-spacing:-0.015em;line-height:1.1;background:linear-gradient(135deg,#FFFFFF 0%,rgba(255,255,255,0.7) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.2));}
-    .hero-desc{margin:14px 0 0;font-size:15px;line-height:1.55;color:rgba(255,255,255,0.75);max-width:44ch;}
-    .executive-summary{margin:18px 0 0;max-width:54ch;}
-    .summary-line{font-size:15px;line-height:1.55;color:rgba(255,255,255,0.85);margin:0 0 6px;}
-    .summary-highlight{font-weight:600;color:rgba(255,255,255,0.95);}
-    .summary-caveat{font-size:13px;color:rgba(255,255,255,0.85);margin:0;font-weight:500;}
-    .summary-trajectory{margin:8px 0 0;font-size:13px;color:rgba(255,255,255,0.75);max-width:54ch;}
-    .region-selector-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.55);margin-bottom:8px;margin-top:22px;}
-    .region-pills{display:flex;flex-wrap:wrap;gap:8px;}
-    .region-pill{font-family:'IBM Plex Mono',monospace;font-size:12px;padding:6px 13px;min-height:44px;border-radius:8px;border:1px solid rgba(255,255,255,0.25);background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.85);cursor:pointer;transition:all var(--ease-smooth);}
-    .region-pill:hover{background:rgba(255,255,255,0.2);transform:scale(1.04);box-shadow:0 0 16px rgba(255,255,255,0.15);}
-    .region-pill.active{background:rgba(255,255,255,0.95);color:#14161A;border-color:rgba(255,255,255,0.95);font-weight:600;box-shadow:0 0 20px rgba(255,255,255,0.2);}
-    .advice-panel{margin-top:12px;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.9);background:rgba(255,255,255,0.1);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:12px 16px;max-width:54ch;}
+    /* Status hero */
+    .hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:start;padding:0 0 clamp(16px,2vw,32px);}
+    .hero-status{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+    .status-dot{width:12px;height:12px;display:inline-block;flex-shrink:0;}
+    #status-label{font-size:var(--t-small);font-weight:600;color:var(--field-ink);}
+    .hero-phase{font-size:var(--t-head);font-weight:800;letter-spacing:-0.03em;line-height:1.02;color:var(--field-ink);}
+    .hero-desc{margin:14px 0 0;font-size:var(--t-body);line-height:1.55;color:var(--field-ink);opacity:.85;max-width:52ch;}
+    .executive-summary{margin:20px 0 0;max-width:58ch;}
+    .summary-line{font-size:var(--t-body);line-height:1.55;color:var(--field-ink);opacity:.92;margin:0 0 8px;}
+    .summary-highlight{font-weight:600;opacity:1;}
+    .summary-caveat{font-size:var(--t-small);opacity:.85;margin:0;}
+    .summary-trajectory{margin:10px 0 0;font-size:var(--t-small);color:var(--field-ink);opacity:.8;max-width:58ch;}
+    #operational-reference{font-size:var(--t-small);line-height:1.6;margin:0 0 18px;color:var(--field-ink);opacity:.85;max-width:58ch;}
+    #observations-asof{font-size:var(--t-small);line-height:1.6;color:var(--field-ink);opacity:.85;max-width:58ch;}
+    .region-selector-label{font-size:var(--t-small);font-weight:600;color:var(--field-ink);opacity:.78;margin:28px 0 10px;}
+    .region-pills{display:flex;flex-wrap:wrap;gap:6px;}
+    .region-pill{font-family:inherit;font-size:var(--t-small);padding:10px 16px;min-height:44px;border:0;background:rgba(255,255,255,0.14);color:var(--field-ink);cursor:pointer;transition:background var(--ease-smooth),color var(--ease-smooth);}
+    .region-pill:hover{background:rgba(255,255,255,0.26);}
+    .region-pill.active{background:#FFFFFF;color:#14161A;font-weight:600;}
+    .hero-action{margin:22px 0 0;}
+    .action{display:inline-flex;align-items:center;min-height:48px;padding:12px 22px;background:#FFFFFF;color:#14161A!important;font-weight:600;font-size:var(--t-body);text-decoration:none!important;transition:opacity var(--ease-smooth);}
+    .action:hover{opacity:.85;text-decoration:none!important;}
+    .advice-panel{margin-top:14px;font-size:var(--t-body);line-height:1.55;color:var(--field-ink);background:rgba(0,0,0,0.22);padding:18px 20px;max-width:58ch;}
 
-    /* Gauge panel */
-    .gauge-panel{display:flex;flex-direction:column;gap:12px;align-self:center;}
-    .gauge-big-value{display:flex;align-items:baseline;gap:8px;}
-    .gauge-value{font-family:'IBM Plex Mono',monospace;font-size:64px;font-weight:600;letter-spacing:-0.03em;color:#FFFFFF;text-shadow:0 0 30px currentColor,0 0 60px rgba(255,255,255,0.2);}
-    .gauge-unit{font-family:'IBM Plex Mono',monospace;font-size:16px;color:rgba(255,255,255,0.6);}
+    /* The reading */
+    .gauge-panel{display:flex;flex-direction:column;gap:14px;}
+    .gauge-big-value{display:flex;align-items:baseline;gap:10px;}
+    .gauge-value{font-size:var(--t-figure);font-weight:700;letter-spacing:-0.04em;line-height:0.9;color:var(--field-ink);}
+    .gauge-unit{font-size:var(--t-body);color:var(--field-ink);opacity:.7;}
     .gauge-bar-wrap{position:relative;}
     #gauge-svg{width:100%;height:auto;display:block;}
-    .gauge-secondary{display:flex;flex-wrap:wrap;gap:20px;margin-top:4px;}
+    .gauge-secondary{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:8px;}
     .gauge-sec-item{display:flex;flex-direction:column;gap:2px;}
-    .gauge-sec-label{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.5);}
-    .gauge-sec-value{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:rgba(255,255,255,0.9);}
+    .gauge-sec-label{font-size:var(--t-small);color:var(--field-ink);opacity:.7;}
+    .gauge-sec-value{font-size:var(--t-lead);font-weight:600;color:var(--field-ink);}
 
-    /* Argentina choropleth */
+    /* Argentina map */
     .risk-map-container{position:relative;min-height:300px;}
     #argentina-map{width:100%;height:auto;display:block;}
-    .map-tooltip{position:absolute;pointer-events:none;background:rgba(20,22,26,0.92);color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 12px;border-radius:6px;white-space:nowrap;z-index:10;opacity:0;transition:opacity .15s;}
-    .map-legend{margin-top:12px;display:flex;flex-wrap:wrap;gap:12px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;}
-    .map-legend-item{display:flex;align-items:center;gap:6px;}
-    .map-legend-swatch{width:14px;height:14px;border-radius:3px;border:1px solid rgba(0,0,0,0.15);}
+    .map-tooltip{position:absolute;pointer-events:none;background:var(--color-ink);color:#fff;font-size:var(--t-small);padding:10px 14px;white-space:nowrap;z-index:10;opacity:0;transition:opacity .15s;}
+    /* The map's own labels follow the ground they sit on. */
+    #argentina-map .region-label{fill:#14161A;color:#14161A;}
+    html.dark #argentina-map .region-label{fill:#F2F3F5;color:#F2F3F5;}
+    #argentina-map text{color:var(--color-ink-3);}
+    .map-legend{margin-top:14px;display:flex;flex-wrap:wrap;gap:8px 20px;font-size:var(--t-small);color:var(--color-ink-3);}
+    .map-legend-item{display:flex;align-items:center;gap:8px;}
+    .map-legend-swatch{width:14px;height:14px;}
 
-    /* Risk cards */
-    .risk-cards{display:grid;grid-template-columns:1fr;gap:10px;}
-    .risk-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius-card);border:1px solid var(--color-border);background:#FFFFFF;cursor:pointer;transition:all var(--ease-smooth);position:relative;overflow:hidden;}
-    .risk-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(30,63,174,0.04) 0%,transparent 60%);opacity:0;transition:opacity 0.3s ease;}
-    .risk-card:hover::before{opacity:1;}
-    .risk-card:hover{box-shadow:0 8px 24px rgba(0,0,0,0.1);transform:translateY(-3px);border-color:rgba(30,63,174,0.2);}
-    .risk-card.active{border-color:#1E3FAE;box-shadow:0 0 0 2px rgba(30,63,174,0.15);}
-    .risk-traffic{width:14px;height:14px;border-radius:50%;flex-shrink:0;border:2px solid rgba(0,0,0,0.1);}
+    /* Region signal list */
+    .risk-cards{display:grid;grid-template-columns:1fr;gap:3px;}
+    .risk-card{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;padding:16px 18px;border:0;background:var(--color-bg-alt);cursor:pointer;transition:background var(--ease-smooth);position:relative;text-align:left;width:100%;}
+    .risk-card:hover{background:var(--color-bg-inset);}
+    .risk-card.active{background:var(--color-ink);color:var(--color-bg);}
+    .risk-card.active .risk-card-prov,.risk-card.active .risk-card-r{color:rgba(255,255,255,0.75);}
+    .risk-traffic{width:14px;height:14px;flex-shrink:0;}
     .risk-card-body{flex:1;min-width:0;}
-    .risk-card-name{font-weight:700;font-size:14px;}
-    .risk-card-prov{font-size:11px;color:#79818E;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-    .risk-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:3px;white-space:nowrap;}
-    .risk-badge-wet{background:#EEF2FB;color:#2A55D0;border:1px solid #c7d7f5;}
-    .risk-badge-dry{background:#FDF5E6;color:#92400e;border:1px solid #e5c888;}
-    .risk-badge-none{background:#F2F2F0;color:#79818E;border:1px solid #d4d4d0;}
-    .risk-card-r{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#555C68;white-space:nowrap;}
+    .risk-card-name{font-weight:700;font-size:var(--t-body);}
+    .risk-card-prov{font-size:var(--t-small);color:var(--color-ink-3);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .risk-badge{font-size:var(--t-small);font-weight:600;padding:4px 10px;border:0;}
+    .risk-badge-wet{background:var(--color-nina-bg);color:var(--color-nina);}
+    .risk-badge-dry{background:#F2E7D2;color:#7A4E09;}
+    .risk-badge-none{background:var(--color-neutral-bg);color:var(--color-ink-3);}
+    .risk-card-r{font-size:var(--t-small);color:var(--color-ink-2);}
+    figure.plate{margin:0 0 28px;}
+    figure.plate img{display:block;width:100%;height:auto;object-fit:cover;background:var(--color-bg-alt);}
+    figure.plate.band img{aspect-ratio:21/9;}
+    figure.plate.tall img{aspect-ratio:4/3;}
+    figure.plate video{display:block;width:100%;height:auto;background:#000;}
+    .plate-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;margin-bottom:28px;}
+    .plate-pair figure.plate{margin:0;}
+    .plate-pair figure.plate img,.plate-pair figure.plate video{aspect-ratio:4/3;object-fit:cover;}
+    figure.plate.split{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:32px;align-items:center;}
+    figure.plate.split img{aspect-ratio:1/1;}
+    figure.plate.split figcaption{margin-top:0;}
+    @media(max-width:760px){figure.plate.split{grid-template-columns:1fr;gap:16px;}}
+    figure.plate figcaption{margin-top:12px;font-size:var(--t-body);color:var(--color-ink-2);max-width:58ch;line-height:1.5;}
+    .command-center figure.plate figcaption{color:var(--field-ink);opacity:.78;}
+    .credits{font-size:var(--t-small);color:rgba(255,255,255,0.72);line-height:1.6;max-width:80ch;}
+    .credits a{color:rgba(255,255,255,0.85);}
+    .figure-block{display:flex;flex-direction:column;gap:4px;}
+    .figure-value{font-size:var(--t-figure);font-weight:700;letter-spacing:-0.04em;line-height:0.9;font-variant-numeric:tabular-nums;}
+    .figure-label{font-size:var(--t-small);color:var(--color-ink-3);}
+    .advice-panel .disclosure{color:var(--field-ink);opacity:.9;font-size:var(--t-small);}
+    .advice-detail span{color:var(--field-ink);opacity:.85;line-height:1.55;display:block;margin-top:6px;}
+    .disclosure-head{font-size:var(--t-head);font-weight:800;letter-spacing:-0.03em;color:var(--color-ink);}
+    .disclosure-head::after{width:12px;height:12px;border-width:3px;}
+    .disclosure{font-size:var(--t-body);font-weight:600;color:var(--color-ink-2);cursor:pointer;padding:10px 0;display:flex;align-items:center;gap:10px;}
+    .disclosure::after{content:'';width:8px;height:8px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;}
+    details[open] > .disclosure::after{transform:rotate(45deg);}
+    .trend-badge{font-size:var(--t-small);font-weight:600;padding:8px 14px;background:var(--color-bg-alt);color:var(--color-ink-2);align-self:flex-end;}
+    .trend-badge[data-trend="nino"],.trend-badge[data-trend="nino-weak"]{background:var(--color-nino-bg);color:var(--color-nino);}
+    .trend-badge[data-trend="nina"],.trend-badge[data-trend="nina-weak"]{background:var(--color-nina-bg);color:var(--color-nina);}
+    html.dark .trend-badge[data-trend="nino"],html.dark .trend-badge[data-trend="nino-weak"]{color:#FF9C8C;}
+    html.dark .trend-badge[data-trend="nina"],html.dark .trend-badge[data-trend="nina-weak"]{color:#8CB0FF;}
 
-    /* Staggered card reveal */
-    .risk-card{opacity:0;transform:translateY(12px);}
-    .reveal.visible .risk-card{opacity:1;transform:none;transition:opacity 0.4s ease,transform 0.4s ease;}
+
+    .risk-card{opacity:0;transform:translateY(10px);}
+    .reveal.visible .risk-card{opacity:1;transform:none;transition:opacity .4s var(--ease-smooth),transform .4s var(--ease-smooth);}
     .reveal.visible .risk-card:nth-child(1){transition-delay:0s;}
-    .reveal.visible .risk-card:nth-child(2){transition-delay:0.07s;}
-    .reveal.visible .risk-card:nth-child(3){transition-delay:0.14s;}
-    .reveal.visible .risk-card:nth-child(4){transition-delay:0.21s;}
-    .reveal.visible .risk-card:nth-child(5){transition-delay:0.28s;}
-    @media(prefers-reduced-motion:reduce){.risk-card{opacity:1;transform:none;transition:none;}}
+    .reveal.visible .risk-card:nth-child(2){transition-delay:.07s;}
+    .reveal.visible .risk-card:nth-child(3){transition-delay:.14s;}
+    .reveal.visible .risk-card:nth-child(4){transition-delay:.21s;}
+    .reveal.visible .risk-card:nth-child(5){transition-delay:.28s;}
+    @media(prefers-reduced-motion:reduce){.risk-card{opacity:1;transform:none;}}
 
-    /* Sections */
-    .section{padding:32px;margin-bottom:24px;background:rgba(255,255,255,0.75);backdrop-filter:blur(var(--glass-card-blur));-webkit-backdrop-filter:blur(var(--glass-card-blur));border-radius:var(--radius-card);box-shadow:var(--shadow-card-up);border:1px solid rgba(255,255,255,0.5);transition:transform var(--ease-smooth),box-shadow var(--ease-smooth);position:relative;overflow:hidden;}
-    .section:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover-lift);}
-    .section:nth-of-type(even){background:linear-gradient(180deg,rgba(244,246,249,0.6) 0%,rgba(255,255,255,0.75) 100%);backdrop-filter:blur(var(--glass-card-blur));-webkit-backdrop-filter:blur(var(--glass-card-blur));}
-    /* Section counter numbers */
-    main.page{counter-reset:section-counter;}
-    .section{counter-increment:section-counter;}
-    .section>.section-header::before,.section>h2:first-of-type::before{content:counter(section-counter,decimal-leading-zero);font-family:'IBM Plex Mono',monospace;font-size:72px;font-weight:900;position:absolute;top:-8px;right:16px;color:rgba(20,22,26,0.03);line-height:1;pointer-events:none;z-index:0;}
-    .section>.section-header,.section>h2:first-of-type{position:relative;}
-    .section-header{display:flex;align-items:baseline;justify-content:space-between;gap:20px;margin-bottom:6px;}
-    .section h2{font-size:var(--text-h2-fluid);font-weight:800;letter-spacing:-0.01em;position:relative;display:inline-block;}
-    .section h2::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:3px;background:linear-gradient(90deg,var(--color-nino),var(--color-accent-2),var(--color-nina));background-size:200% 100%;border-radius:2px;transition:width 0.4s cubic-bezier(0.34,1.56,0.64,1);}
-    .section h2:hover::after{width:100%;animation:omGradientLine 2s linear infinite;}
-    .section-meta{font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;}
-    .section-desc{margin:0 0 20px;font-size:14px;color:#555C68;}
-    .section-desc-wide{max-width:76ch;}
+    /* ── Sections: space and scale separate them, not boxes ─────────────── */
+    .section{padding:0;margin:0 0 var(--section-gap);background:transparent;border:0;position:relative;}
+    .section-header{display:flex;align-items:baseline;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:14px;}
+    .section h2{font-size:var(--t-head);font-weight:800;letter-spacing:-0.03em;line-height:1.02;max-width:20ch;}
+    .section-meta{font-size:var(--t-small);color:var(--color-ink-3);}
+    .section-desc{margin:0 0 28px;font-size:var(--t-body);color:var(--color-ink-2);max-width:58ch;line-height:1.55;}
+    .section-desc-wide{max-width:58ch;}
+    .section p,.section li{max-width:58ch;}
+    .section .chart-layout p,.section figure p{max-width:none;}
 
-    /* Glossary tooltips */
-    .glossary{border-bottom:1px dotted #79818E;cursor:help;position:relative;}
-    .glossary::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#14161A;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:11px;line-height:1.5;padding:6px 10px;border-radius:4px;white-space:normal;width:max-content;max-width:280px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;box-shadow:0 2px 8px rgba(0,0,0,0.25);}
+    /* Glossary */
+    .glossary{font-weight:600;cursor:help;position:relative;}
+    .glossary::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--color-ink);color:#fff;font-size:var(--t-small);line-height:1.5;padding:10px 14px;white-space:normal;width:max-content;max-width:300px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:20;}
     .glossary:hover::after,.glossary:focus::after{opacity:1;}
     @media(max-width:600px){.glossary::after{left:0;transform:none;}}
 
     /* Scroll reveal */
-    .reveal{opacity:0;transform:translateY(30px) scale(0.98);transition:opacity 0.8s cubic-bezier(0.16,1,0.3,1),transform 0.8s cubic-bezier(0.16,1,0.3,1);}
-    .reveal.visible{opacity:1;transform:translateY(0) scale(1);}
-    @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s var(--ease-out-expo),transform .6s var(--ease-out-expo);}
+    .reveal.visible{opacity:1;transform:none;}
+    @media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;}}
 
     /* Range switcher */
-    .range-switcher{display:flex;gap:6px;margin-bottom:16px;}
-    .range-btn{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:6px 14px;min-height:36px;border-radius:20px;border:1px solid #C7CCD6;background:transparent;color:#555C68;cursor:pointer;transition:all var(--ease-smooth);}
-    .range-btn:hover{transform:scale(1.05);box-shadow:0 2px 12px rgba(0,0,0,0.1);border-color:var(--color-accent);}
-    .range-btn.active{background:linear-gradient(135deg,#14161A 0%,#2d3748 100%);color:#FFFFFF;border-color:transparent;box-shadow:0 4px 16px rgba(20,22,26,0.25);}
+    .range-switcher{display:flex;gap:3px;margin-bottom:20px;}
+    .range-btn{font-family:inherit;font-size:var(--t-small);padding:10px 18px;min-height:44px;border:0;background:var(--color-bg-alt);color:var(--color-ink-2);cursor:pointer;transition:background var(--ease-smooth),color var(--ease-smooth);}
+    .range-btn:hover{background:var(--color-bg-inset);color:var(--color-ink);}
+    .range-btn.active{background:var(--color-ink);color:var(--color-bg);font-weight:600;}
 
     /* ONI chart layout */
-    .chart-layout{display:flex;flex-wrap:wrap;gap:36px;align-items:flex-end;}
+    .chart-layout{display:flex;flex-wrap:wrap;gap:32px;align-items:flex-end;}
     .chart-main{flex:1 1 480px;min-width:0;}
     .chart-inset-wrap{flex:0 1 300px;min-width:240px;}
-    .inset-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;}
-    #inset-svg{width:100%;height:auto;display:block;border:1px solid #E4E7EC;border-radius:4px;background:#F4F6F9;}
+    .inset-label{font-size:var(--t-small);font-weight:600;color:var(--color-ink-3);margin-bottom:10px;}
+    #inset-svg{width:100%;height:auto;display:block;border:0;background:var(--color-bg-alt);}
 
-    /* Forecast */
-    .forecast-links{display:flex;flex-direction:column;}
-    .forecast-link-row{display:grid;grid-template-columns:180px 110px 1fr auto;gap:20px;align-items:center;padding:16px 12px;border-top:1px solid #E4E7EC;color:#14161A;text-decoration:none;border-radius:8px;border-left:3px solid transparent;transition:all var(--ease-smooth);position:relative;overflow:hidden;}
-    .forecast-link-row::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(30,63,174,0.06) 0%,transparent 40%);opacity:0;transition:opacity 0.3s ease;}
-    .forecast-link-row:hover::before{opacity:1;}
-    .forecast-link-row:hover{border-left-color:var(--color-nino);transform:translateX(6px);box-shadow:0 2px 12px rgba(0,0,0,0.06);}
-    .forecast-source-name{font-weight:700;font-size:15px;}
-    .forecast-tag{font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;border:1px solid currentColor;border-radius:3px;padding:3px 7px;justify-self:start;}
-    .forecast-desc{font-size:13px;color:#555C68;}
-    .forecast-cta{font-family:'IBM Plex Mono',monospace;font-size:13px;color:#1E3FAE;}
+    /* Forecast sources */
+    .forecast-links{display:flex;flex-direction:column;gap:3px;}
+    .forecast-link-row{display:grid;grid-template-columns:200px 120px 1fr auto;gap:20px;align-items:center;padding:18px 20px;border:0;background:var(--color-bg-alt);color:var(--color-ink);text-decoration:none;transition:background var(--ease-smooth);}
+    .forecast-link-row:hover{background:var(--color-ink);color:var(--color-bg);text-decoration:none;}
+    .forecast-link-row:hover .forecast-desc,.forecast-link-row:hover .forecast-cta{color:inherit;}
+    .forecast-source-name{font-weight:700;font-size:var(--t-body);}
+    .forecast-tag{font-size:var(--t-small);font-weight:600;border:0;padding:4px 10px;justify-self:start;background:var(--color-bg-inset);color:var(--color-ink-2);}
+    .forecast-link-row:hover .forecast-tag{background:rgba(255,255,255,0.18);color:inherit;}
+    .forecast-desc{font-size:var(--t-body);color:var(--color-ink-2);}
+    .forecast-cta{font-size:var(--t-small);font-weight:600;color:var(--color-accent);}
 
-    /* Heatmap */
-    .heatmap-legend{display:flex;align-items:center;gap:12px;margin-top:20px;}
-    .heatmap-legend-bar{width:180px;height:10px;border-radius:5px;background:linear-gradient(to right,#EDEFF3,#E8AC9E,#C2382A);}
+    /* Heatmap legend */
+    .heatmap-legend{display:flex;align-items:center;gap:14px;margin-top:24px;font-size:var(--t-small);color:var(--color-ink-2);}
+    .heatmap-legend-bar{width:180px;height:12px;background:var(--color-nino);}
 
-    /* Risk */
-    .risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:40px;align-items:start;}
-    .risk-summary{margin:18px 0 0;font-size:13px;color:#555C68;line-height:1.55;}
+    /* Risk section */
+    .risk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:48px;align-items:start;}
+    .risk-summary{margin:22px 0 0;font-size:var(--t-body);color:var(--color-ink-2);line-height:1.6;max-width:58ch;}
 
     /* Accordions */
-    .accordions-label{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;margin-bottom:8px;margin-top:36px;}
-    details.region-accordion{border-top:1px solid #E4E7EC;}
-    details.region-accordion summary{display:flex;align-items:baseline;gap:12px;padding:13px 4px;min-height:44px;}
-    details.region-accordion summary::after{content:'▸';margin-left:8px;font-size:11px;color:#A7AEBB;flex-shrink:0;transition:transform .2s;}
-    details.region-accordion[open] summary::after{transform:rotate(90deg);}
-    .acc-name{font-weight:700;font-size:14px;}
-    .acc-prov{font-size:13px;color:#79818E;}
-    .acc-r{margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:12px;color:#555C68;}
-    .acc-bar-note{font-family:'IBM Plex Mono',monospace;font-size:10px;color:#79818E;padding:0 4px 12px;}
-    .acc-detail{margin:0 0 16px;padding:0 4px;font-size:13.5px;color:#555C68;line-height:1.6;max-width:80ch;}
+    .accordions-label{font-size:var(--t-small);font-weight:600;color:var(--color-ink-3);margin:44px 0 10px;}
+    details.region-accordion{border:0;background:var(--color-bg-alt);margin-bottom:3px;}
+    details.region-accordion summary{display:flex;align-items:baseline;gap:14px;padding:16px 18px;min-height:44px;}
+    details.region-accordion summary::after{content:'';margin-left:8px;width:9px;height:9px;align-self:center;border-right:2px solid var(--color-ink-3);border-bottom:2px solid var(--color-ink-3);transform:rotate(-45deg);flex-shrink:0;transition:transform .2s;}
+    details.region-accordion[open] summary::after{transform:rotate(45deg);}
+    .acc-name{font-weight:700;font-size:var(--t-body);}
+    .acc-prov{font-size:var(--t-small);color:var(--color-ink-3);}
+    .acc-r{margin-left:auto;font-size:var(--t-small);color:var(--color-ink-2);}
+    .acc-bar-note{font-size:var(--t-small);color:var(--color-ink-3);padding:0 18px 14px;}
+    .acc-detail{margin:0 0 18px;padding:0 18px;font-size:var(--t-body);color:var(--color-ink-2);line-height:1.65;max-width:58ch;}
 
-    /* Footer */
-    .footer{margin-top:24px;padding:36px 32px;background:linear-gradient(135deg,#14161A 0%,#1e2536 50%,#2d3748 100%);border-radius:var(--radius-card);box-shadow:0 -4px 20px rgba(0,0,0,0.08);border:none;display:flex;justify-content:space-between;gap:20px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.6);flex-wrap:wrap;position:relative;overflow:hidden;}
-    .footer::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--color-nina),var(--color-neutral),var(--color-nino));}
-    .footer a{color:rgba(255,255,255,0.75);}
-    .footer a:hover{color:#FFFFFF;text-decoration:underline;}
+    /* ── The close ──────────────────────────────────────────────────────── */
+    .footer{margin:clamp(132px,10vw,200px) 0 0;padding:clamp(48px,6vw,88px) var(--margin) clamp(40px,4vw,64px);background:var(--color-ink);border:0;font-size:var(--t-body);color:rgba(255,255,255,0.72);}
+    .footer > *{max-width:var(--max-width);margin-inline:auto;}
+    .footer > * + *{margin-top:24px;}
+    .footer a{color:#fff;text-decoration:underline;text-underline-offset:3px;}
+    .footer a:hover{color:#fff;}
+    .footer-wordmark{font-size:var(--t-display);font-weight:800;letter-spacing:-0.04em;line-height:0.88;color:#fff;}
+    .footer-credits{font-size:var(--t-body);color:rgba(255,255,255,0.75);line-height:1.6;max-width:58ch;}
 
-    /* Sticky nav */
-    .sticky-nav{position:sticky;top:0;z-index:50;background:rgba(248,249,252,0.8);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid rgba(0,0,0,0.06);display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+    /* Sticky nav: a plain bar */
+    .sticky-nav{position:sticky;top:0;z-index:50;background:var(--color-bg);border:0;display:none;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
     .sticky-nav::-webkit-scrollbar{display:none;}
-    .sticky-nav-inner{display:flex;gap:0;max-width:1180px;margin:0 auto;padding:0 16px;}
-    .sticky-nav a{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.06em;color:#79818E;text-decoration:none;padding:10px 14px;white-space:nowrap;border-bottom:2px solid transparent;transition:all var(--ease-smooth);}
-    .sticky-nav a:hover{color:#14161A;text-decoration:none;}
-    .sticky-nav a.active{color:#14161A;font-weight:600;position:relative;}
-    .sticky-nav a.active::after{content:'';position:absolute;bottom:0;left:14px;right:14px;height:2px;background:linear-gradient(90deg,var(--color-nino),var(--color-accent-2));border-radius:1px;}
-    /* Loading state */
-    #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;background:linear-gradient(135deg,#0a0e27 0%,#1e3a8a 50%,#0c1445 100%);font-family:'IBM Plex Mono',monospace;font-size:13px;color:rgba(255,255,255,0.7);z-index:100;}
-    #loading .loader-brand{font-size:28px;font-weight:800;letter-spacing:-0.02em;color:#FFFFFF;animation:omLoadPulse 2s ease-in-out infinite;}
-    #loading .loader-bar{width:120px;height:3px;border-radius:3px;background:rgba(255,255,255,0.15);overflow:hidden;}
-    #loading .loader-bar::after{content:'';display:block;width:40%;height:100%;border-radius:3px;background:linear-gradient(90deg,#2563eb,#38bdf8,#d97706);animation:omGradientLine 1.5s ease-in-out infinite;background-size:200% 100%;}
-    /* Back to top */
-    #back-to-top{position:fixed;bottom:20px;right:72px;z-index:60;width:44px;height:44px;border-radius:50%;border:1px solid #C7CCD6;background:#FFFFFF;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);transition:all var(--ease-smooth);opacity:0;pointer-events:none;}
-    #back-to-top.visible{opacity:1;pointer-events:auto;}
-    #back-to-top:hover{transform:translateY(-3px) scale(1.05);box-shadow:0 4px 16px rgba(0,0,0,0.15);}
-    html.dark #back-to-top{background:rgba(20,24,50,0.6);border-color:rgba(100,120,200,0.25);color:#e0e0e8;}
+    .sticky-nav-inner{display:flex;gap:0;max-width:var(--max-width);margin:0 auto;padding:0 var(--margin);}
+    .sticky-nav a{font-size:var(--t-small);color:var(--color-ink-3);text-decoration:none;padding:14px 16px;white-space:nowrap;transition:color var(--ease-smooth),background var(--ease-smooth);}
+    .sticky-nav a:hover{color:var(--color-ink);text-decoration:none;background:var(--color-bg-alt);}
+    .sticky-nav a.active{color:var(--color-bg);background:var(--color-ink);font-weight:600;}
 
-    /* ── Responsive: 1280px (large desktop) ────────────────────────────── */
-    @media(max-width:1280px){
-      .page{max-width:100%;padding:0 24px 80px;}
-    }
-    /* ── Responsive: 1024px (tablet landscape) ─────────────────────────── */
+    /* Loading */
+    #loading{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;background:var(--color-ink);font-size:var(--t-small);color:rgba(255,255,255,0.72);z-index:100;}
+    #loading .loader-brand{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-0.03em;color:#fff;}
+    #loading .loader-bar{width:160px;height:4px;background:rgba(255,255,255,0.2);overflow:hidden;}
+    #loading .loader-bar::after{content:'';display:block;width:40%;height:100%;background:#fff;animation:omLoadSlide 1.3s var(--ease-smooth) infinite;}
+    @keyframes omLoadSlide{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+
+    /* Back to top */
+    #back-to-top{position:fixed;bottom:20px;right:76px;z-index:60;width:48px;height:48px;border:0;background:var(--color-ink);color:#fff;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:opacity var(--ease-smooth);opacity:0;pointer-events:none;}
+    #back-to-top.visible{opacity:1;pointer-events:auto;}
+    #dark-mode-toggle{border:0!important;background:var(--color-ink)!important;color:#fff!important;}
+
+    /* ── Widths ─────────────────────────────────────────────────────────── */
     @media(max-width:1024px){
-      .hero{grid-template-columns:1fr;gap:32px;}
-      .gauge-panel{max-width:420px;}
-      .risk-grid{grid-template-columns:1fr;gap:24px;}
-      .masthead h1{/* fluid via clamp() */}
+      .hero{grid-template-columns:1fr;gap:64px;}
+      .gauge-panel{max-width:460px;}
+      .risk-grid{grid-template-columns:1fr;gap:32px;}
+      .masthead{grid-template-columns:1fr;align-items:start;}
+      .masthead-meta{text-align:left;max-width:48ch;}
     }
-    /* ── Responsive: 640px (mobile) ────────────────────────────────────── */
     @media(max-width:640px){
-      .page{padding:0 16px 60px;}
-      .command-center{margin:0 -16px;padding:0 16px 50px;}
-      .masthead{gap:12px;padding:24px 0 16px;}
-      .masthead-meta{text-align:left;}
-      .hero{gap:24px;padding:24px 0 20px;}
-      .gauge-value{font-size:40px;}
-      .gauge-secondary{gap:12px;}
-      .gauge-sec-value{font-size:16px;}
-      .section{padding:16px;margin-bottom:14px;}
-      .section>.section-header::before,.section>h2:first-of-type::before{font-size:48px;}
-      .chart-layout{flex-direction:column;gap:20px;}
-      .chart-inset-wrap{flex:1 1 auto;min-width:0;}
-      .forecast-link-row{grid-template-columns:1fr auto;gap:8px;}
+      .masthead{gap:12px;padding:28px 0 16px;}
+      .masthead-meta .desc{display:none;}
+      .hero{gap:64px;}
+      /* On a phone the state and the one action come first; the fine print
+         follows them instead of pushing them off the screen. */
+      .hero > div:first-child{display:flex;flex-direction:column;}
+      .hero > div:first-child > .hero-status{order:1;}
+      .hero > div:first-child > .hero-phase{order:2;}
+      .hero > div:first-child > .executive-summary{order:3;margin-top:14px;}
+      .hero > div:first-child > .hero-action{order:4;}
+      .hero > div:first-child > #operational-reference{order:5;margin:18px 0 0;}
+      .hero > div:first-child > .summary-trajectory{order:6;}
+      .hero > div:first-child > #observations-asof{order:7;margin-top:10px;}
+      .hero > div:first-child > .region-selector-label{order:8;}
+      .hero > div:first-child > .region-pills{order:9;}
+      .hero > div:first-child > .advice-panel{order:10;}
+      .forecast-link-row{grid-template-columns:1fr auto;gap:10px;padding:16px;}
       .forecast-source-name,.forecast-tag,.forecast-desc{display:block;}
-      .forecast-tag{margin-top:4px;}
+      .forecast-tag{margin-top:6px;}
       .forecast-desc{display:none;}
-      .sticky-nav a{padding:10px 10px;font-size:10px;}
-      .risk-card{padding:12px 14px;}
+      .sticky-nav a{padding:12px;}
+      .risk-card{padding:14px 16px;}
       .risk-card-prov{display:none;}
-      .region-pill{font-size:11px;padding:6px 10px;}
-      .footer{padding:20px 16px;font-size:10px;}
+      .chart-layout{flex-direction:column;gap:24px;}
+      .chart-inset-wrap{flex:1 1 auto;min-width:0;}
     }
-    /* ── 360px stress test ─────────────────────────────────────────────── */
-    @media(max-width:400px){
-      .gauge-value{font-size:34px;}
-      .gauge-unit{font-size:13px;}
-      .gauge-sec-value{font-size:14px;}
-      .risk-badge{font-size:9px;padding:2px 6px;}
-      .risk-card-r{font-size:11px;}
-    }
-    /* ── Touch targets: enforce 44px minimum ──────────────────────────── */
+
     .region-pill,.range-btn,.risk-card,.forecast-link-row,details.region-accordion summary,.sticky-nav a{min-height:44px;}
-    /* Print */
+
     @media print{
       .sticky-nav,#dark-mode-toggle,#back-to-top,#enso-alert,#enso-alert-banner{display:none!important;}
       .command-center{animation:none;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
-      .command-center::before,.command-center::after{animation:none;}
       .reveal{opacity:1;transform:none;}
-      body{background:#fff;background-image:none;}
-      .section{box-shadow:none;break-inside:avoid;backdrop-filter:none;-webkit-backdrop-filter:none;background:#FFFFFF;}
-      .footer{background:#14161A;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+      body{background:#fff;}
+      .section{break-inside:avoid;}
+      .footer{background:var(--color-ink);-webkit-print-color-adjust:exact;print-color-adjust:exact;}
     }
-    /* Dark mode — premium */
-    html.dark{--nav-bg:#0a0e27;}
-    html.dark body{background:var(--dark-bg);background-image:radial-gradient(circle at 1px 1px,rgba(100,120,200,0.05) 1px,transparent 0);background-size:24px 24px;color:#e0e0e8;}
-    html.dark .page{color:#e0e0e8;}
-    html.dark a{color:#6d9fff;}
-    html.dark a:hover{color:#ff8a7a;}
-    html.dark .command-center{border-color:transparent;}
-    html.dark .command-center.phase-nino{background:var(--dark-gradient-nino);}
-    html.dark .command-center.phase-nina{background:var(--dark-gradient-nina);}
-    html.dark .command-center.phase-neutral{background:var(--dark-gradient-neutral);}
-    html.dark .command-center::after{background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 1440 50' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,25 C180,50 360,0 540,25 C720,50 900,0 1080,25 C1260,50 1440,0 1440,25 L1440,50 L0,50 Z' fill='%230a0e27'/%3E%3C/svg%3E");background-size:1440px 50px;background-repeat:repeat-x;}
-    html.dark .gauge-value{color:#e0e0e8;text-shadow:0 0 20px currentColor;}
-    html.dark .risk-card{background:rgba(15,18,38,0.7);border-color:var(--dark-glass-border);}
-    html.dark .risk-card::before{background:linear-gradient(135deg,rgba(109,159,255,0.06) 0%,transparent 60%);}
-    html.dark .risk-card.active{border-color:#6d9fff;box-shadow:0 0 0 2px rgba(109,159,255,0.2);}
-    html.dark .risk-card-name{color:#e0e0e8;}
-    html.dark .risk-card-prov{color:#888;}
-    html.dark .risk-card-r{color:#aab;}
-    html.dark .risk-badge-wet{background:rgba(42,85,208,0.2);color:#6d9fff;border-color:rgba(109,159,255,0.3);}
-    html.dark .risk-badge-dry{background:rgba(180,83,9,0.2);color:#fbbf24;border-color:rgba(251,191,36,0.3);}
-    html.dark .risk-badge-none{background:rgba(148,163,184,0.15);color:#94a3b8;border-color:rgba(148,163,184,0.25);}
-    html.dark .map-legend{color:#888;}
-    html.dark .map-tooltip{background:rgba(15,18,38,0.95);}
-    html.dark .section{background:rgba(15,18,38,0.7);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-color:rgba(100,120,200,0.12);box-shadow:var(--dark-card-glow);}
-    html.dark .section:hover{border-color:rgba(100,120,200,0.25);box-shadow:0 0 2px rgba(100,120,200,0.3),0 8px 30px rgba(0,0,0,0.4);}
-    html.dark .page.phase-nino .section:hover{border-color:rgba(194,56,42,0.2);box-shadow:var(--dark-glow-nino);}
-    html.dark .page.phase-nina .section:hover{border-color:rgba(42,85,208,0.2);box-shadow:var(--dark-glow-nina);}
-    html.dark .section h2{color:#e0e0e8;}
-    html.dark .section>.section-header::before,html.dark .section>h2:first-of-type::before{color:rgba(100,120,200,0.06);}
-    html.dark .section h2::after{background:#6d9fff;}
-    html.dark .section-meta,html.dark .inset-label,html.dark .heatmap-legend span,html.dark .accordions-label,html.dark .acc-bar-note{color:#888;}
-    html.dark .hero-desc,html.dark .section-desc,html.dark .acc-prov,html.dark .forecast-desc,html.dark .risk-summary,html.dark .acc-detail{color:#aab;}
-    html.dark .range-btn{border-color:rgba(100,120,200,0.25);color:#aab;}
-    html.dark .range-btn:hover{box-shadow:0 2px 8px rgba(100,120,200,0.15);}
-    html.dark .range-btn.active{background:#e0e0e8;color:#0f0f1a;border-color:#e0e0e8;}
-    html.dark .forecast-link-row{color:#e0e0e8;border-top-color:rgba(100,120,200,0.15);}
-    html.dark .forecast-link-row:hover{background:rgba(20,24,50,0.5);border-left-color:#6d9fff;}
-    html.dark .forecast-cta{color:#6d9fff;}
-    html.dark .acc-name{color:#e0e0e8;}
-    html.dark .acc-r{color:#aab;}
-    html.dark #inset-svg{background:rgba(20,24,50,0.5);border-color:rgba(100,120,200,0.15);}
-    html.dark details.region-accordion{border-top-color:rgba(100,120,200,0.15);}
-    html.dark .footer{background:linear-gradient(135deg,#0a0e27 0%,#131a3a 50%,#1e2536 100%);border-color:rgba(100,120,200,0.12);box-shadow:0 -4px 20px rgba(0,0,0,0.3);color:rgba(255,255,255,0.5);}
-    html.dark .footer::before{background:linear-gradient(90deg,rgba(42,85,208,0.6),rgba(100,120,200,0.3),rgba(194,56,42,0.6));}
-    html.dark .footer a{color:rgba(255,255,255,0.6);}
-    html.dark .footer a:hover{color:#e0e0e8;}
-    html.dark .sticky-nav{background:rgba(10,14,39,0.85);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom-color:rgba(100,120,200,0.15);}
-    html.dark .sticky-nav a{color:#888;}
-    html.dark .sticky-nav a.active{color:#e0e0e8;text-shadow:0 0 8px currentColor;}
-    html.dark .sticky-nav a.active::after{background:linear-gradient(90deg,rgba(109,159,255,0.8),rgba(194,56,42,0.6));}
-    html.dark #loading{background:linear-gradient(135deg,#050820 0%,#0a0e27 50%,#0c1445 100%);color:rgba(255,255,255,0.5);}
-    html.dark #dark-mode-toggle{background:rgba(20,24,50,0.6);border-color:rgba(100,120,200,0.25);color:#e0e0e8;}
-    #dark-mode-toggle:hover{transform:scale(1.1) rotate(15deg);box-shadow:0 4px 20px rgba(0,0,0,0.2);}
-    html.dark #dark-mode-toggle:hover{box-shadow:0 4px 20px rgba(100,120,200,0.3);}
-    html.dark #season-select{background:rgba(20,24,50,0.6) !important;color:#e0e0e8 !important;border-color:rgba(100,120,200,0.25) !important;}
-    html.dark .glossary{border-bottom-color:#aab;}
-    html.dark .glossary::after{background:#1a1e3a;box-shadow:0 2px 8px rgba(0,0,0,0.5);}
-    html.dark #enso-timeline text{fill:#888;}
-    html.dark #enso-timeline line{stroke:rgba(100,120,200,0.25);}
-    html.dark #enso-timeline rect[fill="#EDEFF3"]{fill:rgba(20,24,50,0.5);}
-    html.dark #enso-timeline rect[fill="#14161A"]{fill:#e0e0e8;}
-    html.dark #enso-timeline text[fill="#14161A"]{fill:#e0e0e8;}
-    html.dark .section p[id$="-note"]{color:#aab !important;}
-    html.dark .section [style*="color:#14161A"]{color:#e0e0e8 !important;}
-    html.dark .section [style*="color:#555C68"]{color:#aab !important;}
-    html.dark .section [style*="color:#79818E"]{color:#888 !important;}
-    html.dark .footer button{color:rgba(255,255,255,0.6) !important;border-color:rgba(100,120,200,0.25) !important;}
-    html.dark .modebar-btn path{fill:#888 !important;}
-    html.dark .modebar-btn:hover path{fill:#e0e0e8 !important;}
-    html.dark #iri-plume-img{border-radius:8px;filter:invert(0.88) hue-rotate(180deg);}
-    html.dark #sst-month-label{color:#e0e0e8;}
+
+    /* ── Dark ground ────────────────────────────────────────────────────── */
+    /* The dark ground now lives in css/tokens.css, where both pages read it. */
+    html.dark body{background:var(--dark-bg);color:var(--dark-ink);}
+    html.dark a:hover{color:#FF9C8C;}
+    html.dark .risk-card.active{background:var(--dark-ink);color:var(--dark-bg);}
+    html.dark .risk-badge-dry{background:#2E2415;color:#E3B457;}
+    html.dark .forecast-link-row:hover{background:var(--dark-ink);color:var(--dark-bg);}
+    html.dark .sticky-nav a.active{background:var(--dark-ink);color:var(--dark-bg);}
+    html.dark .footer{background:#171A20;}
+    html.dark .map-tooltip,html.dark .glossary::after{background:#21252D;color:var(--dark-ink);}
+    html.dark #loading{background:var(--dark-bg);}
+    html.dark #back-to-top,html.dark #dark-mode-toggle{background:var(--dark-surface-2)!important;color:var(--dark-ink)!important;}
+    html.dark #enso-timeline text{fill:var(--dark-ink-3);}
+    html.dark #enso-timeline line{stroke:#333942;}
+    html.dark #enso-timeline rect[fill="#EDEFF3"]{fill:var(--dark-surface);}
+    html.dark #enso-timeline rect[fill="#14161A"]{fill:var(--dark-ink);}
+    html.dark #enso-timeline text[fill="#14161A"]{fill:var(--dark-ink);}
+    html.dark .section p[id$="-note"]{color:var(--dark-ink-2)!important;}
+    html.dark .section [style*="color:#14161A"]{color:var(--dark-ink)!important;}
+    html.dark .section [style*="color:#555C68"]{color:var(--dark-ink-2)!important;}
+    html.dark .section [style*="color:#79818E"]{color:var(--dark-ink-3)!important;}
+    html.dark .footer button{color:rgba(255,255,255,0.72)!important;}
+    html.dark .modebar-btn path{fill:var(--dark-ink-3)!important;}
+    html.dark .modebar-btn:hover path{fill:var(--dark-ink)!important;}
+    html.dark #iri-plume-img{filter:invert(0.9) hue-rotate(180deg);}
+    html.dark #sst-month-label{color:var(--dark-ink);}
   </style>
 </head>
 <body>
@@ -408,24 +394,23 @@
   <!-- 1. Masthead -->
   <header class="masthead">
     <div>
-      <div class="masthead-kicker" data-i18n-text="masthead_kicker">Boletín climático · NOAA CPC · CHIRPS v3.0</div>
       <h1>Argentina ENSO<br>Impact Tracker</h1>
     </div>
     <div class="masthead-meta">
-      <div class="label"><span data-i18n-text="updated_label">Sitio generado</span> <span id="freshness-dot" title="Estado de los datos" style="display:inline-block;width:8px;height:8px;border-radius:50%;margin-left:4px;vertical-align:middle;"></span></div>
+      <div class="label"><span data-i18n-text="updated_label">Sitio generado</span> <span id="freshness-dot" title="Estado de los datos" style="display:inline-block;width:9px;height:9px;margin-left:6px;vertical-align:middle;"></span></div>
       <div class="date" id="updated-date">—</div>
       <div class="desc" data-i18n="masthead_desc">Estado <span class="glossary" data-tip="El Niño–Oscilación del Sur: ciclo climático del Pacífico ecuatorial que influye en la precipitación de Argentina." style="color:inherit;">ENSO</span> y su relación histórica con<br>la lluvia en 5 regiones argentinas</div>
-      <button id="lang-toggle" onclick="I18N.toggleLang()" style="font-family:'IBM Plex Mono',monospace;font-size:11px;padding:4px 10px;border-radius:4px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.85);cursor:pointer;margin-top:8px;letter-spacing:0.08em;font-weight:600;transition:all .2s;" data-i18n-text="lang_toggle" data-i18n-aria="lang_toggle_aria"></button>
+      <button id="lang-toggle" onclick="I18N.toggleLang()" data-i18n-text="lang_toggle" data-i18n-aria="lang_toggle_aria"></button>
     </div>
   </header>
 
   <!-- 2. Status hero -->
   <section class="hero" id="estado-section">
     <div>
-      <p id="operational-reference" style="font-size:14px;line-height:1.6;margin:0 0 16px;"></p>
+      <p id="operational-reference" style="font-size:17px;line-height:1.6;margin:0 0 16px;"></p>
       <div class="hero-status">
         <span class="status-dot" id="status-dot"></span>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:0.12em;text-transform:uppercase;font-weight:600;" id="status-label"></span>
+        <span style="font-family:'Libre Franklin',sans-serif;font-size:17px;font-weight:600;" id="status-label"></span>
       </div>
       <div class="hero-phase" id="hero-phase"></div>
       <div class="executive-summary" id="executive-summary">
@@ -434,7 +419,8 @@
         <p id="summary-line3" class="summary-line summary-caveat"></p>
       </div>
       <p class="summary-trajectory" id="hero-desc"></p>
-      <p id="observations-asof" style="font-size:12px;line-height:1.6;color:rgba(255,255,255,0.8);"></p>
+      <p class="hero-action"><a class="action" href="#risk-section" data-i18n-text="hero_cta">Ver qué significa para cada región</a></p>
+      <p id="observations-asof" style="font-size:17px;line-height:1.6;color:rgba(255,255,255,0.8);"></p>
       <div class="region-selector-label" data-i18n-text="region_selector">Qué significa para mi región</div>
       <div class="region-pills" id="region-pills"></div>
       <div class="advice-panel" id="advice-panel"></div>
@@ -466,6 +452,10 @@
           <span class="gauge-sec-value" id="gauge-season-val">—</span>
         </div>
       </div>
+      <figure class="plate band">
+        <img src="media/comparing-sea-level-during-el-nino-events.jpg" width="1586" height="783" alt="Mapa de altimetría del Pacífico el 6 de octubre de 1997, con una franja blanca de agua elevada sobre el ecuador" decoding="async">
+        <figcaption>El Pacífico el 6 de octubre de 1997, camino al pico del El Niño más fuerte que se midió. El blanco es agua más de 10 cm por encima de lo normal: el mar sube donde se calienta, y por eso un altímetro alcanza para leer el episodio. NASA/JPL-Caltech.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -481,6 +471,10 @@
       <div class="section-meta" id="chart-range-label"></div>
     </div>
     <p class="section-desc" data-i18n="oni_desc">ONI: media trimestral de anomalías del Niño 3.4, conservada aquí como referencia histórica. NOAA usa RONI para el monitoreo operativo desde febrero de 2026; el aviso oficial y RONI se muestran en el encabezado.</p>
+    <figure class="plate split">
+      <img src="media/1997-el-nino-topex.jpg" width="2550" height="2548" alt="Mapa satelital del Pacífico en diciembre de 1997, con una banda blanca de agua muy cálida sobre el ecuador" loading="lazy" decoding="async">
+      <figcaption>El punto más alto de la serie, visto desde arriba: el Pacífico el 1 de diciembre de 1997. La banda blanca sobre el ecuador es agua entre 14 y 32 cm por encima de lo normal, dilatada por el calor. Altimetría TOPEX/Poseidon, NASA/JPL.</figcaption>
+    </figure>
     <div class="range-switcher">
       <button class="range-btn active" data-desde="1970" data-i18n-text="oni_range_1970">1970–hoy</button>
       <button class="range-btn" data-desde="2000" data-i18n-text="oni_range_2000">2000–hoy</button>
@@ -504,14 +498,16 @@
       <div class="section-meta" id="soi-range-label"></div>
     </div>
     <p class="section-desc section-desc-wide" data-i18n="soi_desc">El SOI resume diferencias de presión entre Tahití y Darwin. Valores negativos sostenidos suelen acompañar El Niño; positivos, La Niña. Es un indicador complementario, no una alerta temprana calibrada por este tracker.</p>
+      <figure class="plate band">
+        <img src="media/anomaly-wind-deviation-seen-by-rapidscat-for.jpg" width="1600" height="875" alt="Mapa de anomalía de viento sobre el Pacífico ecuatorial en noviembre de 2015" loading="lazy" decoding="async">
+        <figcaption>Noviembre de 2015: los vientos del oeste soplan contra el alisio habitual sobre el Pacífico central. Ese cambio de presión y viento es lo que el SOI resume en un número. RapidScat, NASA/JPL-Caltech.</figcaption>
+      </figure>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:16px;">
-      <div>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="soi_current">SOI actual</span>
-        <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:600;" id="soi-tracker-val">—</span>
-        </div>
+      <div class="figure-block">
+        <span class="figure-value" id="soi-tracker-val">—</span>
+        <span class="figure-label" data-i18n-text="soi_current">SOI actual</span>
       </div>
-      <div id="soi-trend-badge" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.08em;text-transform:uppercase;font-weight:600;border:1px solid currentColor;border-radius:3px;padding:4px 10px;"></div>
+      <div id="soi-trend-badge" class="trend-badge"></div>
     </div>
     <div id="soi-plotly" style="width:100%;height:320px;" role="img" aria-label="Serie temporal del SOI con media móvil de 3 meses" data-i18n-aria="soi_aria"></div>
   </section>
@@ -524,15 +520,13 @@
     </div>
     <p class="section-desc section-desc-wide" data-i18n="sam_desc">El SAM (Modo Anular del Sur) resume cambios de circulación en latitudes medias y altas del hemisferio sur. Complementa otros indicadores climáticos. Fuente: NOAA CPC AAO.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:20px;margin-bottom:16px;">
-      <div>
-        <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="sam_current">SAM actual</span>
-        <div style="display:flex;align-items:baseline;gap:6px;margin-top:4px;">
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:36px;font-weight:600;" id="sam-tracker-val">—</span>
-        </div>
+      <div class="figure-block">
+        <span class="figure-value" id="sam-tracker-val">—</span>
+        <span class="figure-label" data-i18n-text="sam_current">SAM actual</span>
       </div>
     </div>
     <div id="sam-plotly" style="width:100%;height:320px;" role="img" aria-label="Serie temporal del SAM/AAO" data-i18n-aria="sam_aria"></div>
-    <p style="margin:12px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="sam_note">El SAM modifica la posición y la intensidad de los vientos del oeste. Su asociación con la lluvia depende de la estación y del lugar; un valor positivo o negativo no determina por sí solo la lluvia en toda Patagonia. Puede interactuar con ENSO.</p>
+    <p style="margin:12px 0 0;font-size:17px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="sam_note">El SAM modifica la posición y la intensidad de los vientos del oeste. Su asociación con la lluvia depende de la estación y del lugar; un valor positivo o negativo no determina por sí solo la lluvia en toda Patagonia. Puede interactuar con ENSO.</p>
   </section>
 
   <!-- 4c. Subsurface temperature cross-section -->
@@ -554,12 +548,12 @@
     <p class="section-desc section-desc-wide" data-i18n="sst_desc">Anomalía diaria de temperatura superficial del Pacífico ecuatorial respecto de la climatología OI.v2 1971–2000. Son instantáneas cada 30 días, no promedios mensuales. Fuente: NOAA OISST v2.1, variable anom de ERDDAP.</p>
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:12px;">
       <button class="range-btn" id="sst-play-btn" aria-label="Reproducir animación del mapa" data-i18n-text="sst_play" data-i18n-aria="sst_play_aria">▶ Reproducir</button>
-      <div id="sst-month-label" style="font-family:'IBM Plex Mono',monospace;font-size:24px;font-weight:700;letter-spacing:-0.01em;"></div>
+      <div id="sst-month-label" style="font-family:'Libre Franklin',sans-serif;font-size:24px;font-weight:700;letter-spacing:-0.01em;"></div>
     </div>
     <div id="sst-map-plotly" style="width:100%;height:480px;" role="img" aria-label="Mapa interactivo de anomalía de temperatura superficial del mar en el Pacífico ecuatorial" data-i18n-aria="sst_aria"></div>
-    <div id="sst-map-fallback" style="display:none;background:#F4F6F9;border-radius:4px;padding:24px;text-align:center;">
-      <p style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:#79818E;" data-i18n-text="sst_fallback">No se pudo cargar el mapa satelital de TSM. Mostrando datos de ONI en su lugar.</p>
-      <p style="font-size:13px;color:#555C68;margin-top:8px;" data-i18n-text="sst_fallback2">Consultá el aviso oficial de NOAA en el encabezado para el diagnóstico operativo.</p>
+    <div id="sst-map-fallback" style="display:none;background:#F4F6F9;padding:24px;text-align:center;">
+      <p style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;" data-i18n-text="sst_fallback">No se pudo cargar el mapa satelital de TSM. Mostrando datos de ONI en su lugar.</p>
+      <p style="font-size:17px;color:#555C68;margin-top:8px;" data-i18n-text="sst_fallback2">Consultá el aviso oficial de NOAA en el encabezado para el diagnóstico operativo.</p>
     </div>
   </section>
 
@@ -581,16 +575,16 @@
         <div id="iri-probs-plotly" style="width:100%;height:360px;" role="img" aria-label="Probabilidades ENSO por trimestre: El Niño, Neutral, La Niña"></div>
       </div>
       <div id="iri-plume-view" style="display:none;">
-        <div style="background:#F4F6F9;border-radius:4px;padding:16px;text-align:center;overflow-x:auto;">
+        <div style="background:#F4F6F9;padding:16px;text-align:center;overflow-x:auto;">
           <img id="iri-plume-img" alt="IRI ENSO model predictions plume" style="max-width:100%;height:auto;display:inline-block;"
             onerror="this.style.display='none';this.nextElementSibling.style.display='';">
-          <p id="iri-plume-fallback" style="display:none;font-size:13px;color:#79818E;padding:40px 0;" data-i18n-text="forecast_plume_fallback">Pluma de modelos no disponible. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
+          <p id="iri-plume-fallback" style="display:none;font-size:17px;color:#79818E;padding:40px 0;" data-i18n-text="forecast_plume_fallback">Pluma de modelos no disponible. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
         </div>
       </div>
-      <div id="iri-no-data" style="display:none;background:#F4F6F9;border-radius:4px;padding:40px 20px;text-align:center;">
-        <p style="font-size:14px;color:#79818E;" data-i18n="forecast_iri_nodata">Pronóstico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
+      <div id="iri-no-data" style="display:none;background:#F4F6F9;padding:40px 20px;text-align:center;">
+        <p style="font-size:17px;color:#79818E;" data-i18n="forecast_iri_nodata">Pronóstico IRI no disponible para este mes. <a href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
       </div>
-      <p style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;margin-top:10px;" data-i18n="forecast_iri_credit">Fuente: IRI/CCSR, Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
+      <p style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;margin-top:10px;" data-i18n="forecast_iri_credit">Fuente: IRI/CCSR, Columbia University. <a id="iri-forecast-link" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">Consultar en IRI</a></p>
     </div>
 
     <div class="forecast-links" style="margin-top:20px;">
@@ -602,7 +596,7 @@
       </a>
       <a class="forecast-link-row" href="https://iri.columbia.edu/our-expertise/climate/forecasts/enso/current/" target="_blank" rel="noopener">
         <span class="forecast-source-name" data-i18n-text="forecast_iri_name">IRI ENSO Forecast</span>
-        <span class="forecast-tag" style="color:#C2382A;" data-i18n-text="forecast_iri_tag">Probabilístico</span>
+        <span class="forecast-tag" style="color:#C0252A;" data-i18n-text="forecast_iri_tag">Probabilístico</span>
         <span class="forecast-desc" data-i18n-text="forecast_iri_desc">Pronóstico completo del IRI: probabilidades, pluma de modelos, análisis.</span>
         <span class="forecast-cta" data-i18n-text="forecast_cta">Consultar</span>
       </a>
@@ -628,6 +622,18 @@
       <div class="section-meta" data-i18n-text="compare_meta">Episodio actual vs históricos</div>
     </div>
     <p class="section-desc section-desc-wide" data-i18n="compare_desc">Trayectorias históricas de ONI en ventanas definidas alrededor de eventos destacados. Permiten comparar valores, no predecir que se repetirá un patrón. Las fechas son los meses centrales de las medias trimestrales.</p>
+      <div class="plate-pair">
+        <figure class="plate">
+          <video autoplay muted loop playsinline preload="metadata"
+                 poster="media/el-nino-sea-surface-temperature-anomaly-january-poster.jpg"
+                 width="640" height="480" aria-label="Animación de la anomalía de temperatura del Pacífico mes a mes durante 1997"></video>
+          <figcaption>Un año de El Niño en veinticinco segundos: la anomalía de temperatura del Pacífico de enero a diciembre de 1997. La lengua roja crece hacia el este y se apaga. NASA Scientific Visualization Studio, con datos AVHRR de NOAA.</figcaption>
+        </figure>
+        <figure class="plate">
+          <img src="media/sea-surface-temperature-november-2007.jpg" width="1440" height="720" alt="Mapa global de anomalía de temperatura del mar en noviembre de 2007, con una lengua azul sobre el Pacífico ecuatorial" loading="lazy" decoding="async">
+          <figcaption>La otra cara, quieta: noviembre de 2007, La Niña. La lengua azul sobre el Pacífico ecuatorial es agua más fría que la media. NASA, con datos AMSR-E.</figcaption>
+        </figure>
+      </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;">
       <button class="range-btn active" data-compare="nino" id="compare-btn-nino" data-i18n-text="compare_nino">El Niño históricos</button>
       <button class="range-btn" data-compare="nina" id="compare-btn-nina" data-i18n-text="compare_nina">La Niña históricos</button>
@@ -648,30 +654,30 @@
     <h2 style="margin-bottom:6px;" data-i18n="corr_title">¿Cómo se relaciona el ENSO con la lluvia?</h2>
     <p class="section-desc section-desc-wide" data-i18n="corr_desc">Asociaciones históricas entre ONI y lluvia en cinco cajas rectangulares CHIRPS v3.0. La comparación anual usa anomalías por mes calendario; la estacional, acumulados de tres meses completos. La altura de una barra indica asociación, no causalidad ni capacidad de pronóstico.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
-      <label for="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
-      <select id="season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
+      <label for="season-select" style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
+      <select id="season-select" class="field-select">
         <option value="annual" data-i18n-text="season_annual">Anual</option>
         <option value="SON" data-i18n-text="season_spring">Primavera (SON)</option>
         <option value="DEF" data-i18n-text="season_summer">Verano (DEF)</option>
         <option value="MAM" data-i18n-text="season_autumn">Otoño (MAM)</option>
         <option value="JJA" data-i18n-text="season_winter">Invierno (JJA)</option>
       </select>
-      <span id="season-note" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;"></span>
+      <span id="season-note" style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;"></span>
     </div>
     <div id="corr-bar-chart" style="width:100%;height:320px;margin-bottom:28px;" role="img" aria-label="Gráfico de barras de correlación ENSO-precipitación por región" data-i18n-aria="corr_bar_aria"></div>
     <details style="margin-bottom:20px;">
-      <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;" data-i18n-text="corr_detail_toggle">Tabla detallada por lag ▸</summary>
-      <div id="heatmap-grid" style="margin-top:12px;"></div>
+      <summary class="disclosure" data-i18n-text="corr_detail_toggle">Tabla detallada por lag</summary>
+      <div id="heatmap-grid" data-ui style="margin-top:12px;"></div>
     </details>
     <div class="heatmap-legend">
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;" data-i18n-text="corr_legend_label">correlación</span>
+      <span style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;" data-i18n-text="corr_legend_label">correlación</span>
       <div class="heatmap-legend-bar"></div>
-      <span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">0 a +0.25</span>
+      <span style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;">0 a +0.25</span>
     </div>
-    <p style="margin:22px 0 0;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="corr_note">Los colores y asteriscos requieren q < 0.05 después de corregir todas las comparaciones de la familia. Un resultado sin asterisco no demuestra ausencia de un vínculo físico. Las cajas no son promedios por provincia ni por cuenca; Patagonia solo cubre 37–50°S.</p>
+    <p style="margin:22px 0 0;font-size:17px;color:#555C68;max-width:76ch;line-height:1.55;" data-i18n="corr_note">Los colores y asteriscos requieren q < 0.05 después de corregir todas las comparaciones de la familia. Un resultado sin asterisco no demuestra ausencia de un vínculo físico. Las cajas no son promedios por provincia ni por cuenca; Patagonia solo cubre 37–50°S.</p>
     <details style="margin:10px 0 0;max-width:76ch;">
-      <summary style="font-family:'IBM Plex Mono',monospace;font-size:12px;color:#79818E;cursor:pointer;" data-i18n-text="corr_stat_toggle">Detalle estadístico ▸</summary>
-      <p style="margin:8px 0 0;font-size:12px;color:#79818E;line-height:1.55;font-family:'IBM Plex Mono',monospace;" data-i18n="corr_stat_detail">Pearson y Spearman con p aproximado por autocorrelación y q ajustado por Benjamini–Yekutieli. Familia: regiones × lags 0–3 × anual y cuatro estaciones, separada por variable y coeficiente. Asteriscos: * q<0.05, ** q<0.01, *** q<0.001. Resultados exploratorios sin validación fuera de muestra.</p>
+      <summary class="disclosure" data-i18n-text="corr_stat_toggle">Detalle estadístico</summary>
+      <p style="margin:8px 0 0;font-size:17px;color:#79818E;line-height:1.55;font-family:'Libre Franklin',sans-serif;" data-i18n="corr_stat_detail">Pearson y Spearman con p aproximado por autocorrelación y q ajustado por Benjamini–Yekutieli. Familia: regiones × lags 0–3 × anual y cuatro estaciones, separada por variable y coeficiente. Asteriscos: * q<0.05, ** q<0.01, *** q<0.001. Resultados exploratorios sin validación fuera de muestra.</p>
     </details>
   </section>
 
@@ -683,15 +689,15 @@
     </div>
     <p class="section-desc section-desc-wide" data-i18n="temp_desc">Asociaciones históricas entre ONI y anomalías de temperatura media (CPC Global Temperature). Se usa el mismo calendario y ajuste estadístico que para lluvia. Sin eliminación de tendencias: son asociaciones exploratorias, no atribución causal ni pronóstico.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
-      <label for="temp-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
-      <select id="temp-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
+      <label for="temp-season-select" style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
+      <select id="temp-season-select" class="field-select">
         <option value="annual" data-i18n-text="season_annual">Anual</option>
         <option value="SON" data-i18n-text="season_spring">Primavera (SON)</option>
         <option value="DEF" data-i18n-text="season_summer">Verano (DEF)</option>
         <option value="MAM" data-i18n-text="season_autumn">Otoño (MAM)</option>
         <option value="JJA" data-i18n-text="season_winter">Invierno (JJA)</option>
       </select>
-      <span id="temp-season-note" style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;"></span>
+      <span id="temp-season-note" style="font-family:'Libre Franklin',sans-serif;font-size:17px;color:#79818E;"></span>
     </div>
     <div id="temp-bar-chart" style="width:100%;height:320px;" role="img" aria-label="Gráfico de barras de correlación ENSO-temperatura por región" data-i18n-aria="temp_bar_aria"></div>
   </section>
@@ -704,8 +710,8 @@
     </div>
     <p class="section-desc section-desc-wide" data-i18n="composite_desc">Promedios descriptivos de lluvia estacional según |ONI|: débil [0.5,1), moderado [1,1.5), fuerte [1.5,2), muy fuerte ≥2. N cuenta estaciones completas; con N<10 la muestra es pequeña. Estas medias no son pronósticos ni tienen intervalos predictivos.</p>
     <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:16px;">
-      <label for="composite-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
-      <select id="composite-season-select" style="font-family:'IBM Plex Mono',monospace;font-size:12px;padding:5px 10px;border:1px solid #C7CCD6;border-radius:3px;background:#FFFFFF;color:#14161A;cursor:pointer;min-height:36px;">
+      <label for="composite-season-select" style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="corr_season_label">Estación:</label>
+      <select id="composite-season-select" class="field-select">
         <option value="DEF" data-i18n-text="season_summer">Verano (DEF)</option>
         <option value="SON" data-i18n-text="season_spring">Primavera (SON)</option>
         <option value="MAM" data-i18n-text="season_autumn">Otoño (MAM)</option>
@@ -722,15 +728,19 @@
       <div class="section-meta" id="spi-meta"></div>
     </div>
     <p class="section-desc section-desc-wide" data-i18n="spi_desc">El SPI-3 estandariza lluvia acumulada de tres meses mediante una distribución gamma por mes calendario, ajustada al período histórico disponible. SPI ≤−1 indica sequía meteorológica; ≥+1, humedad anormal. No mide sequía hidrológica o agrícola por sí solo.</p>
-    <p id="spi-asof" style="font-size:13px;color:var(--color-ink-3);"></p>
-    <div id="spi-status-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
+    <p id="spi-asof" style="font-size:17px;color:var(--color-ink-3);"></p>
+    <div id="spi-status-cards" data-ui style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px;"></div>
     <div id="spi-chart" style="width:100%;height:340px;" role="img" aria-label="Serie temporal del SPI-3 por región" data-i18n-aria="spi_aria"></div>
   </section>
 
   <!-- 7. Regional risk -->
-  <section class="section reveal" id="risk-section" style="border-top:1px solid var(--color-border);margin-top:36px;">
+  <section class="section reveal" id="risk-section" >
     <h2 style="margin-bottom:6px;" data-i18n="risk_title">¿Qué significa para cada región?</h2>
     <p class="section-desc section-desc-wide" data-i18n="risk_desc">Los colores reflejan la dirección de lluvia que se observó históricamente durante fases similares a la actual. Son promedios regionales basados en datos de <span class="glossary" data-tip="Climate Hazards group Infrared Precipitation with Stations. Producto satelital de precipitación calibrado con estaciones.">CHIRPS</span>. No reemplazan un pronóstico ni aplican a escala provincial sin validación local.</p>
+      <figure class="plate band">
+        <img src="media/iss063e040142-fires-on-the-parana-river-floodplain.jpg" width="1920" height="1280" alt="Vista desde la Estación Espacial de la llanura del río Paraná, con humo de incendios" loading="lazy" decoding="async">
+        <figcaption>La llanura del Paraná vista desde la Estación Espacial en junio de 2020, con humo de quemas. Ese año La Niña dejó la cuenca en bajante. Fotografía de la tripulación de la ISS, NASA.</figcaption>
+      </figure>
     <div class="risk-grid">
       <div class="risk-map-container" id="risk-map-container">
         <svg id="argentina-map" role="img" aria-label="Mapa de señal ENSO por región en Argentina" data-i18n-aria="risk_map_aria"></svg>
@@ -754,7 +764,7 @@
     <p class="section-desc section-desc-wide" data-i18n="parana_desc">Para niveles fluviales y alertas consultá el INA. El ENSO es uno de varios factores de la cuenca y no determina por sí solo una crecida o bajante. La tabla manual de niveles se retiró porque no tenía fuentes verificables para cada observación; este tracker no ofrece un pronóstico de niveles.</p>
     <div id="parana-events" style="margin-bottom:20px;"></div>
     <div id="parana-chart" style="width:100%;height:280px;margin-bottom:16px;" role="img" aria-label="Niveles del Paraná durante eventos ENSO" data-i18n-aria="parana_aria"></div>
-    <p id="parana-correlation-note" style="margin:0 0 16px;font-size:13px;color:#555C68;max-width:76ch;line-height:1.55;"></p>
+    <p id="parana-correlation-note" style="margin:0 0 16px;font-size:17px;color:#555C68;max-width:76ch;line-height:1.55;"></p>
     <div class="forecast-links">
       <a class="forecast-link-row" id="parana-live-link" href="https://www.ina.gob.ar/alerta/" target="_blank" rel="noopener">
         <span class="forecast-source-name" data-i18n-text="forecast_ina_name">INA Alerta Hidrológico</span>
@@ -765,7 +775,7 @@
       <a class="forecast-link-row" href="https://bdhi.hidricosargentina.gob.ar/" target="_blank" rel="noopener">
         <span class="forecast-source-name" data-i18n-text="forecast_bdhi_name">BDHI: Base de Datos Hidrológica</span>
         <span class="forecast-tag" style="color:#79818E;" data-i18n-text="forecast_bdhi_tag">Histórico</span>
-        <span class="forecast-desc" data-i18n-text="forecast_bdhi_desc">Base de datos hidrológica integrada del INA — series históricas de caudal y nivel.</span>
+        <span class="forecast-desc" data-i18n-text="forecast_bdhi_desc">Base de datos hidrológica integrada del INA: series históricas de caudal y nivel.</span>
         <span class="forecast-cta" data-i18n-text="forecast_cta">Consultar</span>
       </a>
     </div>
@@ -774,58 +784,60 @@
   <!-- 8. Data sources panel -->
   <section class="section reveal" id="data-sources-section">
     <details>
-      <summary style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:20px;font-weight:800;letter-spacing:-0.01em;">
-        <span data-i18n-text="sources_title">Fuentes de datos y metodología</span>
-        <span style="font-size:12px;color:#79818E;font-weight:400;">▸</span>
-      </summary>
-      <div style="margin-top:20px;font-size:14px;color:#555C68;line-height:1.7;">
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:16px;">
+      <summary class="disclosure disclosure-head" data-i18n-text="sources_title">Fuentes de datos y metodología</summary>
+      <div style="margin-top:20px;font-size:17px;color:#555C68;line-height:1.7;">
+      <figure class="plate band">
+        <img src="media/fires-along-the-parana-river-argentina-modis.jpg" width="1920" height="1456" alt="Imagen satelital MODIS del río Paraná en octubre de 2022, con focos de incendio marcados" loading="lazy" decoding="async">
+        <figcaption>El mismo río en octubre de 2022, desde el satélite MODIS: los puntos rojos son focos detectados por el sensor. Es el dato crudo, antes de volverse una serie. MODIS Land Rapid Response Team, NASA GSFC.</figcaption>
+      </figure>
+
+        <table style="width:100%;border-collapse:collapse;font-size:14px;margin-bottom:16px;">
           <thead>
             <tr style="border-bottom:2px solid #E4E7EC;text-align:left;">
-              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;" data-i18n-text="th_index">Índice</th>
-              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;" data-i18n-text="th_source">Fuente</th>
-              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;" data-i18n-text="th_frequency">Frecuencia</th>
-              <th style="padding:8px 12px;font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;" data-i18n-text="th_latency">Latencia</th>
+              <th style="padding:8px 12px;font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="th_index">Índice</th>
+              <th style="padding:8px 12px;font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="th_source">Fuente</th>
+              <th style="padding:8px 12px;font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="th_frequency">Frecuencia</th>
+              <th style="padding:8px 12px;font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;" data-i18n-text="th_latency">Latencia</th>
             </tr>
           </thead>
           <tbody>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;">ONI (Oceanic Niño Index)</td>
               <td style="padding:8px 12px;">NOAA CPC (ERDDAP / CPC ASCII fallback)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_2m">~2 meses</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;">Niño 3.4 SST</td>
               <td style="padding:8px 12px;" data-i18n="nino34_source_desc">ERDDAP ncepNinoSSTwk (OISST v2, composites semanales promediados a mensual). Difiere del Niño 3.4 mensual de ERSSTv5 que usan NOAA CPC e IRI.</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_weekly">Semanal, promediada a mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_1w">~1 semana</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;">SOI</td>
               <td style="padding:8px 12px;" data-i18n="soi_source_desc">Primario: CPC estandarizado (NOAA). Fallback: ERDDAP erdlasNoix (estandarización distinta; diverge &gt;0.5 del CPC en ~54% de meses). El rótulo del indicador refleja la fuente efectiva de cada build. Escala estandarizada (rango ≈ −3 a +3); ×10 ≈ escala Troup (BOM). Los umbrales ±0.5 y ±1.0 son adimensionales y aplican a ambas series estandarizadas.</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_1m">~1 mes</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_subsurface">Temperatura subsuperficial</td>
               <td style="padding:8px 12px;">TAO/TRITON (NOAA PMEL via ERDDAP pmelTaoMonT)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_1m">~1 mes</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_precipitation">Precipitación</td>
               <td style="padding:8px 12px;">CHIRPS v3.0 (UCSB, 1981–present)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_cache">Producto mensual final; revisión semanal</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="regional_temperature">Temperatura regional</td>
               <td style="padding:8px 12px;">NOAA CPC Global Temperature (tmax+tmin)/2</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
               <td style="padding:8px 12px;" data-i18n-text="latency_cache">Meses completos; revisión semanal</td>
             </tr>
-            <tr style="border-bottom:1px solid #E4E7EC;">
+            <tr style="border-bottom:1px solid #E4E7EC;"><!-- taste-skill-ignore: a real table -->
               <td style="padding:8px 12px;font-weight:600;" data-i18n-text="src_forecast">Pronóstico ENSO</td>
               <td style="padding:8px 12px;">IRI/CCSR (Columbia University)</td>
               <td style="padding:8px 12px;" data-i18n-text="freq_monthly">Mensual</td>
@@ -833,24 +845,26 @@
             </tr>
           </tbody>
         </table>
-        <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes de la referencia fija 1981–2025. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub>eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
+        <p data-i18n="method_corr"><strong>Correlaciones exploratorias.</strong> Anomalías mensuales respecto de la media de cada mes de la referencia fija 1981–2025. Para estaciones: una observación por trimestre completo (sumas de lluvia, medias de temperatura) y el ONI publicado para su mes central. Lags 0–3 meses; no equivalen a anticipación operativa porque el ONI incluye meses posteriores a su fecha central. p aproximado con n<sub style="font-size:0.8em">eff</sub> y q Benjamini–Yekutieli por familia de región × lag × anual/estación, separada por variable y coeficiente. Se resaltan q&lt;0.05. Sin validación fuera de muestra ni detrendado de temperatura.</p>
         <p style="margin-top:8px;" data-i18n="method_oni"><strong>ONI y RONI.</strong> NOAA usa RONI para monitoreo desde el 1 de febrero de 2026. RONI resta la anomalía tropical al Niño 3.4 y reescala la varianza; la serie actual usa ERSSTv6 y base 1991–2020. El ONI histórico sigue disponible con bases de 30 años centradas. Las asociaciones del tracker usan ONI; su clasificación no sustituye el aviso operativo de NOAA, que también considera la atmósfera.</p>
         <p style="margin-top:8px;" data-i18n="method_chirps"><strong>Dominio y cobertura.</strong> CHIRPS v3.0 cubre 60°S–60°N. La serie y el SPI se recalcularon desde 1981 con v3; se conservó la referencia 1981–2025 y las mismas cajas. El proyecto conserva la caja de lluvia de Patagonia entre 37 y 50°S: excluye Tierra del Fuego y el extremo sur de Santa Cruz. Son medias aritméticas de píxeles válidos en cajas, sin ponderación de área ni máscara nacional; incluyen terreno fuera de Argentina y dominios solapados. No equivalen a promedios administrativos. La nieve y el relieve limitan su precisión. El período disponible se muestra en el encabezado.</p>
-        <p style="margin-top:8px;" data-i18n="method_neff"><strong>Incertidumbre.</strong> n<sub>eff</sub> estima el efecto de la autocorrelación; los p son aproximados. La corrección FDR ajusta comparaciones dependientes, pero no prueba causalidad ni elimina toda incertidumbre. Las frecuencias usan un binomial aproximado, una única familia exploratoria y q corregido. Correlaciones y frecuencias proceden de los mismos datos: no constituyen validaciones independientes.</p>
+        <p style="margin-top:8px;" data-i18n="method_neff"><strong>Incertidumbre.</strong> n<sub style="font-size:0.8em">eff</sub> estima el efecto de la autocorrelación; los p son aproximados. La corrección FDR ajusta comparaciones dependientes, pero no prueba causalidad ni elimina toda incertidumbre. Las frecuencias usan un binomial aproximado, una única familia exploratoria y q corregido. Correlaciones y frecuencias proceden de los mismos datos: no constituyen validaciones independientes.</p>
         <p style="margin-top:8px;" data-i18n="method_episodes"><strong>Episodios históricos por ONI.</strong> Se requieren cinco estaciones solapadas consecutivas con ONI ≥+0.5 o ≤−0.5. Es la regla histórica del ONI, no una declaración operativa actual. El encabezado muestra por separado el RONI y el aviso oficial de NOAA.</p>
-        <p style="margin-top:8px;color:#79818E;font-size:12px;" data-i18n="method_pipeline">Los índices ENSO y el sitio se actualizan diariamente. Los meses completos de lluvia y temperatura regional se incorporan mediante una revisión semanal. Cada variable muestra su fecha por separado.</p>
+        <p style="margin-top:8px;color:#79818E;font-size:17px;" data-i18n="method_pipeline">Los índices ENSO y el sitio se actualizan diariamente. Los meses completos de lluvia y temperatura regional se incorporan mediante una revisión semanal. Cada variable muestra su fecha por separado.</p>
       </div>
     </details>
   </section>
 
   <!-- 9. Footer -->
   <footer class="footer" role="contentinfo">
+    <p class="footer-wordmark" aria-hidden="true">ENSO<br>Tracker</p>
     <div style="width:100%;margin-bottom:12px;line-height:1.6;">
       <p style="margin-bottom:6px;" data-i18n="footer_sources">Fuentes: NOAA CPC · IRI Columbia · CHIRPS v3.0 (UCSB) · TAO/TRITON (NOAA PMEL)</p>
       <p style="margin-bottom:6px;" data-i18n="footer_disclaimer">El ENSO explica solo una parte de la variabilidad de precipitación en Argentina. El SAM (Modo Anular del Sur), la variabilidad interna atmosférica y factores regionales también influyen significativamente.</p>
       <p style="margin-bottom:6px;" data-i18n="footer_latency">Cada indicador muestra su fecha. ONI y RONI son medias trimestrales fechadas en el mes central; no observaciones instantáneas. El mapa OISST usa instantáneas diarias con latencia propia. La lluvia y el SPI conservan el período del archivo histórico.</p>
     </div>
-    <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:12px;font-weight:500;"></div>
+    <div id="data-generated-stamp" style="width:100%;margin-bottom:8px;font-size:17px;font-weight:500;"></div>
+    <p class="credits">Imágenes: <a href="https://commons.wikimedia.org/wiki/File:1997_El_Nino_TOPEX.jpg">“1997 El Nino TOPEX”</a>; <a href="https://commons.wikimedia.org/wiki/File:Comparing_Sea_Level_During_El_Ni%C3%B1o_Events_(PIA26099).jpg">“Comparing Sea Level During El Niño Events”</a> y <a href="https://commons.wikimedia.org/wiki/File:Anomaly_wind_deviation_seen_by_RapidScat_for_November_2015_(PIA20365-3).jpg">“Anomaly wind deviation seen by RapidScat”</a>, NASA/JPL-Caltech; <a href="https://commons.wikimedia.org/wiki/File:Sea_Surface_Temperature_-_November_2007.jpg">“Sea Surface Temperature, November 2007”</a>, NASA; <a href="https://commons.wikimedia.org/wiki/File:(iss063e040142)_Fires_on_the_Parana_River_floodplain_in_Argentina.jpg">“Fires on the Parana River floodplain”</a>, NASA; <a href="https://commons.wikimedia.org/wiki/File:Fires_along_the_Parana_River,_Argentina_(MODIS).jpg">“Fires along the Parana River”</a>, MODIS Land Rapid Response Team, NASA GSFC. Animación: <a href="https://commons.wikimedia.org/wiki/File:El_Ni%C3%B1o_Sea_Surface_Temperature_Anomaly-_January,_1997,_through_December,_1997_(SVS156).webm">“El Niño Sea Surface Temperature Anomaly, 1997”</a>, NASA Scientific Visualization Studio. Todas de <a href="https://creativecommons.org/publicdomain/mark/1.0/">dominio público</a>, vía Wikimedia Commons.</p>
     <div style="display:flex;justify-content:space-between;gap:20px;width:100%;flex-wrap:wrap;">
       <span data-i18n="footer_auto">Índices automáticos. No constituyen declaración oficial.</span>
       <span data-i18n="footer_corr">Correlaciones anuales y estacionales · CHIRPS v3.0</span>
@@ -863,5 +877,20 @@
 <script src="js/scientific.js"></script>
 <script src="js/advice.js"></script>
 <script src="js/main.js" defer></script>
+<script>
+/* The loop carries its own source, so a reader who asked for less motion is
+   left with the poster frame and nothing downloads. */
+(function () {
+  var quiet = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('figure.plate video').forEach(function (v) {
+    if (quiet) { v.removeAttribute('autoplay'); v.setAttribute('controls', ''); }
+    var src = document.createElement('source');
+    src.src = 'media/el-nino-sea-surface-temperature-anomaly-january.webm';
+    src.type = 'video/webm';
+    v.appendChild(src);
+    if (!quiet) { v.load(); }
+  });
+})();
+</script>
 </body>
 </html>

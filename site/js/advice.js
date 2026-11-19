@@ -93,8 +93,8 @@ function getRegionAdvice(regionName, phase, bestCorr, extras) {
 
   /* Collapsible statistical detail */
   const statDetail =
-    `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
-    `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">` +
+    `<details class="advice-detail" style="margin-top:10px;"><summary class="disclosure">${t('detail_stat_toggle')}</summary>` +
+    `<span style="font-size:14px;">` +
     `r = ${r > 0 ? '+' : ''}${r.toFixed(3)}${stars || ''}, q = ${p.toFixed(3)}, p = ${bestCorr.pearson_p.toPrecision(3)}, ` +
     `n = ${n}, n<sub>eff</sub> = ${nEff}, ${_lagStr(lag)}` +
     `</span></details>`;

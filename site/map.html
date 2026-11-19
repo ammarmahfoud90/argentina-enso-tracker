@@ -3,15 +3,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mapa ENSO Argentina</title>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Libre+Franklin:wght@400;600;700&display=swap" rel="stylesheet">
+  <title>El ENSO, región por región · Argentina ENSO Impact Tracker</title>
+  <meta name="description" content="Mapa de la asociación histórica entre el ONI y la lluvia en las cinco cajas CHIRPS que cubren Argentina, con el valor de cada región y lo que el mapa no dice.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#0E1014">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/tokens.css">
+  <script>/* Same ground as the tracker, decided before the first paint. */
+  (function(){var s=localStorage.getItem('enso-dark-mode');if(s===null||s==='1')document.documentElement.classList.add('dark');document.documentElement.classList.add('js');})()</script>
   <style>
-    html, body { margin: 0; background: #FFFFFF; overflow: hidden; transition: background .3s; }
-    html.dark, html.dark body { background: #0a0e27; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:var(--font-body);color:var(--color-ink);background:var(--color-bg);-webkit-font-smoothing:antialiased;font-size:var(--t-body);line-height:1.55;}
+    h1,h2{font-weight:800;letter-spacing:-0.03em;line-height:1.02;}
+    a{color:var(--color-accent);text-decoration:none;}
+    a:hover{color:var(--color-nino);text-decoration:underline;}
+    a:focus-visible,button:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px;}
+    ::selection{background:var(--color-ink);color:var(--color-bg);}
+    svg text{font-family:var(--font-body);}
+
+    .page{max-width:none;margin:0;padding:0 0 clamp(120px,10vw,200px);}
+    .page > section{max-width:calc(var(--max-width) + var(--margin) * 2);margin-inline:auto;padding:10px var(--margin) 0;}
+    section + section{margin-top:var(--section-gap);}
+
+    /* The first screen: one solid field, the same ink the tracker uses. */
+    .masthead{background:var(--field-neutral);color:var(--field-ink);padding:0 var(--margin) clamp(48px,6vw,88px);margin-bottom:var(--section-gap);}
+    .masthead-inner{max-width:var(--max-width);margin-inline:auto;padding-top:clamp(40px,5vw,72px);}
+    .masthead-row{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(32px,5vw,72px);align-items:start;margin-top:clamp(28px,3vw,48px);}
+    .masthead h1{font-size:var(--t-display);letter-spacing:-0.035em;line-height:0.92;color:var(--field-ink);max-width:14ch;}
+    .masthead .lead{margin-top:24px;font-size:var(--t-lead);line-height:1.4;color:var(--field-ink);opacity:.9;max-width:46ch;}
+    .masthead .note{margin-top:16px;font-size:var(--t-small);color:var(--field-ink);opacity:.78;max-width:52ch;}
+    .masthead figure{margin:0;}
+    .masthead figure img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;background:#000;}
+    .masthead figcaption{margin-top:12px;font-size:var(--t-body);color:var(--field-ink);opacity:.8;line-height:1.5;}
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px;}
+    .action{display:inline-flex;align-items:center;min-height:48px;padding:12px 22px;background:#FFFFFF;color:#14161A!important;font-weight:600;font-size:var(--t-body);text-decoration:none!important;transition:opacity var(--ease-smooth);}
+    .action.ghost{background:rgba(255,255,255,0.16);color:var(--field-ink)!important;}
+    .action:hover{opacity:.85;text-decoration:none!important;}
+
+    h2{font-size:var(--t-head);max-width:20ch;margin-bottom:14px;}
+    section > p{max-width:58ch;margin-bottom:16px;color:var(--color-ink-2);}
+    section > p.plain{color:var(--color-ink);}
+
+    #map{margin-top:8px;}
+    #map svg{width:100%;height:auto;display:block;}
+    .map-note{margin-top:18px;font-size:var(--t-small);color:var(--color-ink-3);max-width:58ch;}
+
+    /* The reading, in words as well as in circles. */
+    .reading{display:grid;gap:3px;margin-top:8px;}
+    .reading-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;align-items:baseline;padding:18px 20px;background:var(--color-bg-alt);}
+    .reading-name{font-weight:700;font-size:var(--t-body);}
+    .reading-prov{grid-column:1;font-size:var(--t-small);color:var(--color-ink-3);margin-top:4px;}
+    .reading-val{font-size:var(--t-lead);font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap;}
+    .reading-flag{grid-column:2;justify-self:end;font-size:var(--t-small);color:var(--color-ink-3);}
+
+    figure.plate{margin:0;}
+    figure.plate img,figure.plate video{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;background:#000;}
+    figure.plate figcaption{margin-top:12px;font-size:var(--t-body);color:var(--color-ink-2);max-width:58ch;line-height:1.5;}
+    .plate-pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:32px;margin-top:8px;}
+
+    .footer{margin-top:clamp(132px,10vw,200px);padding:clamp(48px,6vw,88px) var(--margin) clamp(40px,4vw,64px);background:var(--color-ink);color:rgba(255,255,255,0.75);font-size:var(--t-body);}
+    .footer > *{max-width:var(--max-width);margin-inline:auto;}
+    .footer > * + *{margin-top:24px;}
+    .footer a{color:#fff;text-decoration:underline;text-underline-offset:3px;}
+    .footer-wordmark{font-size:var(--t-display);font-weight:800;letter-spacing:-0.04em;line-height:0.88;color:#fff;}
+    .credits{font-size:var(--t-small);color:rgba(255,255,255,0.72);line-height:1.6;max-width:80ch;}
+    html.dark .footer{background:#171A20;}
+
+    /* Motion: an entrance per part, travel only. */
+    @keyframes mapRise{from{opacity:0;transform:translateY(20px)}}
+    .masthead h1,.masthead .lead,.masthead .note,.masthead .actions,.masthead figure{animation:mapRise .6s var(--ease-out-expo) both;}
+    .masthead .lead{animation-delay:.08s}
+    .masthead .note{animation-delay:.14s}
+    .masthead .actions{animation-delay:.2s}
+    .masthead figure{animation-delay:.26s}
+    html.js .reveal > *:not(h2){opacity:0;transform:translateY(20px);transition:opacity .6s var(--ease-out-expo),transform .6s var(--ease-out-expo);}
+    html.js .reveal > h2{transform:translateY(20px);transition:transform .6s var(--ease-out-expo);}
+    html.js .reveal.visible > *{opacity:1;transform:none;}
+    .reveal.visible > *:nth-child(2){transition-delay:.07s}
+    .reveal.visible > *:nth-child(3){transition-delay:.14s}
+    .reveal.visible > *:nth-child(4){transition-delay:.21s}
+    .reading-row{transition:background var(--ease-smooth);}
+    .reading-row:hover{background:var(--color-bg-inset);}
+    @media(prefers-reduced-motion:reduce){
+      *{animation:none!important;transition:none!important}
+      .reveal > *{opacity:1!important;transform:none!important;}
+    }
+
+    @media(max-width:900px){
+      .masthead-row{grid-template-columns:1fr;align-items:start;gap:28px;}
+    }
+
+    /* Embedded in the tracker, the map arrives on its own. */
+    html.embedded,html.embedded body{background:transparent;overflow:hidden;}
+    html.embedded .masthead,html.embedded .footer,html.embedded .chrome{display:none!important;}
+    html.embedded .page{padding:0;}
+    html.embedded .page > section{padding-inline:0;}
+    html.embedded section + section{margin-top:0;}
   </style>
 </head>
 <body>
-<div id="map"></div>
+
+<main class="page">
+
+  <header class="masthead">
+    <div class="masthead-inner">
+      <h1>El ENSO, región por región</h1>
+      <div class="masthead-row">
+      <div>
+        <p class="lead">Cuánto acompañan la lluvia de cada región argentina y el estado del Pacífico, medido sobre el archivo CHIRPS desde 1981.</p>
+        <p class="note">El tamaño del círculo es la fuerza de la asociación anual. El borde discontinuo marca las regiones cuyo valor no sobrevive al ajuste por comparaciones múltiples: ahí el mapa no afirma nada.</p>
+        <div class="actions">
+          <a class="action" href="index.html">Volver al tracker</a>
+          <a class="action ghost" href="#regiones">Ver el valor de cada región</a>
+        </div>
+      </div>
+      <figure>
+        <img src="media/comparing-sea-level-during-el-nino-events.jpg" width="1586" height="783"
+             alt="Mapa de altimetría del Pacífico el 6 de octubre de 1997, con una franja blanca de agua elevada sobre el ecuador"
+             decoding="async">
+        <figcaption>Donde empieza todo: el Pacífico el 6 de octubre de 1997, con el agua sobre el ecuador más de 10 cm por encima de lo normal. Altimetría, NASA/JPL-Caltech.</figcaption>
+      </figure>
+      </div>
+    </div>
+  </header>
+
+  <section class="reveal" id="mapa" aria-labelledby="mapaTitle">
+    <h2 id="mapaTitle">El mapa</h2>
+    <p>Cada círculo se dibuja sobre el centro de una caja rectangular de CHIRPS, no sobre una provincia ni sobre una cuenca. El radio crece con el valor absoluto de la correlación de Pearson entre el ONI y la anomalía de lluvia de esa caja.</p>
+    <div id="map"></div>
+    <p class="map-note">La caja de Patagonia solo llega hasta los 50°S: deja afuera Tierra del Fuego y el extremo sur de Santa Cruz. La nieve y el relieve limitan la precisión de CHIRPS en Cuyo y en la cordillera.</p>
+  </section>
+
+  <section class="reveal" id="regiones" aria-labelledby="regionesTitle">
+    <h2 id="regionesTitle">Región por región</h2>
+    <p>El mismo contenido del mapa, en texto. El valor es la correlación anual de mejor retardo; los asteriscos indican el nivel de q tras el ajuste de Benjamini-Yekutieli.</p>
+    <div class="reading" id="reading"></div>
+  </section>
+
+  <section class="reveal" id="lectura" aria-labelledby="lecturaTitle">
+    <h2 id="lecturaTitle">Cómo leerlo sin pasarse</h2>
+    <p class="plain">Una asociación histórica no es un pronóstico. Dice que, en el archivo, los años con el Pacífico cálido llegaron acompañados de más lluvia en esa caja; no dice cuánta lluvia va a caer el mes que viene en un campo concreto.</p>
+    <p>Un círculo discontinuo tampoco demuestra que no exista un vínculo físico. Significa que, con la cantidad de comparaciones que hace este tracker, el valor no se distingue del ruido.</p>
+    <p>Para lluvia y niveles de río en los próximos meses, el pronóstico operativo lo publican el Servicio Meteorológico Nacional y el Instituto Nacional del Agua.</p>
+    <div class="plate-pair">
+      <figure class="plate">
+        <img src="media/iss063e040142-fires-on-the-parana-river-floodplain.jpg" width="1920" height="1280"
+             alt="Vista desde la Estación Espacial de la llanura del río Paraná, con humo de incendios"
+             loading="lazy" decoding="async">
+        <figcaption>La llanura del Paraná desde la Estación Espacial, en junio de 2020. Ese año La Niña dejó la cuenca en bajante y el humo de las quemas se ve desde órbita. Fotografía de la tripulación de la ISS, NASA.</figcaption>
+      </figure>
+      <figure class="plate">
+        <img src="media/fires-along-the-parana-river-argentina-modis.jpg" width="1920" height="1456"
+             alt="Imagen satelital MODIS del río Paraná en octubre de 2022, con focos de incendio marcados"
+             loading="lazy" decoding="async">
+        <figcaption>El mismo río en octubre de 2022, desde MODIS: los puntos rojos son focos que detectó el sensor. Es el dato crudo, antes de volverse una serie. MODIS Land Rapid Response Team, NASA GSFC.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="reveal" id="otro-lado" aria-labelledby="otroTitle">
+    <h2 id="otroTitle">La otra fase</h2>
+    <p>Los mismos círculos cambian de signo cuando el Pacífico se enfría. La asociación que apunta a más lluvia durante El Niño apunta a menos durante La Niña, y con la misma incertidumbre.</p>
+    <div class="plate-pair">
+      <figure class="plate">
+        <video autoplay muted loop playsinline preload="metadata"
+               poster="media/el-nino-sea-surface-temperature-anomaly-january-poster.jpg"
+               width="640" height="480"
+               aria-label="Animación de la anomalía de temperatura del Pacífico mes a mes durante 1997"></video>
+        <figcaption>Un año de El Niño en veinticinco segundos: la anomalía de temperatura del Pacífico de enero a diciembre de 1997. La lengua roja crece hacia el este y se apaga. NASA Scientific Visualization Studio, con datos AVHRR de NOAA.</figcaption>
+      </figure>
+      <figure class="plate">
+        <img src="media/sea-surface-temperature-november-2007.jpg" width="1440" height="720"
+             alt="Mapa global de anomalía de temperatura del mar en noviembre de 2007, con una lengua azul sobre el Pacífico ecuatorial"
+             loading="lazy" decoding="async">
+        <figcaption>Noviembre de 2007, La Niña: la lengua azul sobre el Pacífico ecuatorial es agua más fría que la media. NASA, con datos AMSR-E.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <footer class="footer chrome">
+    <p class="footer-wordmark" aria-hidden="true">ENSO<br>Tracker</p>
+    <p>Correlaciones anuales y estacionales sobre CHIRPS v3.0 (UCSB) y el ONI de NOAA CPC. <a href="index.html">Volver al tracker</a>.</p>
+    <p class="credits">Imágenes: <a href="https://commons.wikimedia.org/wiki/File:Comparing_Sea_Level_During_El_Ni%C3%B1o_Events_(PIA26099).jpg">“Comparing Sea Level During El Niño Events”</a>, NASA/JPL-Caltech; <a href="https://commons.wikimedia.org/wiki/File:Sea_Surface_Temperature_-_November_2007.jpg">“Sea Surface Temperature, November 2007”</a>, NASA; <a href="https://commons.wikimedia.org/wiki/File:(iss063e040142)_Fires_on_the_Parana_River_floodplain_in_Argentina.jpg">“Fires on the Parana River floodplain”</a>, NASA; <a href="https://commons.wikimedia.org/wiki/File:Fires_along_the_Parana_River,_Argentina_(MODIS).jpg">“Fires along the Parana River”</a>, MODIS Land Rapid Response Team, NASA GSFC. Animación: <a href="https://commons.wikimedia.org/wiki/File:El_Ni%C3%B1o_Sea_Surface_Temperature_Anomaly-_January,_1997,_through_December,_1997_(SVS156).webm">“El Niño Sea Surface Temperature Anomaly, 1997”</a>, NASA Scientific Visualization Studio. Todas de <a href="https://creativecommons.org/publicdomain/mark/1.0/">dominio público</a>, vía Wikimedia Commons.</p>
+  </footer>
+
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
@@ -21,7 +199,12 @@
    Argentina ENSO signal map — v2
    Circles sized r = 9 + |pearson_r| × 90, oklch fill, dashed when corrected q ≥ 0.05.
    All correlation values loaded from data/enso.json — no hardcoded data.
+
+   The page stands on its own at its own URL and still works inside the
+   tracker: in a frame it drops its chrome and hands over the map alone.
    ====================================================================== */
+
+if (window.self !== window.top) document.documentElement.classList.add('embedded');
 
 const SIG_THRESHOLD = 0.05;
 
@@ -34,6 +217,42 @@ function col(r, sig) {
   return `oklch(0.56 ${C.toFixed(3)} ${H} / ${A})`;
 }
 
+const MAP_DARK = document.documentElement.classList.contains('dark');
+const INK = MAP_DARK ? '#F2F3F5' : '#14161A';
+const INK_2 = MAP_DARK ? '#B4BAC3' : '#474D57';
+const INK_3 = MAP_DARK ? '#8A919B' : '#6B7280';
+
+/* Each section arrives as the reader reaches it. The observer does the work;
+   a plain scroll check stands behind it, because a section that never gets
+   its class would stay invisible, and losing the content is worse than
+   losing the entrance. */
+(function () {
+  const quiet = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const sections = [...document.querySelectorAll('.reveal')];
+  const show = (el) => el.classList.add('visible');
+  if (quiet) { sections.forEach(show); return; }
+
+  const sweep = () => {
+    const h = window.innerHeight || document.documentElement.clientHeight;
+    for (const s of sections) {
+      if (s.classList.contains('visible')) continue;
+      const r = s.getBoundingClientRect();
+      if (r.top < h * 0.92) show(s);   /* also anything a jump scrolled past */
+    }
+  };
+
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { show(e.target); io.unobserve(e.target); }
+    }, { rootMargin: '0px 0px -8% 0px' });
+    sections.forEach((s) => io.observe(s));
+  }
+  addEventListener('scroll', sweep, { passive: true });
+  addEventListener('resize', sweep);
+  addEventListener('load', sweep);
+  sweep();
+})();
+
 (async () => {
   /* 1. Load ENSO data */
   let data;
@@ -42,7 +261,7 @@ function col(r, sig) {
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     data = await resp.json();
   } catch (err) {
-    document.getElementById('map').textContent = 'Error: ' + err.message;
+    document.getElementById('map').textContent = 'No se pudieron cargar los datos: ' + err.message;
     return;
   }
 
@@ -75,15 +294,17 @@ function col(r, sig) {
 
   const svg = d3.select('#map').append('svg')
     .attr('viewBox', `0 0 ${W} ${H}`)
+    .attr('role', 'img')
+    .attr('aria-label', 'Mapa de la asociación entre el ONI y la lluvia en cinco regiones de Argentina')
     .style('width', '100%').style('height', 'auto').style('display', 'block');
 
   /* Neighbors */
   svg.selectAll('.nb').data(neighbors).join('path')
-    .attr('d', path).attr('fill', '#F0F2F5').attr('stroke', '#DEE2E8').attr('stroke-width', 0.8);
+    .attr('d', path).attr('fill', MAP_DARK ? '#1A1E26' : '#EFF1F4').attr('stroke', MAP_DARK ? '#262B33' : '#DDE1E6').attr('stroke-width', 0.8);
 
   /* Argentina */
   svg.append('path').datum(arg)
-    .attr('d', path).attr('fill', '#FAFBFC').attr('stroke', '#14161A').attr('stroke-width', 1.1);
+    .attr('d', path).attr('fill', MAP_DARK ? '#171A20' : '#FAFBFC').attr('stroke', INK).attr('stroke-width', 1.1);
 
   /* Islas Malvinas override label */
   const [mlx, mly] = proj([-59.0, -51.8]);
@@ -91,9 +312,9 @@ function col(r, sig) {
     svg.append('text')
       .attr('x', mlx).attr('y', mly)
       .attr('text-anchor', 'middle')
-      .attr('font-family', 'IBM Plex Mono, monospace')
-      .attr('font-size', '8px')
-      .attr('fill', '#79818E')
+      .attr('font-family', 'Libre Franklin,sans-serif')
+      .attr('font-size', 13)
+      .attr('fill', INK_3)
       .text('Islas Malvinas (Arg.)');
   }
 
@@ -109,16 +330,20 @@ function col(r, sig) {
   const g = svg.selectAll('.reg').data(regData).join('g')
     .attr('transform', d => { const p = proj(d.ll); return `translate(${p[0].toFixed(1)},${p[1].toFixed(1)})`; });
 
-  g.append('circle')
-    .attr('r', 0)
+  const quietMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const circles = g.append('circle')
+    .attr('r', quietMotion ? (d => d.best ? rad(d.best.pearson_r) : rad(0.03)) : 0)
     .attr('fill', d => d.best ? col(d.best.pearson_r, correlationQ(d.best) < SIG_THRESHOLD) : col(0, false))
-    .attr('stroke', '#14161A')
+    .attr('stroke', INK)
     .attr('stroke-width', d => (d.best && correlationQ(d.best) < SIG_THRESHOLD) ? 1.2 : 0.6)
-    .attr('stroke-dasharray', d => (d.best && correlationQ(d.best) < SIG_THRESHOLD) ? null : '2 3')
-    .transition().duration(650)
-    .delay((d, i) => 350 + i * 130)
-    .ease(d3.easeCubicOut)
-    .attr('r', d => d.best ? rad(d.best.pearson_r) : rad(0.03));
+    .attr('stroke-dasharray', d => (d.best && correlationQ(d.best) < SIG_THRESHOLD) ? null : '2 3');
+
+  if (!quietMotion) {
+    circles.transition().duration(650)
+      .delay((d, i) => 350 + i * 130)
+      .ease(d3.easeCubicOut)
+      .attr('r', d => d.best ? rad(d.best.pearson_r) : rad(0.03));
+  }
 
   g.append('text')
     .attr('x', d => d.best ? rad(d.best.pearson_r) + 8 : rad(0.03) + 8)
@@ -126,13 +351,12 @@ function col(r, sig) {
     .attr('font-family', 'Libre Franklin, sans-serif')
     .attr('font-size', 13)
     .attr('font-weight', 700)
-    .attr('fill', '#14161A')
+    .attr('fill', INK)
     .text(d => d.n);
 
   /* Build best seasonal signal per region (for n.s. annual labels) */
   const seasonalCorr = data.seasonal_correlations || {};
   const bestSeasonal = {};
-  const seasonLabels = { SON: 'SON', DEF: 'DEF', MAM: 'MAM', JJA: 'JJA' };
   for (const region of regionOrder) {
     let topHit = null;
     for (const [sn, recs] of Object.entries(seasonalCorr)) {
@@ -146,66 +370,115 @@ function col(r, sig) {
     bestSeasonal[region] = topHit;
   }
 
+  function valueLabel(d) {
+    if (!d.best) return 'sin datos';
+    const r = d.best.pearson_r;
+    const sign = r >= 0 ? '+' : '−';
+    const stars = correlationStars(d.best);
+    const isSig = correlationQ(d.best) < SIG_THRESHOLD;
+    if (isSig) return sign + Math.abs(r).toFixed(3) + stars;
+    let label = sign + Math.abs(r).toFixed(3) + ' n.s.';
+    const ss = bestSeasonal[d.n];
+    if (ss) {
+      const ssSign = ss.r >= 0 ? '+' : '−';
+      label += ' · ' + ss.season + ' ' + ssSign + Math.abs(ss.r).toFixed(2) + ss.stars;
+    }
+    return label;
+  }
+
   g.append('text')
     .attr('x', d => d.best ? rad(d.best.pearson_r) + 8 : rad(0.03) + 8)
     .attr('y', 14)
-    .attr('font-family', 'IBM Plex Mono, monospace')
-    .attr('font-size', 11.5)
-    .attr('fill', '#555C68')
-    .text(d => {
-      if (!d.best) return 'sin datos';
-      const r = d.best.pearson_r;
-      const sign = r >= 0 ? '+' : '−';
-      const stars = correlationStars(d.best);
-      const isSig = correlationQ(d.best) < SIG_THRESHOLD;
-      if (isSig) return sign + Math.abs(r).toFixed(3) + stars;
-      /* Annual n.s. — append best seasonal if available */
-      let label = sign + Math.abs(r).toFixed(3) + ' n.s.';
-      const ss = bestSeasonal[d.n];
-      if (ss) {
-        const ssSign = ss.r >= 0 ? '+' : '−';
-        label += ' · ' + ss.season + ' ' + ssSign + Math.abs(ss.r).toFixed(2) + ss.stars;
-      }
-      return label;
-    });
+    .attr('font-family', 'Libre Franklin,sans-serif')
+    .attr('font-size', 13)
+    .attr('fill', INK_2)
+    .text(valueLabel);
 
   /* Legend */
   const lg = svg.append('g').attr('transform', `translate(${W - 235}, ${H - 208})`);
   lg.append('text')
-    .attr('font-family', 'IBM Plex Mono, monospace')
-    .attr('font-size', 10.5)
-    .attr('letter-spacing', '0.1em')
-    .attr('fill', '#79818E')
-    .text('ASOCIACIÓN ONI · q FDR');
+    .attr('font-family', 'Libre Franklin,sans-serif')
+    .attr('font-size', 13)
+    .attr('font-weight', 600)
+    .attr('fill', INK_3)
+    .text('Asociación con el ONI');
 
-  const legendItems = [[0.35, '', true, '|r| = 0.35 (tamaño)'], [0.22, '', true, '|r| = 0.22 (tamaño)'], [0.10, '', true, '|r| = 0.10 (tamaño)'], [0.02, '', false, 'q ≥ 0.05 (discontinua)']];
-  legendItems.forEach(([r, stars, sig, label], i) => {
+  const legendItems = [[0.35, true, '|r| = 0.35'], [0.22, true, '|r| = 0.22'], [0.10, true, '|r| = 0.10'], [0.02, false, 'q ≥ 0.05']];
+  legendItems.forEach(([r, sig, label], i) => {
     const y = 24 + i * 40;
     lg.append('circle')
       .attr('cx', 12).attr('cy', y)
       .attr('r', rad(r) * 0.55)
       .attr('fill', col(r, sig))
-      .attr('stroke', '#14161A')
+      .attr('stroke', INK)
       .attr('stroke-width', sig ? 1 : 0.6)
       .attr('stroke-dasharray', sig ? null : '2 3');
     lg.append('text')
       .attr('x', 34).attr('y', y + 4)
-      .attr('font-family', 'IBM Plex Mono, monospace')
-      .attr('font-size', 11.5)
-      .attr('fill', '#555C68')
+      .attr('font-family', 'Libre Franklin,sans-serif')
+      .attr('font-size', 13)
+      .attr('fill', INK_2)
       .text(label);
   });
 
   lg.append('text')
     .attr('y', 198)
-    .attr('font-family', 'IBM Plex Mono, monospace')
-    .attr('font-size', 10)
-    .attr('fill', '#A7AEBB')
-    .text('CHIRPS: Patagonia 37–50°S · cajas');
+    .attr('font-family', 'Libre Franklin,sans-serif')
+    .attr('font-size', 13)
+    .attr('fill', INK_3)
+    .text('Cajas CHIRPS · Patagonia 37–50°S');
+
+  /* 5. The same reading in text, built from the same values. */
+  const readingEl = document.getElementById('reading');
+  if (readingEl) {
+    for (const d of regData) {
+      const meta = (data.region_meta || {})[d.n] || {};
+      const provinces = Array.isArray(meta.provinces) ? meta.provinces.join(', ') : (meta.provinces || '');
+      const isSig = d.best && correlationQ(d.best) < SIG_THRESHOLD;
+      const row = document.createElement('div');
+      row.className = 'reading-row';
+
+      const name = document.createElement('p');
+      name.className = 'reading-name';
+      name.textContent = d.n;
+
+      const val = document.createElement('p');
+      val.className = 'reading-val';
+      val.textContent = valueLabel(d);
+
+      const prov = document.createElement('p');
+      prov.className = 'reading-prov';
+      prov.textContent = provinces;
+
+      const flag = document.createElement('p');
+      flag.className = 'reading-flag';
+      flag.textContent = d.best
+        ? (isSig ? 'supera el ajuste' : 'no supera el ajuste')
+        : 'sin datos';
+
+      row.append(name, val, prov, flag);
+      readingEl.appendChild(row);
+    }
+  }
 })();
 
-/* Dark mode via postMessage from parent */
+/* The loop carries its own source: a reader who asked for less motion is left
+   with the poster frame and nothing downloads. */
+(function () {
+  var quiet = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('figure.plate video').forEach(function (v) {
+    if (quiet) { v.removeAttribute('autoplay'); v.setAttribute('controls', ''); }
+    var src = document.createElement('source');
+    src.src = 'media/el-nino-sea-surface-temperature-anomaly-january.webm';
+    src.type = 'video/webm';
+    v.appendChild(src);
+    if (!quiet) { v.load(); }
+  });
+})();
+
+/* The tracker can hand the frame its own ground. */
 window.addEventListener('message', (e) => {
+  if (e.origin !== window.location.origin) return;
   if (e.data && typeof e.data.dark === 'boolean') {
     document.documentElement.classList.toggle('dark', e.data.dark);
   }

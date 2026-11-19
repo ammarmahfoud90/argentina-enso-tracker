@@ -6,12 +6,13 @@
  * Serves cached data when offline.
  */
 
-const CACHE_NAME = 'enso-tracker-climate-v5';
-const DATA_CACHE = 'enso-data-climate-v5';
+const CACHE_NAME = 'enso-tracker-climate-v6';
+const DATA_CACHE = 'enso-data-climate-v6';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './map.html',
   './css/tokens.css',
   './js/i18n.js',
   './js/scientific.js',

@@ -48,7 +48,7 @@ function svgText(parent, x, y, text, attrs = {}) {
   return e;
 }
 function phaseColor(phase) {
-  if (phase === 'El Niño') return '#C2382A';
+  if (phase === 'El Niño') return '#C0252A';
   if (phase === 'La Niña') return '#2A55D0';
   return '#79818E';
 }
@@ -97,13 +97,13 @@ function chartColors() {
 
 /* ── ONI Gauge ── */
 const GAUGE_SEGMENTS = [
-  { from: -2.5, to: -1.5, color: '#1e3a8a', label: t('gauge_nina_strong') },
-  { from: -1.5, to: -0.5, color: '#2563eb', label: t('gauge_la_nina') },
-  { from: -0.5, to:  0.5, color: '#94a3b8', label: t('gauge_neutral') },
-  { from:  0.5, to:  1.0, color: '#d97706', label: t('gauge_nino_weak') },
-  { from:  1.0, to:  1.5, color: '#ea580c', label: t('gauge_nino_moderate') },
-  { from:  1.5, to:  2.0, color: '#dc2626', label: t('gauge_nino_strong') },
-  { from:  2.0, to:  2.5, color: '#7f1d1d', label: t('gauge_nino_vstrong') },
+  { from: -2.5, to: -1.5, color: '#17307E', label: t('gauge_nina_strong') },
+  { from: -1.5, to: -0.5, color: '#2A55D0', label: t('gauge_la_nina') },
+  { from: -0.5, to:  0.5, color: '#9AA1AC', label: t('gauge_neutral') },
+  { from:  0.5, to:  1.0, color: '#E07B7B', label: t('gauge_nino_weak') },
+  { from:  1.0, to:  1.5, color: '#CE3A33', label: t('gauge_nino_moderate') },
+  { from:  1.5, to:  2.0, color: '#C0252A', label: t('gauge_nino_strong') },
+  { from:  2.0, to:  2.5, color: '#8E2318', label: t('gauge_nino_vstrong') },
 ];
 const GAUGE_MIN = -2.5, GAUGE_MAX = 2.5, GAUGE_W = 300, GAUGE_BAR_H = 18, GAUGE_BAR_Y = 4;
 
@@ -159,8 +159,7 @@ function buildOniGauge(svgId, oniValue) {
   const markerLine = document.createElementNS(ns, 'rect');
   markerLine.setAttribute('x', mx - 1.5); markerLine.setAttribute('y', GAUGE_BAR_Y - 5);
   markerLine.setAttribute('width', 3); markerLine.setAttribute('height', GAUGE_BAR_H + 10);
-  markerLine.setAttribute('rx', 1.5); markerLine.setAttribute('fill', '#FFFFFF');
-  markerLine.setAttribute('filter', 'drop-shadow(0 0 4px rgba(255,255,255,0.5))');
+  markerLine.setAttribute('fill', '#FFFFFF');
   marker.appendChild(markerLine);
   svg.appendChild(marker);
 
@@ -173,7 +172,7 @@ function buildOniGauge(svgId, oniValue) {
     const t = document.createElementNS(ns, 'text');
     t.setAttribute('x', xScale(al.v)); t.setAttribute('y', GAUGE_BAR_Y + GAUGE_BAR_H + 16);
     t.setAttribute('text-anchor', al.v === -2.5 ? 'start' : (al.v === 2.5 ? 'end' : 'middle'));
-    t.setAttribute('font-family', 'IBM Plex Mono, monospace'); t.setAttribute('font-size', '10');
+    t.setAttribute('font-family', 'Libre Franklin,sans-serif'); t.setAttribute('font-size', '13');
     t.setAttribute('fill', 'rgba(255,255,255,0.5)');
     t.textContent = al.text;
     svg.appendChild(t);
@@ -187,7 +186,7 @@ function buildOniGauge(svgId, oniValue) {
     const t = document.createElementNS(ns, 'text');
     t.setAttribute('x', xScale(pl.v)); t.setAttribute('y', GAUGE_BAR_Y + GAUGE_BAR_H + 30);
     t.setAttribute('text-anchor', 'middle');
-    t.setAttribute('font-family', 'IBM Plex Mono, monospace'); t.setAttribute('font-size', '10');
+    t.setAttribute('font-family', 'Libre Franklin,sans-serif'); t.setAttribute('font-size', '13');
     t.setAttribute('letter-spacing', '0.08em'); t.setAttribute('text-transform', 'uppercase');
     t.setAttribute('fill', 'rgba(255,255,255,0.65)'); t.setAttribute('font-weight', '500');
     t.textContent = pl.text;
@@ -290,13 +289,18 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
   defs.append('clipPath').attr('id', 'clip-arg')
     .append('path').attr('d', path(arg));
 
+  /* The map is drawn once, so it reads the theme that is on now rather than
+     waiting for a toggle that may never come. */
+  const mapDark = document.documentElement.classList.contains('dark');
+
   /* Neighbors */
   svg.selectAll('.nb').data(neighbors).join('path')
-    .attr('d', path).attr('fill', '#F0F2F5').attr('stroke', '#DEE2E8').attr('stroke-width', 0.5);
+    .attr('d', path).attr('fill', mapDark ? '#1a1e3a' : '#F0F2F5')
+    .attr('stroke', mapDark ? '#2a2e4a' : '#DEE2E8').attr('stroke-width', 0.5);
 
   /* Argentina outline (background) */
   svg.append('path').datum(arg)
-    .attr('d', path).attr('fill', '#FAFBFC').attr('stroke', 'none');
+    .attr('d', path).attr('fill', mapDark ? '#141824' : '#FAFBFC').attr('stroke', 'none');
 
   /* Region rectangles clipped to Argentina */
   const regionFeatures = regionOrder.map(name => {
@@ -380,9 +384,8 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
     .attr('y', d => meta[d][1])
     .attr('text-anchor', 'middle')
     .attr('font-family', 'Libre Franklin, sans-serif')
-    .attr('font-size', 11)
+    .attr('font-size', 13)
     .attr('font-weight', 700)
-    .attr('fill', '#14161A')
     .attr('pointer-events', 'none')
     .text(d => d);
 
@@ -392,8 +395,8 @@ async function buildArgentinaMap(svgId, regionOrder, best, phase, onSelect, freq
     svg.append('text')
       .attr('x', mlx).attr('y', mly)
       .attr('text-anchor', 'middle')
-      .attr('font-family', 'IBM Plex Mono, monospace')
-      .attr('font-size', '8').attr('fill', '#79818E')
+      .attr('font-family', 'Libre Franklin,sans-serif')
+      .attr('font-size', '13').attr('fill', mapDark ? '#8A919B' : '#6B7280')
       .text(t('map_malvinas'));
   }
 
@@ -508,7 +511,7 @@ function buildOniPlotly(divId, series, episodes, desde, notableEvents) {
 
   /* Color each point by value: red for El Niño, blue for La Niña, gray for neutral */
   const colors = onis.map(v => {
-    if (v >= 0.5) return '#C2382A';
+    if (v >= 0.5) return '#C0252A';
     if (v <= -0.5) return '#2A55D0';
     return '#79818E';
   });
@@ -536,10 +539,10 @@ function buildOniPlotly(divId, series, episodes, desde, notableEvents) {
     /* Latest point marker */
     { x: [dates[dates.length-1]], y: [onis[onis.length-1]],
       type:'scatter', mode:'markers+text',
-      marker: { color:'#C2382A', size:8 },
+      marker: { color:'#C0252A', size:8 },
       text: [(onis[onis.length-1] >= 0 ? '+' : '') + onis[onis.length-1].toFixed(2)],
       textposition: 'top left',
-      textfont: { family:'IBM Plex Mono', size:12, color:'#C2382A' },
+      textfont: { family:'Libre Franklin', size:13, color:'#C0252A' },
       hoverinfo:'skip', showlegend:false },
   ];
 
@@ -564,17 +567,17 @@ function buildOniPlotly(divId, series, episodes, desde, notableEvents) {
     margin: { t:10, r:20, b:40, l:50 },
     xaxis: {
       type:'date', gridcolor:cc.grid, linecolor:cc.axis,
-      tickfont: { family:'IBM Plex Mono', size:11, color:cc.tick },
+      tickfont: { family:'Libre Franklin', size:13, color:cc.tick },
     },
     yaxis: {
-      title: { text:'ONI (°C)', font:{ family:'IBM Plex Mono', size:11, color:cc.tick } },
+      title: { text:'ONI (°C)', font:{ family:'Libre Franklin', size:13, color:cc.tick } },
       gridcolor:cc.grid, linecolor:cc.axis, zeroline:true, zerolinecolor:cc.zero,
-      tickfont: { family:'IBM Plex Mono', size:11, color:cc.tick },
+      tickfont: { family:'Libre Franklin', size:13, color:cc.tick },
     },
     shapes: [
       /* +0.5 threshold */
       { type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:0.5, y1:0.5,
-        line:{ color:'#C2382A', width:1, dash:'dot' } },
+        line:{ color:'#C0252A', width:1, dash:'dot' } },
       /* -0.5 threshold */
       { type:'line', xref:'paper', yref:'y', x0:0, x1:1, y0:-0.5, y1:-0.5,
         line:{ color:'#2A55D0', width:1, dash:'dot' } },
@@ -582,28 +585,28 @@ function buildOniPlotly(divId, series, episodes, desde, notableEvents) {
     ],
     annotations: [
       { xref:'paper', yref:'y', x:1.02, y:0.5, text:'+0.5', showarrow:false,
-        font:{ family:'IBM Plex Mono', size:10, color:'#C2382A' }, xanchor:'left' },
+        font:{ family:'Libre Franklin', size:13, color:'#C0252A' }, xanchor:'left' },
       { xref:'paper', yref:'y', x:1.02, y:-0.5, text:'−0.5', showarrow:false,
-        font:{ family:'IBM Plex Mono', size:10, color:'#2A55D0' }, xanchor:'left' },
+        font:{ family:'Libre Franklin', size:13, color:'#2A55D0' }, xanchor:'left' },
       ...(notableEvents || []).filter(ev => ev.start_year >= desde).map((ev, i) => ({
         x: ev.start_year + '-' + String(ev.start_month).padStart(2, '0') + '-15',
         y: ev.type === 'El Niño' ? ev.oni_peak : -Math.abs(ev.oni_peak),
         xref: 'x', yref: 'y',
         text: ev.year_range,
         showarrow: true, arrowhead: 0, arrowwidth: 1,
-        arrowcolor: ev.type === 'El Niño' ? '#C2382A' : '#2A55D0',
+        arrowcolor: ev.type === 'El Niño' ? '#C0252A' : '#2A55D0',
         ax: 0, ay: ev.type === 'El Niño' ? -30 - (i % 2) * 16 : 30 + (i % 2) * 16,
-        font: { family: 'IBM Plex Mono', size: 10, color: ev.type === 'El Niño' ? '#C2382A' : '#2A55D0' },
+        font: { family: 'Libre Franklin', size: 13, color: ev.type === 'El Niño' ? '#C0252A' : '#2A55D0' },
       })),
     ],
     paper_bgcolor:cc.paper, plot_bgcolor:cc.plot,
     hovermode:'x unified',
-    hoverlabel: { bgcolor:cc.hover, font:{ family:'IBM Plex Mono', size:12, color:cc.hoverFont } },
+    hoverlabel: { bgcolor:cc.hover, font:{ family:'Libre Franklin', size:13, color:cc.hoverFont } },
   };
 
   const config = {
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: 'hover',
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
     displaylogo: false,
   };
@@ -620,17 +623,17 @@ function buildInset(svgEl_, series24m) {
   const Y2 = v => insetY(v);
 
   const Y05 = Y2(0.5).toFixed(1), Y0 = Y2(0).toFixed(1);
-  svgEl('line', { x1:34, y1:Y05, x2:292, y2:Y05, stroke:'#C2382A', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.5 }, svgEl_);
+  svgEl('line', { x1:34, y1:Y05, x2:292, y2:Y05, stroke:'#C0252A', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.5 }, svgEl_);
   svgEl('line', { x1:34, y1:Y0, x2:292, y2:Y0, stroke:'#C7CCD6', 'stroke-width':1 }, svgEl_);
-  svgText(svgEl_, 30, (parseFloat(Y05)+4).toFixed(0), '+0.5', { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#C2382A' });
-  svgText(svgEl_, 30, (parseFloat(Y0)+4).toFixed(0), '0', { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#79818E' });
+  svgText(svgEl_, 30, (parseFloat(Y05)+4).toFixed(0), '+0.5', { 'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':13, fill:'#C0252A' });
+  svgText(svgEl_, 30, (parseFloat(Y0)+4).toFixed(0), '0', { 'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':13, fill:'#79818E' });
 
   /* Ticks: first, middle, last */
   const tickPts = [series24m[0], series24m[11], series24m[23] || series24m[series24m.length - 1]];
   for (const pt of tickPts) {
     const d = new Date(pt.date + 'T12:00:00Z');
     const label = getMonthShort(d.getUTCMonth()) + ' ' + String(d.getUTCFullYear()).slice(-2);
-    svgText(svgEl_, X2(d2y(pt.date)).toFixed(0), 220, label, { 'text-anchor':'middle', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#79818E' });
+    svgText(svgEl_, X2(d2y(pt.date)).toFixed(0), 220, label, { 'text-anchor':'middle', 'font-family':'Libre Franklin', 'font-size':13, fill:'#79818E' });
   }
 
   /* Path */
@@ -647,11 +650,11 @@ function buildInset(svgEl_, series24m) {
 
   const last = series24m[series24m.length - 1];
   const lx = X2(d2y(last.date)).toFixed(1), ly = Y2(last.oni).toFixed(1);
-  svgEl('circle', { cx:lx, cy:ly, r:'4.5', fill:'#C2382A', style:'animation:omIn .4s ease 1.85s backwards' }, svgEl_);
+  svgEl('circle', { cx:lx, cy:ly, r:'4.5', fill:'#C0252A', style:'animation:omIn .4s ease 1.85s backwards' }, svgEl_);
   const sign = last.oni >= 0 ? '+' : '';
   svgText(svgEl_, lx, (parseFloat(ly)-12).toFixed(1), sign + last.oni.toFixed(2), {
-    'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':'11.5', 'font-weight':600,
-    fill:'#C2382A', style:'animation:omIn .4s ease 1.85s backwards'
+    'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':'13', 'font-weight':600,
+    fill:'#C0252A', style:'animation:omIn .4s ease 1.85s backwards'
   });
 }
 
@@ -672,12 +675,12 @@ function buildSoiChart(svgEl_, soi24m) {
   /* La Niña threshold (+0.7 SOI ≈ La Niña conditions) */
   const yP = Y(1).toFixed(1);
   svgEl('line', { x1:x0, y1:yP, x2:x1, y2:yP, stroke:'#2A55D0', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.4 }, svgEl_);
-  svgText(svgEl_, 44, (parseFloat(yP)+4).toFixed(0), '+1', { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#2A55D0' });
+  svgText(svgEl_, 44, (parseFloat(yP)+4).toFixed(0), '+1', { 'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':13, fill:'#2A55D0' });
   /* El Niño threshold (-1 SOI ≈ El Niño conditions) */
   const yN = Y(-1).toFixed(1);
-  svgEl('line', { x1:x0, y1:yN, x2:x1, y2:yN, stroke:'#C2382A', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.4 }, svgEl_);
-  svgText(svgEl_, 44, (parseFloat(yN)+4).toFixed(0), '−1', { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#C2382A' });
-  svgText(svgEl_, 44, (parseFloat(zeroY.toFixed(1))+4).toFixed(0), '0', { 'text-anchor':'end', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#79818E' });
+  svgEl('line', { x1:x0, y1:yN, x2:x1, y2:yN, stroke:'#C0252A', 'stroke-width':1, 'stroke-dasharray':'3 4', opacity:0.4 }, svgEl_);
+  svgText(svgEl_, 44, (parseFloat(yN)+4).toFixed(0), '−1', { 'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':13, fill:'#C0252A' });
+  svgText(svgEl_, 44, (parseFloat(zeroY.toFixed(1))+4).toFixed(0), '0', { 'text-anchor':'end', 'font-family':'Libre Franklin', 'font-size':13, fill:'#79818E' });
 
   /* Bars */
   const totalW = x1 - x0;
@@ -689,7 +692,7 @@ function buildSoiChart(svgEl_, soi24m) {
     const val = d.soi;
     const barH = Math.abs(val) / (vTop - vBot) * (yBot - yTop);
     const by = val >= 0 ? zeroY - barH : zeroY;
-    const fill = val >= 0 ? '#2A55D0' : '#C2382A';
+    const fill = val >= 0 ? '#2A55D0' : '#C0252A';
     const delay = (0.3 + i * 0.03).toFixed(2) + 's';
 
     svgEl('rect', {
@@ -704,7 +707,7 @@ function buildSoiChart(svgEl_, soi24m) {
       const dt = new Date(d.date + 'T12:00:00Z');
       const label = getMonthShort(dt.getUTCMonth()) + ' ' + String(dt.getUTCFullYear()).slice(-2);
       svgText(svgEl_, cx.toFixed(0), 210, label, {
-        'text-anchor':'middle', 'font-family':'IBM Plex Mono', 'font-size':10, fill:'#79818E'
+        'text-anchor':'middle', 'font-family':'Libre Franklin', 'font-size':13, fill:'#79818E'
       });
     }
   });
@@ -716,22 +719,24 @@ function buildSoiChart(svgEl_, soi24m) {
   const labelY = last.soi >= 0 ? zeroY - lastBarH - 8 : zeroY + lastBarH + 14;
   const sign = last.soi >= 0 ? '+' : '';
   svgText(svgEl_, lastCx.toFixed(0), labelY.toFixed(0), sign + last.soi.toFixed(1), {
-    'text-anchor':'middle', 'font-family':'IBM Plex Mono', 'font-size':12, 'font-weight':600,
-    fill: last.soi >= 0 ? '#2A55D0' : '#C2382A',
+    'text-anchor':'middle', 'font-family':'Libre Franklin', 'font-size':12, 'font-weight':600,
+    fill: last.soi >= 0 ? '#2A55D0' : '#C0252A',
     style:'animation:omIn .4s ease 1.2s backwards'
   });
 }
 
 /* ── SOI trend classification ── */
+/* The badge names its own state and lets the stylesheet colour it, so the
+   reading stays legible on whichever ground the page is wearing. */
 function soiTrend(soi24m) {
-  if (!soi24m || soi24m.length < 3) return { label: I18N.getLang() === 'en' ? 'Insufficient data' : 'Datos insuficientes', color: '#79818E' };
+  if (!soi24m || soi24m.length < 3) return { label: I18N.getLang() === 'en' ? 'Insufficient data' : 'Datos insuficientes', key: 'none' };
   const recent = soi24m.slice(-3).map(d => d.soi);
   const avg = recent.reduce((a, b) => a + b, 0) / recent.length;
-  if (avg <= -1) return { label: I18N.getLang() === 'en' ? 'El Niño signal' : 'Señal El Niño', color: '#C2382A' };
-  if (avg >= 1) return { label: I18N.getLang() === 'en' ? 'La Niña signal' : 'Señal La Niña', color: '#2A55D0' };
-  if (avg <= -0.5) return { label: I18N.getLang() === 'en' ? 'Negative trend' : 'Tendencia negativa', color: '#DC8E80' };
-  if (avg >= 0.5) return { label: I18N.getLang() === 'en' ? 'Positive trend' : 'Tendencia positiva', color: '#8098E0' };
-  return { label: 'Neutral', color: '#79818E' };
+  if (avg <= -1) return { label: I18N.getLang() === 'en' ? 'El Niño signal' : 'Señal El Niño', key: 'nino' };
+  if (avg >= 1) return { label: I18N.getLang() === 'en' ? 'La Niña signal' : 'Señal La Niña', key: 'nina' };
+  if (avg <= -0.5) return { label: I18N.getLang() === 'en' ? 'Negative trend' : 'Tendencia negativa', key: 'nino-weak' };
+  if (avg >= 0.5) return { label: I18N.getLang() === 'en' ? 'Positive trend' : 'Tendencia positiva', key: 'nina-weak' };
+  return { label: 'Neutral', key: 'none' };
 }
 
 /* ── Historical event comparison (Plotly) ── */
@@ -830,7 +835,7 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
   }
 
   const current = extractEpisode(currentStart.year, currentStart.month, 24);
-  const currentColor = compareType === 'nino' ? '#C2382A' : '#2A55D0';
+  const currentColor = compareType === 'nino' ? '#C0252A' : '#2A55D0';
   if (current.months.length > 0) {
     traces.push({
       x: current.months, y: current.values,
@@ -853,7 +858,7 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
       text: `${lastOni >= 0 ? '+' : ''}${lastOni.toFixed(2)}`,
       showarrow: true, arrowhead: 0, arrowcolor: currentColor,
       ax: 35, ay: -25,
-      font: { family: 'IBM Plex Mono', size: 12, color: currentColor, weight: 700 },
+      font: { family: 'Libre Franklin', size: 13, color: currentColor, weight: 700 },
       bgcolor: chartColors().annotBg, bordercolor: currentColor, borderwidth: 1, borderpad: 3,
     });
   }
@@ -862,31 +867,31 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
   const layout = {
     margin: { t: 10, r: 20, b: 50, l: 50 },
     xaxis: {
-      title: { text: 'Meses desde inicio del episodio', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Meses desde inicio del episodio', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       gridcolor: cc.grid,
     },
     yaxis: {
-      title: { text: 'ONI (°C)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'ONI (°C)', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       gridcolor: cc.grid, zeroline: true, zerolinecolor: cc.zero,
     },
     shapes: [
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 0.5, y1: 0.5,
-        line: { color: '#C2382A', width: 1, dash: 'dot' } },
+        line: { color: '#C0252A', width: 1, dash: 'dot' } },
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -0.5, y1: -0.5,
         line: { color: '#2A55D0', width: 1, dash: 'dot' } },
     ],
     annotations,
-    legend: { font: { family: 'IBM Plex Mono', size: 11, color: cc.text }, x: 0, y: 1 },
+    legend: { font: { family: 'Libre Franklin', size: 13, color: cc.text }, x: 0, y: 1 },
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
     hovermode: 'closest',
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
   };
 
   const config = {
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: 'hover',
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
     displaylogo: false,
   };
@@ -899,7 +904,7 @@ function buildComparisonChart(divId, oniSeries, episodes, compareType) {
   if (!noteEl) {
     noteEl = document.createElement('p');
     noteEl.id = noteId;
-    noteEl.style.cssText = 'margin:10px 0 0;font-size:12px;color:#555C68;font-family:IBM Plex Mono,monospace;line-height:1.55;max-width:76ch;';
+    noteEl.style.cssText = 'margin:10px 0 0;font-size:14px;color:#555C68;font-family:Libre Franklin,sans-serif;line-height:1.55;max-width:76ch;';
     document.getElementById(divId).parentNode.insertBefore(noteEl, document.getElementById(divId).nextSibling);
   }
 
@@ -961,11 +966,11 @@ function buildSubsurfaceHeatmap(divId, subsurface) {
       [0.55, '#FAEBC8'],
       [0.7, '#F5C26B'],
       [0.85, '#E87D3E'],
-      [1, '#C2382A'],
+      [1, '#C0252A'],
     ],
     colorbar: {
-      title: { text: '\u00B0C', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: '\u00B0C', font: { family: 'Libre Franklin', size: 13, color: '#79818E' } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: '#79818E' },
       thickness: 14,
       len: 0.9,
     },
@@ -979,23 +984,23 @@ function buildSubsurfaceHeatmap(divId, subsurface) {
   const layout = {
     margin: { t: 10, r: 80, b: 50, l: 60 },
     xaxis: {
-      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Longitud', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       side: 'bottom',
     },
     yaxis: {
-      title: { text: 'Profundidad (m)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Profundidad (m)', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       autorange: 'reversed',
     },
     paper_bgcolor: cc.paper,
     plot_bgcolor: cc.plot,
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
   };
 
   const config = {
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: 'hover',
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
     displaylogo: false,
   };
@@ -1037,13 +1042,13 @@ function buildSSTMap(divId, sstData) {
       [0, '#1E3FAE'], [0.15, '#5B8BD0'], [0.3, '#8AC0E8'],
       [0.45, '#D6EAF8'], [0.5, '#F5F5F5'],
       [0.55, '#FDE8D0'], [0.7, '#F5C26B'],
-      [0.85, '#E87D3E'], [1, '#C2382A'],
+      [0.85, '#E87D3E'], [1, '#C0252A'],
     ],
     zmid: 0,
     zmin: -3, zmax: 3,
     colorbar: {
-      title: { text: I18N.getLang() === 'en' ? 'SST Anomaly (°C)' : 'Anomalia TSM (°C)', font: { family: 'IBM Plex Mono', size: 12, color: '#79818E' } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: '#79818E' },
+      title: { text: I18N.getLang() === 'en' ? 'SST Anomaly (°C)' : 'Anomalia TSM (°C)', font: { family: 'Libre Franklin', size: 13, color: '#79818E' } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: '#79818E' },
       thickness: 14, len: 0.9,
     },
     hovertemplate: I18N.getLang() === 'en' ? 'Lat: %{y:.1f}°<br>Lon: %{x:.0f}°<br>Anomaly: %{z:.2f} °C<extra></extra>' : 'Lat: %{y:.1f}°<br>Lon: %{x:.0f}°<br>Anomalia: %{z:.2f} °C<extra></extra>',
@@ -1065,7 +1070,7 @@ function buildSSTMap(divId, sstData) {
     y: box.lat1 + 1.5,
     text: box.name,
     showarrow: false,
-    font: { family: 'IBM Plex Mono', size: 10, color: '#14161A' },
+    font: { family: 'Libre Franklin', size: 13, color: '#14161A' },
   }));
 
   /* External month label */
@@ -1076,24 +1081,24 @@ function buildSSTMap(divId, sstData) {
   const layout = {
     margin: { t: 10, r: 80, b: 60, l: 60 },
     xaxis: {
-      title: { text: 'Longitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      title: { text: 'Longitud', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
       tickvals: lonTickVals, ticktext: lonTickText,
-      tickfont: { family: 'IBM Plex Mono', size: 10, color: cc.tick },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
     },
     yaxis: {
-      title: { text: 'Latitud', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Latitud', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       ticksuffix: '°',
     },
     shapes: shapes,
     annotations: annotations,
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
     /* Time slider (secondary control) */
     sliders: [{
       active: lastIdx,
       pad: { t: 30 },
-      currentvalue: { prefix: '', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      currentvalue: { prefix: '', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
       steps: times.map((t, i) => ({
         label: dateLabels[i],
         method: 'restyle',
@@ -1104,7 +1109,7 @@ function buildSSTMap(divId, sstData) {
 
   const config = {
     responsive: true,
-    displayModeBar: true,
+    displayModeBar: 'hover',
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
     displaylogo: false,
   };
@@ -1144,7 +1149,7 @@ function buildIRIProbsChart(divId, probabilities) {
     },
     {
       name: 'El Niño', x: trimesters, y: elNino, type: 'bar',
-      marker: { color: '#C2382A' },
+      marker: { color: '#C0252A' },
       hovertemplate: '%{x}: El Niño %{y}%<extra></extra>',
     },
   ];
@@ -1154,21 +1159,21 @@ function buildIRIProbsChart(divId, probabilities) {
     barmode: 'stack',
     margin: { t: 30, r: 20, b: 50, l: 50 },
     yaxis: {
-      title: { text: 'Probabilidad (%)', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
+      title: { text: 'Probabilidad (%)', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
       range: [0, 105],
       ticksuffix: '%',
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
     },
     xaxis: {
-      title: { text: 'Trimestre', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Trimestre', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
     },
     legend: {
       orientation: 'h', x: 0.5, xanchor: 'center', y: 1.08,
-      font: { family: 'IBM Plex Mono', size: 11, color: cc.text },
+      font: { family: 'Libre Franklin', size: 13, color: cc.text },
     },
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
     shapes: [{
       type: 'line', x0: -0.5, x1: trimesters.length - 0.5,
       y0: 33.3, y1: 33.3, yref: 'y',
@@ -1177,7 +1182,7 @@ function buildIRIProbsChart(divId, probabilities) {
     annotations: [{
       x: trimesters.length - 0.5, y: 34, yref: 'y',
       text: 'Climatología', showarrow: false, xanchor: 'right',
-      font: { family: 'IBM Plex Mono', size: 10, color: '#79818E' },
+      font: { family: 'Libre Franklin', size: 13, color: '#79818E' },
     }],
   };
 
@@ -1214,7 +1219,7 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
     x: regions, y: rValues, type: 'bar',
     marker: { color: colors, line: { color: '#14161A', width: 0.5 } },
     text: texts, textposition: 'outside',
-    textfont: { family: 'IBM Plex Mono', size: 11, color: chartColors().tick },
+    textfont: { family: 'Libre Franklin', size: 13, color: chartColors().tick },
     hovertemplate: '<b>%{x}</b><br>Pearson r: %{y:+.3f}<br>R²: %{customdata:.1f}%<extra></extra>',
     customdata: rValues.map(r => r * r * 100),
   };
@@ -1224,8 +1229,8 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
     margin: { t: 20, r: 20, b: 50, l: 50 },
     xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick } },
     yaxis: {
-      title: { text: 'Pearson r', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'Pearson r', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       zeroline: true, zerolinecolor: cc.zero, gridcolor: cc.grid,
       range: [-0.1, 0.3],
     },
@@ -1234,7 +1239,7 @@ function buildCorrelationBarChart(divId, correlations, regionOrder) {
         line: { color: cc.zero, width: 1 } },
     ],
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
   };
 
   Plotly.newPlot(divId, [trace], layout, {
@@ -1275,34 +1280,34 @@ function buildSoiPlotly(divId, soiSeries) {
     margin: { t: 10, r: 20, b: 40, l: 50 },
     xaxis: {
       type: 'date', gridcolor: cc.grid,
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
     },
     yaxis: {
-      title: { text: 'SOI', font: { family: 'IBM Plex Mono', size: 12, color: cc.tick } },
-      tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+      title: { text: 'SOI', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+      tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
       gridcolor: cc.grid, zeroline: true, zerolinecolor: cc.zero,
     },
     shapes: [
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -1, y1: -1,
-        line: { color: '#C2382A', width: 1, dash: 'dot' } },
+        line: { color: '#C0252A', width: 1, dash: 'dot' } },
       { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 1, y1: 1,
         line: { color: '#2A55D0', width: 1, dash: 'dot' } },
     ],
     annotations: [
       { xref: 'paper', yref: 'y', x: 1.02, y: -1, text: 'El Niño', showarrow: false,
-        font: { family: 'IBM Plex Mono', size: 10, color: '#C2382A' }, xanchor: 'left' },
+        font: { family: 'Libre Franklin', size: 13, color: '#C0252A' }, xanchor: 'left' },
       { xref: 'paper', yref: 'y', x: 1.02, y: 1, text: 'La Niña', showarrow: false,
-        font: { family: 'IBM Plex Mono', size: 10, color: '#2A55D0' }, xanchor: 'left' },
+        font: { family: 'Libre Franklin', size: 13, color: '#2A55D0' }, xanchor: 'left' },
     ],
-    legend: { font: { family: 'IBM Plex Mono', size: 11, color: cc.text }, x: 0, y: 1 },
+    legend: { font: { family: 'Libre Franklin', size: 13, color: cc.text }, x: 0, y: 1 },
     paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
     hovermode: 'x unified',
-    hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+    hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
     bargap: 0.15,
   };
 
   Plotly.newPlot(divId, traces, layout, {
-    responsive: true, displayModeBar: true,
+    responsive: true, displayModeBar: 'hover',
     modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d'],
     displaylogo: false,
   });
@@ -1328,7 +1333,7 @@ function updateFreshnessIndicator(lastUpdated) {
   /* Hard stale-data warning banner when >15 days old */
   if (daysSince > 15) {
     const staleBanner = document.createElement('div');
-    staleBanner.style.cssText = 'background:#FEE2E2;color:#991B1B;padding:12px 20px;text-align:center;font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;border-bottom:2px solid #EF4444;';
+    staleBanner.style.cssText = 'background:#FEE2E2;color:#991B1B;padding:12px 20px;text-align:center;font-family:"Libre Franklin",sans-serif;font-size:13px;font-weight:600;border-bottom:2px solid #EF4444;';
     staleBanner.textContent = t('stale_banner', { days: Math.round(daysSince) });
     const mainEl = document.getElementById('main');
     mainEl.insertBefore(staleBanner, mainEl.firstChild);
@@ -1366,7 +1371,7 @@ function renderHeatmap(correlations, regionOrder) {
   grid.appendChild(document.createElement('div'));
   for (let lag = 0; lag < 4; lag++) {
     const h = document.createElement('div');
-    h.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:#79818E;text-align:center;padding-bottom:4px;";
+    h.style.cssText = "font-size:14px;color:var(--color-ink-3);text-align:center;padding-bottom:4px;";
     h.textContent = `Lag ${lag}m`;
     grid.appendChild(h);
   }
@@ -1374,7 +1379,7 @@ function renderHeatmap(correlations, regionOrder) {
   let cellIdx = 0;
   for (const region of regionOrder) {
     const rc = document.createElement('div');
-    rc.style.cssText = "display:flex;align-items:center;font-weight:700;font-size:14px;font-family:'Libre Franklin',sans-serif;color:#14161A;padding:16px 14px;background:transparent;border-radius:3px;";
+    rc.style.cssText = "display:flex;align-items:center;font-weight:700;font-size:14px;color:var(--color-ink);padding:16px 14px;";
     rc.textContent = region;
     grid.appendChild(rc);
 
@@ -1397,13 +1402,13 @@ function renderHeatmap(correlations, regionOrder) {
       cell.style.cssText = `display:flex;align-items:center;justify-content:center;background:${bg};border-radius:3px;padding:16px 14px;min-height:26px;animation:omFadeUp .45s ease ${delay} backwards;`;
 
       const span = document.createElement('span');
-      span.style.cssText = "font-weight:500;font-size:14px;font-family:'IBM Plex Mono',monospace;color:#14161A;";
+      span.style.cssText = "font-weight:500;font-size:14px;color:#14161A;";  /* the cell paints its own light field */
       const sign = r >= 0 ? '+' : '−';
       span.textContent = sign + Math.abs(r).toFixed(3);
 
       if (correlationQ(c) < SIG_THRESHOLD && correlationStars(c)) {
         const stars = document.createElement('span');
-        stars.style.cssText = 'color:#C2382A;font-weight:700;';
+        stars.style.cssText = 'color:#C0252A;font-weight:700;';
         stars.textContent = correlationStars(c);
         span.appendChild(stars);
       }
@@ -1433,7 +1438,7 @@ function buildPrecipBars(anomalyArr) {
     const h = Math.max(2, Math.min(BAR_MAX, (Math.abs(d.anomaly_mm) / maxAbs) * BAR_MAX));
     const x = 8 + i * 53;
     const cx = 25 + i * 53;
-    const fill = d.anomaly_mm >= 0 ? '#2A55D0' : '#C2382A';
+    const fill = d.anomaly_mm >= 0 ? '#2A55D0' : '#C0252A';
     const y = d.anomaly_mm >= 0 ? MID_Y - h : MID_Y;
 
     const rect = ns('rect', { x, y: y.toFixed(1), width: 34, height: h.toFixed(1), fill, rx: 2, opacity: 0.85 });
@@ -1441,7 +1446,7 @@ function buildPrecipBars(anomalyArr) {
 
     const mDate = new Date(d.date + 'T12:00:00Z');
     const label = getMonthShort(mDate.getUTCMonth());
-    const txt = ns('text', { x: cx, y: 92, 'text-anchor':'middle', 'font-family':'IBM Plex Mono', 'font-size':'9.5', fill:'#79818E' });
+    const txt = ns('text', { x: cx, y: 92, 'text-anchor':'middle', 'font-family':'Libre Franklin', 'font-size':'9.5', fill:'#79818E' });
     txt.textContent = label;
     svg.appendChild(txt);
   });
@@ -1464,8 +1469,8 @@ function regionDetailText(region, best, isSig, freqStats) {
     const ninaEffect = r > 0 ? t('detail_less_rain') : t('detail_more_rain_2');
     const nEffStr = best.n_eff ? `, n<sub>eff</sub>&nbsp;=&nbsp;${best.n_eff}` : '';
     html += t('detail_nino_years', {signal, ninaEffect}) + chirpsCaveat +
-      `<details style="margin-top:6px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
-      `<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${correlationStars(best)}, q&nbsp;=&nbsp;${correlationQ(best).toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
+      `<details style="margin-top:6px;"><summary style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;cursor:pointer;">${t('detail_stat_toggle')}</summary>` +
+      `<span style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;">r&nbsp;=&nbsp;${r >= 0 ? '+' : ''}${r.toFixed(3)}${correlationStars(best)}, q&nbsp;=&nbsp;${correlationQ(best).toFixed(4)}, n&nbsp;=&nbsp;${best.n_obs}${nEffStr}, lag ${best.lag}m, R²&nbsp;=&nbsp;${(r * r * 100).toFixed(1)}%</span></details>`;
   }
 
   /* Frequency table by season */
@@ -1481,7 +1486,7 @@ function regionDetailText(region, best, isSig, freqStats) {
         if (!c) continue;
         hasData = true;
         const sigMark = frequencySignificant(c) ? ' *' : '';
-        const prelim = c.preliminary ? ` <span style="color:#b45309;font-size:10px;">${t('freq_preliminary')}</span>` : '';
+        const prelim = c.preliminary ? ` <span style="color:#b45309;font-size:14px;">${t('freq_preliminary')}</span>` : '';
         const devPct = c.deviation_pct_of_climatology != null
           ? `${c.deviation_pct_of_climatology > 0 ? '+' : ''}${c.deviation_pct_of_climatology}%`
           : '—';
@@ -1491,7 +1496,7 @@ function regionDetailText(region, best, isSig, freqStats) {
         const range = c.range_seasonal_mm
           ? `[${c.range_seasonal_mm[0] > 0 ? '+' : ''}${c.range_seasonal_mm[0]}, ${c.range_seasonal_mm[1] > 0 ? '+' : ''}${c.range_seasonal_mm[1]}]`
           : '';
-        rows += `<tr style="border-bottom:1px solid #eee;">` +
+        rows += `<tr style="border-bottom:1px solid #eee;">` /* taste-skill-ignore: a real table */ +
           `<td style="padding:3px 6px;">${SEASON_NAMES[sn]}</td>` +
           `<td style="padding:3px 6px;">${label}</td>` +
           `<td style="padding:3px 6px;text-align:center;font-weight:${frequencySignificant(c) ? '700' : '400'};">${c.M_above_median}/${c.N}${sigMark}</td>` +
@@ -1502,8 +1507,8 @@ function regionDetailText(region, best, isSig, freqStats) {
       }
     }
     if (hasData) {
-      html += `<details style="margin-top:10px;"><summary style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:#79818E;cursor:pointer;">${t('detail_seasonal_toggle')}</summary>` +
-        `<table style="width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:11px;margin-top:6px;">` +
+      html += `<details style="margin-top:10px;"><summary style="font-family:'Libre Franklin',sans-serif;font-size:14px;color:#79818E;cursor:pointer;">${t('detail_seasonal_toggle')}</summary>` +
+        `<table style="width:100%;border-collapse:collapse;font-family:'Libre Franklin',sans-serif;font-size:14px;margin-top:6px;">` +
         `<thead><tr style="border-bottom:2px solid #ddd;color:#79818E;text-align:left;">` +
         `<th style="padding:3px 6px;">${t('freq_season')}</th><th style="padding:3px 6px;">${t('freq_phase')}</th>` +
         `<th style="padding:3px 6px;text-align:center;">${t('freq_above_median')}</th>` +
@@ -1512,7 +1517,7 @@ function regionDetailText(region, best, isSig, freqStats) {
         `<th style="padding:3px 6px;text-align:right;">${t('freq_range')}</th>` +
         `<th style="padding:3px 6px;text-align:right;">q</th></tr></thead>` +
         `<tbody>${rows}</tbody></table>` +
-        `<p style="font-size:10px;color:#79818E;margin-top:4px;">${t('freq_p_note')}</p>` +
+        `<p style="font-size:14px;color:#79818E;margin-top:4px;">${t('freq_p_note')}</p>` +
         `</details>`;
     }
   }
@@ -1823,12 +1828,12 @@ async function main() {
     const lastSoi = soi24m[soi24m.length - 1];
     const soiSign = lastSoi.soi >= 0 ? '+' : '';
     countUp(soiTrackerVal, lastSoi.soi, v => (v >= 0 ? '+' : '') + v.toFixed(1));
-    soiTrackerVal.style.color = lastSoi.soi >= 0 ? '#2A55D0' : '#C2382A';
+    soiTrackerVal.style.color = lastSoi.soi >= 0 ? '#2A55D0' : '#C0252A';
 
     const trend = soiTrend(soi24m);
     const trendBadge = document.getElementById('soi-trend-badge');
     trendBadge.textContent = trend.label;
-    trendBadge.style.color = trend.color;
+    trendBadge.dataset.trend = trend.key;
 
     const firstDate = new Date(soi24m[0].date + 'T12:00:00Z');
     const lastDate = new Date(soi24m[soi24m.length - 1].date + 'T12:00:00Z');
@@ -1853,14 +1858,14 @@ async function main() {
     document.getElementById('gauge-sam').textContent = samSign + lastSam.sam.toFixed(2);
     const samTrackerVal = document.getElementById('sam-tracker-val');
     samTrackerVal.textContent = samSign + lastSam.sam.toFixed(2);
-    samTrackerVal.style.color = lastSam.sam >= 0 ? '#2A55D0' : '#C2382A';
+    samTrackerVal.style.color = lastSam.sam >= 0 ? '#2A55D0' : '#C0252A';
 
     /* SAM staleness warning */
     const samLastDate = new Date(lastSam.date + 'T12:00:00Z');
     const samAgeDays = Math.floor((Date.now() - samLastDate.getTime()) / 86400000);
     if (samAgeDays > 60) {
       const samWarn = document.createElement('p');
-      samWarn.style.cssText = 'font-family:IBM Plex Mono,monospace;font-size:12px;color:#D4A01A;margin-top:8px;padding:6px 10px;background:rgba(212,160,26,0.1);border-radius:6px;border:1px solid rgba(212,160,26,0.2);';
+      samWarn.style.cssText = 'font-size:14px;color:#7A4E09;margin-top:10px;padding:10px 14px;background:#F2E7D2;';
       samWarn.textContent = t('sam_stale', {month: getMonthShort(samLastDate.getUTCMonth()), year: samLastDate.getUTCFullYear(), days: samAgeDays});
       document.getElementById('sam-section').querySelector('.section-meta').after(samWarn);
     }
@@ -1882,14 +1887,14 @@ async function main() {
         hovertemplate: '<b>%{x|%b %Y}</b><br>SAM: %{y:+.2f}<extra></extra>',
       }], {
         margin: { t: 10, r: 20, b: 40, l: 50 },
-        xaxis: { type: 'date', gridcolor: cc.grid, linecolor: cc.axis, tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
+        xaxis: { type: 'date', gridcolor: cc.grid, linecolor: cc.axis, tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick } },
         yaxis: {
-          title: { text: 'SAM index', font: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
+          title: { text: 'SAM index', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
           gridcolor: cc.grid, linecolor: cc.axis, zeroline: true, zerolinecolor: cc.zero,
-          tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+          tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
         },
         paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-        hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+        hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
       }, { responsive: true, displayModeBar: false });
     }
   }
@@ -2067,7 +2072,7 @@ async function main() {
 
     const xScale = d => PAD_L + ((d.getFullYear() + d.getMonth() / 12) - START_YEAR) / YEAR_SPAN * usableW;
 
-    let svg = `<svg viewBox="0 0 ${W} ${LEGEND_Y + 6}" style="width:100%;height:auto;display:block;font-family:'IBM Plex Mono',monospace;">`;
+    let svg = `<svg viewBox="0 0 ${W} ${LEGEND_Y + 6}" style="width:100%;height:auto;display:block;font-family:'Libre Franklin',sans-serif;">`;
 
     /* Decade grid lines */
     for (let y = Math.ceil(START_YEAR / 10) * 10; y <= END_YEAR; y += 10) {
@@ -2086,7 +2091,7 @@ async function main() {
       const x1 = xScale(s);
       const x2 = xScale(e);
       const w = Math.max(x2 - x1, 2);
-      const color = ep.type.startsWith('El') ? '#C2382A' : '#2A55D0';
+      const color = ep.type.startsWith('El') ? '#C0252A' : '#2A55D0';
       const startStr = getMonthShort(s.getUTCMonth()) + ' ' + s.getUTCFullYear();
       const endStr = getMonthShort(e.getUTCMonth()) + ' ' + e.getUTCFullYear();
       svg += `<rect x="${x1}" y="${BAR_Y}" width="${w}" height="${BAR_H}" rx="2" fill="${color}" opacity="0.7">` +
@@ -2099,7 +2104,7 @@ async function main() {
     svg += `<text x="${nowX}" y="${BAR_Y - 8}" text-anchor="middle" font-size="9" fill="#14161A" font-weight="600">${t('timeline_today')}</text>`;
 
     /* Legend — positioned below decade labels to avoid overlap */
-    svg += `<rect x="${PAD_L}" y="${LEGEND_Y - 10}" width="12" height="10" rx="2" fill="#C2382A" opacity="0.7"/>`;
+    svg += `<rect x="${PAD_L}" y="${LEGEND_Y - 10}" width="12" height="10" rx="2" fill="#C0252A" opacity="0.7"/>`;
     svg += `<text x="${PAD_L + 16}" y="${LEGEND_Y - 1}" font-size="10" fill="#79818E">El Niño</text>`;
     svg += `<rect x="${PAD_L + 80}" y="${LEGEND_Y - 10}" width="12" height="10" rx="2" fill="#2A55D0" opacity="0.7"/>`;
     svg += `<text x="${PAD_L + 96}" y="${LEGEND_Y - 1}" font-size="10" fill="#79818E">La Niña</text>`;
@@ -2115,19 +2120,18 @@ async function main() {
   if (notableEvents.length > 0) {
     const nec = document.getElementById('notable-events-cards');
     const necTitle = document.createElement('h3');
-    necTitle.style.cssText = "font-size:16px;font-weight:700;margin-bottom:12px;color:var(--color-ink);";
+    necTitle.style.cssText = "font-size:17px;font-weight:700;margin-bottom:12px;color:var(--color-ink);";
     necTitle.textContent = t('notable_title');
     nec.appendChild(necTitle);
     for (const ev of notableEvents) {
-      const evColor = ev.type === 'El Niño' ? '#C2382A' : '#2A55D0';
+      const evColor = ev.type === 'El Niño' ? '#C0252A' : '#2A55D0';
       const detail = document.createElement('details');
       detail.className = 'region-accordion';
       detail.innerHTML =
         `<summary><span class="acc-name" style="color:${evColor}">${ev.name}</span>` +
         `<span class="acc-prov">${ev.category}</span>` +
-        `<span class="acc-r" style="color:${evColor}">ONI ${ev.oni_peak >= 0 ? '+' : ''}${ev.oni_peak.toFixed(1)}</span></summary>` +
-        `<p class="acc-detail" style="margin:8px 0 0;line-height:1.6;">${ev.argentina_impact}</p>` +
-        `<p class="acc-detail" style="margin:6px 0 0;font-size:12px;color:var(--color-ink-3);">Pico: ${ev.peak_season}</p>`;
+        `<span class="acc-r" style="color:${evColor}">ONI ${ev.oni_peak >= 0 ? '+' : ''}${ev.oni_peak.toFixed(1)} en ${ev.peak_season}</span></summary>` +
+        `<p class="acc-detail" style="margin:8px 0 0;line-height:1.6;">${ev.argentina_impact}</p>`;
       nec.appendChild(detail);
     }
   }
@@ -2164,7 +2168,7 @@ async function main() {
       const lag0 = corrs.filter(c => c.lag === 0);
       const x = regions.filter(r => lag0.some(c => c.region === r));
       const y = x.map(r => { const c = lag0.find(c => c.region === r); return c ? c.pearson_r : 0; });
-      const colors = x.map(region => { const c = lag0.find(c => c.region === region); return correlationQ(c) < SIG_THRESHOLD ? (c.pearson_r >= 0 ? '#C2382A' : '#2A55D0') : '#A7AEBB'; });
+      const colors = x.map(region => { const c = lag0.find(c => c.region === region); return correlationQ(c) < SIG_THRESHOLD ? (c.pearson_r >= 0 ? '#C0252A' : '#2A55D0') : '#A7AEBB'; });
       const text = x.map(r => {
         const c = lag0.find(c => c.region === r);
         return c ? `r=${c.pearson_r >= 0 ? '+' : ''}${c.pearson_r.toFixed(3)}${correlationStars(c)}` : '';
@@ -2173,18 +2177,18 @@ async function main() {
       Plotly.newPlot(divId, [{
         x: x, y: y, type: 'bar', marker: { color: colors },
         text: text, textposition: 'outside',
-        textfont: { family: 'IBM Plex Mono', size: 11 },
+        textfont: { family: 'Libre Franklin', size: 13 },
         hovertemplate: '<b>%{x}</b><br>r = %{y:.3f}<extra></extra>',
       }], {
         margin: { t: 10, r: 20, b: 40, l: 50 },
-        xaxis: { tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
+        xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
         yaxis: {
-          title: { text: 'Pearson r', font: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
-          range: [-0.5, 0.5], tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+          title: { text: 'Pearson r', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+          range: [-0.5, 0.5], tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
           gridcolor: cc.grid, linecolor: cc.axis, zeroline: true, zerolinecolor: cc.zero,
         },
         paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-        hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+        hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
       }, { responsive: true, displayModeBar: false });
     }
 
@@ -2215,7 +2219,7 @@ async function main() {
     const INTENSITY_LABELS = {
       debil: t('intensity_weak'), moderado: t('intensity_moderate'), fuerte: t('intensity_strong'), muy_fuerte: t('intensity_vstrong')
     };
-    const NINO_COLORS = ['#FCBCB8','#E88983','#C2382A','#8B1A10'];
+    const NINO_COLORS = ['#FCBCB8','#E88983','#C0252A','#8B1A10'];
     const NINA_COLORS = ['#B8D4FC','#83A8E8','#2A55D0','#0C1445'];
 
     function buildCompositeChart(season) {
@@ -2263,15 +2267,15 @@ async function main() {
       Plotly.newPlot('composite-chart', traces, {
         barmode: 'group',
         margin: { t: 10, r: 20, b: 40, l: 60 },
-        xaxis: { tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
+        xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
         yaxis: {
-          title: { text: t('anomaly_pct'), font: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
-          tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+          title: { text: t('anomaly_pct'), font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+          tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
           zeroline: true, zerolinecolor: cc.zero, gridcolor: cc.grid, linecolor: cc.axis,
         },
         paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-        legend: { font: { family: 'IBM Plex Mono', size: 10, color: cc.text }, orientation: 'h', y: -0.25 },
-        hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+        legend: { font: { family: 'Libre Franklin', size: 13, color: cc.text }, orientation: 'h', y: -0.25 },
+        hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
       }, { responsive: true, displayModeBar: false });
     }
 
@@ -2300,17 +2304,17 @@ async function main() {
       if (!sc) continue;
       const color = SPI_COLORS[sc.classification] || '#79818E';
       const card = document.createElement('div');
-      card.style.cssText = `padding:16px;border-radius:8px;border:1px solid var(--color-border);background:var(--color-bg);text-align:center;`;
+      card.style.cssText = `padding:18px;background:var(--color-bg-alt);text-align:center;`;
       card.innerHTML =
-        `<div style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--color-ink-3);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:6px;">${region}</div>` +
-        `<div style="font-family:'IBM Plex Mono',monospace;font-size:28px;font-weight:600;color:${color};">${sc.spi >= 0 ? '+' : ''}${sc.spi.toFixed(2)}</div>` +
-        `<div style="font-size:12px;color:${color};margin-top:4px;font-weight:600;">${sc.label}</div>` +
-        `<div style="font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--color-ink-4);margin-top:4px;">${sc.date}</div>`;
+        `<div style="font-size:28px;font-weight:600;color:${color};font-variant-numeric:tabular-nums;">${sc.spi >= 0 ? '+' : ''}${sc.spi.toFixed(2)}</div>` +
+        `<div style="font-size:14px;color:${color};margin-top:6px;font-weight:600;">${sc.label}</div>` +
+        `<div style="font-size:17px;font-weight:600;margin-top:10px;">${region}</div>` +
+        `<div style="font-size:14px;color:var(--color-ink-3);margin-top:2px;">${sc.date}</div>`;
       cardsEl.appendChild(card);
     }
 
     if (spiSeries && plotlyReady) {
-      const REGION_COLORS = ['#C2382A','#2A55D0','#D4A01A','#16a34a','#7c3aed'];
+      const REGION_COLORS = ['#C0252A','#2A55D0','#9A6B0F','#1F6B3C','#8E2318'];
       const traces = [];
       regionOrder.forEach((region, idx) => {
         const series = spiSeries[region];
@@ -2326,11 +2330,11 @@ async function main() {
       const cc = chartColors();
       Plotly.newPlot('spi-chart', traces, {
         margin: { t: 10, r: 20, b: 40, l: 50 },
-        xaxis: { type: 'date', gridcolor: cc.grid, linecolor: cc.axis, tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
+        xaxis: { type: 'date', gridcolor: cc.grid, linecolor: cc.axis, tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick } },
         yaxis: {
-          title: { text: 'SPI-3', font: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
+          title: { text: 'SPI-3', font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
           gridcolor: cc.grid, linecolor: cc.axis, zeroline: true, zerolinecolor: cc.zero,
-          tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+          tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
         },
         shapes: [
           { type: 'rect', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: -1, y1: 1, fillcolor: 'rgba(121,129,142,0.06)', line: { width: 0 }, layer: 'below' },
@@ -2340,12 +2344,12 @@ async function main() {
           { type: 'line', xref: 'paper', yref: 'y', x0: 0, x1: 1, y0: 2, y1: 2, line: { color: '#1e3a8a', width: 1, dash: 'dot' } },
         ],
         annotations: [
-          { xref: 'paper', yref: 'y', x: 1.02, y: -1, text: t('spi_seq'), showarrow: false, font: { family: 'IBM Plex Mono', size: 9, color: '#ea580c' }, xanchor: 'left' },
-          { xref: 'paper', yref: 'y', x: 1.02, y: 1, text: t('spi_hum'), showarrow: false, font: { family: 'IBM Plex Mono', size: 9, color: '#2563eb' }, xanchor: 'left' },
+          { xref: 'paper', yref: 'y', x: 1.02, y: -1, text: t('spi_seq'), showarrow: false, font: { family: 'Libre Franklin', size: 9, color: '#ea580c' }, xanchor: 'left' },
+          { xref: 'paper', yref: 'y', x: 1.02, y: 1, text: t('spi_hum'), showarrow: false, font: { family: 'Libre Franklin', size: 9, color: '#2563eb' }, xanchor: 'left' },
         ],
         paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-        legend: { font: { family: 'IBM Plex Mono', size: 10, color: cc.text }, orientation: 'h', y: -0.22 },
-        hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+        legend: { font: { family: 'Libre Franklin', size: 13, color: cc.text }, orientation: 'h', y: -0.22 },
+        hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
         hovermode: 'x unified',
       }, { responsive: true, displayModeBar: false });
     }
@@ -2483,21 +2487,21 @@ async function main() {
     if (summary.events && summary.events.length > 0 && plotlyReady) {
       const evNames = summary.events.map(e => e.year_range + '<br>' + e.enso_type);
       const evLevels = summary.events.map(e => e.peak_level_m);
-      const evColors = summary.events.map(e => e.enso_type.toLowerCase().includes('nina') ? '#2A55D0' : '#C2382A');
+      const evColors = summary.events.map(e => e.enso_type.toLowerCase().includes('nina') ? '#2A55D0' : '#C0252A');
       const evText = summary.events.map(e => `${e.peak_level_m} m (${e.peak_date})`);
       const cc = chartColors();
       Plotly.newPlot('parana-chart', [{
         x: evNames, y: evLevels, type: 'bar',
         marker: { color: evColors },
         text: evText, textposition: 'outside',
-        textfont: { family: 'IBM Plex Mono', size: 11 },
+        textfont: { family: 'Libre Franklin', size: 13 },
         hovertemplate: '%{x}<br>Nivel: %{y} m<extra></extra>',
       }], {
         margin: { t: 20, r: 20, b: 80, l: 50 },
-        xaxis: { tickfont: { family: 'IBM Plex Mono', size: 10, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
+        xaxis: { tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick }, gridcolor: cc.grid, linecolor: cc.axis },
         yaxis: {
-          title: { text: t('parana_level'), font: { family: 'IBM Plex Mono', size: 11, color: cc.tick } },
-          tickfont: { family: 'IBM Plex Mono', size: 11, color: cc.tick },
+          title: { text: t('parana_level'), font: { family: 'Libre Franklin', size: 13, color: cc.tick } },
+          tickfont: { family: 'Libre Franklin', size: 13, color: cc.tick },
           gridcolor: cc.grid, linecolor: cc.axis, zeroline: true, zerolinecolor: cc.zero,
         },
         shapes: [
@@ -2507,11 +2511,11 @@ async function main() {
             line: { color: '#D4A01A', width: 1.5, dash: 'dot' } },
         ],
         annotations: [
-          { xref: 'paper', yref: 'y', x: 1.02, y: summary.normal_level_m, text: t('parana_normal'), showarrow: false, font: { family: 'IBM Plex Mono', size: 9, color: '#16a34a' }, xanchor: 'left' },
-          { xref: 'paper', yref: 'y', x: 1.02, y: summary.alert_level_m, text: t('parana_alert'), showarrow: false, font: { family: 'IBM Plex Mono', size: 9, color: '#D4A01A' }, xanchor: 'left' },
+          { xref: 'paper', yref: 'y', x: 1.02, y: summary.normal_level_m, text: t('parana_normal'), showarrow: false, font: { family: 'Libre Franklin', size: 9, color: '#16a34a' }, xanchor: 'left' },
+          { xref: 'paper', yref: 'y', x: 1.02, y: summary.alert_level_m, text: t('parana_alert'), showarrow: false, font: { family: 'Libre Franklin', size: 9, color: '#D4A01A' }, xanchor: 'left' },
         ],
         paper_bgcolor: cc.paper, plot_bgcolor: cc.plot,
-        hoverlabel: { bgcolor: cc.hover, font: { family: 'IBM Plex Mono', size: 12, color: cc.hoverFont } },
+        hoverlabel: { bgcolor: cc.hover, font: { family: 'Libre Franklin', size: 13, color: cc.hoverFont } },
       }, { responsive: true, displayModeBar: false });
     }
 
@@ -2548,9 +2552,9 @@ async function main() {
   /* ── CSV export button ── */
   const csvBtn = document.createElement('button');
   csvBtn.textContent = t('csv_download');
-  csvBtn.style.cssText = "font-family:'IBM Plex Mono',monospace;font-size:12px;padding:8px 16px;min-height:36px;border-radius:20px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:rgba(255,255,255,0.7);cursor:pointer;margin-top:16px;transition:all .2s;";
-  csvBtn.addEventListener('mouseenter', () => { csvBtn.style.background = 'rgba(255,255,255,0.15)'; csvBtn.style.color = '#FFFFFF'; csvBtn.style.borderColor = 'rgba(255,255,255,0.4)'; });
-  csvBtn.addEventListener('mouseleave', () => { csvBtn.style.background = 'transparent'; csvBtn.style.color = 'rgba(255,255,255,0.7)'; csvBtn.style.borderColor = 'rgba(255,255,255,0.25)'; });
+  csvBtn.style.cssText = 'font-size:14px;padding:12px 18px;min-height:44px;border:0;background:rgba(255,255,255,0.16);color:#FFFFFF;cursor:pointer;margin-top:16px;';
+  csvBtn.addEventListener('mouseenter', () => { csvBtn.style.background = 'rgba(255,255,255,0.3)'; });
+  csvBtn.addEventListener('mouseleave', () => { csvBtn.style.background = 'rgba(255,255,255,0.16)'; });
   csvBtn.addEventListener('click', () => {
     const samMap = {};
     (data.sam_monthly || []).forEach(s => { samMap[s.date] = s.sam; });
@@ -2590,7 +2594,7 @@ async function main() {
   const dmBtn = document.createElement('button');
   dmBtn.id = 'dark-mode-toggle';
   dmBtn.setAttribute('aria-label', t('dark_mode_aria'));
-  dmBtn.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:60;width:44px;height:44px;border-radius:50%;border:1px solid #C7CCD6;background:#FFFFFF;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.12);transition:background .2s,border-color .2s;";
+  dmBtn.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:60;width:48px;height:48px;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:opacity .2s;";
   document.body.appendChild(dmBtn);
 
   /* ── Back to top button ── */
@@ -2606,9 +2610,11 @@ async function main() {
 
   function applyDarkMode(dark) {
     document.documentElement.classList.toggle('dark', dark);
-    dmBtn.textContent = dark ? '\u2600\ufe0f' : '\ud83c\udf19';
-    dmBtn.style.background = dark ? '#1e1e2e' : '#FFFFFF';
-    dmBtn.style.borderColor = dark ? 'rgba(100,120,200,0.3)' : '#C7CCD6';
+    /* A drawn sun or moon, not an emoji: the glyph would arrive in whatever
+       face the reader's system picked, at whatever size it felt like. */
+    dmBtn.innerHTML = dark
+      ? '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="5" fill="currentColor"/><g stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M19.4 4.6l-2.1 2.1M6.7 17.3l-2.1 2.1"/></g></svg>'
+      : '<svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20.5 14.3A8.5 8.5 0 1 1 9.7 3.5a7 7 0 0 0 10.8 10.8z" fill="currentColor"/></svg>';
     localStorage.setItem('enso-dark-mode', dark ? '1' : '0');
 
     /* Relayout all Plotly charts for dark/light */
@@ -2634,7 +2640,6 @@ async function main() {
     const mapSvg = document.getElementById('argentina-map');
     if (mapSvg && typeof d3 !== 'undefined') {
       d3.select(mapSvg).selectAll('.nb').attr('fill', dark ? '#1a1e3a' : '#F0F2F5').attr('stroke', dark ? '#2a2e4a' : '#DEE2E8');
-      d3.select(mapSvg).selectAll('.region-label').attr('fill', dark ? '#e0e0e8' : '#14161A');
       /* Argentina background fill */
       d3.select(mapSvg).selectAll('path').filter(function() {
         return d3.select(this).attr('fill') === '#FAFBFC' || d3.select(this).attr('fill') === '#141824';
@@ -2661,12 +2666,27 @@ async function main() {
   const ogDesc = document.querySelector('meta[property="og:description"]');
   if (ogDesc) ogDesc.content = `ONI: ${cur.oni_value >= 0 ? '+' : ''}${cur.oni_value.toFixed(2)} (${cur.oni_season}). ${canonicalPhase}. Lluvia CHIRPS hasta ${data.precipitation_metadata?.observations_end.slice(0,7) || 'fecha no disponible'} para 5 muestras regionales.`;
 
-  /* ── Scroll reveal (IntersectionObserver) ── */
+  /* ── Scroll reveal (IntersectionObserver) ──
+     A jump to an anchor or to the foot of the page can carry a section past
+     the viewport without the observer ever calling it intersecting, and the
+     section would then keep its content invisible. A plain scroll check
+     stands behind the observer and shows anything already scrolled past. */
   if (!prefersReducedMotion) {
+    const revealEls = [...document.querySelectorAll('.reveal')];
     const revealObs = new IntersectionObserver((entries) => {
       entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); revealObs.unobserve(e.target); } });
     }, { threshold: 0.08 });
-    document.querySelectorAll('.reveal').forEach(el => revealObs.observe(el));
+    revealEls.forEach(el => revealObs.observe(el));
+    const revealSweep = () => {
+      const h = window.innerHeight || document.documentElement.clientHeight;
+      for (const el of revealEls) {
+        if (el.classList.contains('visible')) continue;
+        if (el.getBoundingClientRect().top < h * 0.92) el.classList.add('visible');
+      }
+    };
+    addEventListener('scroll', revealSweep, { passive: true });
+    addEventListener('resize', revealSweep);
+    addEventListener('load', revealSweep);
   } else {
     document.querySelectorAll('.reveal').forEach(el => el.classList.add('visible'));
   }
