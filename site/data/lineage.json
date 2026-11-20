@@ -1,5 +1,5 @@
 {
-  "build_id": "2026-11-19T19:48:54.564825+00:00",
+  "build_id": "2026-11-20T16:36:42.128303+00:00",
   "sources": [
     {
       "name": "NOAA ONI",
@@ -73,7 +73,7 @@
       "name": "TAO/TRITON",
       "url": null,
       "access_method": "live_fetch",
-      "status": "failed",
+      "status": "success",
       "date_range_start": null,
       "date_range_end": null,
       "row_count": null,
@@ -190,7 +190,7 @@
   "artifacts": [
     {
       "path": "site/data/enso.json",
-      "size_bytes": 861174,
+      "size_bytes": 863098,
       "format": "json",
       "key_count": 36,
       "row_count": null
@@ -204,7 +204,7 @@
     },
     {
       "path": "site/data/sst_map.json",
-      "size_bytes": 134412,
+      "size_bytes": 134315,
       "format": "json",
       "key_count": null,
       "row_count": null
@@ -246,7 +246,7 @@
         "id": "src:TAO/TRITON",
         "type": "source",
         "label": "TAO/TRITON",
-        "status": "failed"
+        "status": "success"
       },
       {
         "id": "src:NOAA SAM/AAO",
