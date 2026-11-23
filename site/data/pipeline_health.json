@@ -1,14 +1,14 @@
 {
-  "build_id": "2026-11-22T15:51:21.363413+00:00",
+  "build_id": "2026-11-23T19:44:38.418999+00:00",
   "status": "success",
-  "duration_seconds": 6.64,
-  "last_updated": "2026-11-22T15:51:28.001258+00:00",
+  "duration_seconds": 8.98,
+  "last_updated": "2026-11-23T19:44:47.402317+00:00",
   "sources": [
     {
       "name": "ENSO indices",
       "status": "success",
-      "latency_ms": 1026.1,
-      "freshness_days": 68,
+      "latency_ms": 650.4,
+      "freshness_days": 69,
       "cached_from": null,
       "as_of": null,
       "as_of_source": null
@@ -16,7 +16,7 @@
     {
       "name": "correlations.parquet",
       "status": "cached",
-      "latency_ms": 15.5,
+      "latency_ms": 14.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -25,7 +25,7 @@
     {
       "name": "precipitation_pairs.parquet",
       "status": "cached",
-      "latency_ms": 2.8,
+      "latency_ms": 2.5,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -34,7 +34,7 @@
     {
       "name": "NOAA operational ENSO reference",
       "status": "success",
-      "latency_ms": 714.7,
+      "latency_ms": 561.8,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -43,7 +43,7 @@
     {
       "name": "TAO/TRITON subsurface",
       "status": "success",
-      "latency_ms": 460.3,
+      "latency_ms": 594.9,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -52,8 +52,8 @@
     {
       "name": "NOAA SAM/AAO",
       "status": "success",
-      "latency_ms": 368.7,
-      "freshness_days": 38,
+      "latency_ms": 281.3,
+      "freshness_days": 39,
       "cached_from": null,
       "as_of": null,
       "as_of_source": null
@@ -61,7 +61,7 @@
     {
       "name": "IRI ENSO forecast",
       "status": "success",
-      "latency_ms": 450.9,
+      "latency_ms": 1590.1,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
@@ -70,7 +70,7 @@
     {
       "name": "OISST SST map",
       "status": "success",
-      "latency_ms": 1257.0,
+      "latency_ms": 2496.9,
       "freshness_days": null,
       "cached_from": null,
       "as_of": null,
